@@ -92,6 +92,14 @@ python -m cosmos_generator planet clean --debug    # Limpia solo archivos de dep
 python -m cosmos_generator planet clean --examples # Limpia solo archivos de ejemplos
 python -m cosmos_generator planet clean --results  # Limpia solo archivos de resultados
 python -m cosmos_generator planet clean --dry-run  # Muestra qué se eliminaría sin eliminar nada
+
+# View planet generation logs
+python -m cosmos_generator planet logs                # Show all logs
+python -m cosmos_generator planet logs --tail 20       # Show the last 20 lines
+python -m cosmos_generator planet logs --lines 50      # Show 50 lines
+python -m cosmos_generator planet logs --level INFO    # Filter by level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+python -m cosmos_generator planet logs --summary       # Show the last generation summary
+python -m cosmos_generator planet logs --path          # Show the log file path
 ```
 
 Opciones del subcomando `planet generate`:
@@ -116,6 +124,14 @@ Opciones del subcomando `planet clean`:
 - `--dry-run`: Mostrar qué archivos se eliminarían sin eliminarlos realmente
 - `--help`: Mostrar ayuda
 
+Options for the `planet logs` subcommand:
+- `--lines N`: Show N lines of the log (default: all)
+- `--tail N`: Show the last N lines of the log
+- `--level LEVEL`: Filter logs by minimum level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- `--summary`: Show the last generation summary
+- `--path`: Show the log file path
+- `--help`: Show help
+
 ## Estructura de Carpetas de Output
 
 Cosmos Generator organiza los archivos generados en la siguiente estructura de carpetas:
@@ -124,6 +140,7 @@ Cosmos Generator organiza los archivos generados en la siguiente estructura de c
 output/
 └── planets/                # Carpeta principal para planetas
     ├── debug/              # Archivos de depuración
+    │   ├── planets.log     # Archivo de log con información detallada de generación
     │   └── textures/       # Texturas generadas durante el proceso
     │       ├── terrain/    # Texturas base de terreno
     │       │   └── [seed].png
@@ -147,12 +164,54 @@ output/
 ### Descripción de las Carpetas
 
 - **debug**: Contiene archivos intermedios generados durante el proceso de creación, útiles para depuración y análisis.
+  - **planets.log**: Archivo de log que contiene información detallada sobre el proceso de generación de planetas, incluyendo tiempos de ejecución, parámetros utilizados y errores encontrados. Este archivo se elimina cuando se usa el comando `clean` con la opción `--debug` o `--all`.
   - **textures/terrain**: Texturas base de terreno antes de aplicar iluminación y efectos.
   - **textures/clouds**: Texturas y máscaras de nubes utilizadas en planetas con nubes.
 
 - **examples**: Contiene imágenes generadas por los scripts de ejemplo en la carpeta `examples/planets/`.
 
 - **result**: Contiene los planetas finales generados, organizados por tipo. Esta es la ubicación por defecto donde se guardan los planetas cuando se usa el CLI sin especificar una ruta de salida.
+
+## Sistema de Logging
+
+Cosmos Generator incluye un sistema de logging detallado que registra información sobre el proceso de generación de planetas. Los logs se guardan en el archivo `output/planets/debug/planets.log` y pueden ser visualizados con el subcomando `planet logs`.
+
+El sistema de logging registra:
+
+- Información general sobre la generación de planetas (tipo, semilla, parámetros)
+- Tiempos de ejecución para cada paso del proceso con detalles específicos:
+  - Generación de textura: tipo de planeta, tamaño
+  - Iluminación: ángulo, intensidad, factor de caída
+  - Atmósfera: porcentaje de relleno, radio de desenfoque
+  - Nubes: cobertura, umbral de generación
+  - Anillos: complejidad, número de anillos, factor de tamaño
+- Errores y excepciones que puedan ocurrir durante el proceso
+- Rutas de archivos generados
+
+Ejemplo de salida del log:
+
+```
+2025-04-15 19:10:19 [INFO] cosmos_generator: [cli] Generating Desert planet with seed 12345
+2025-04-15 19:10:19 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 19:10:19 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 1.53ms (rendering will start next)
+2025-04-15 19:10:19 [INFO] cosmos_generator: [cli] Exporting planet to output/planets/result/desert/12345.png
+2025-04-15 19:10:19 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 19:10:19 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 19:11:22 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 63014.32ms - Type: Desert, Size: 512x512
+2025-04-15 19:10:19 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 315°, intensity: 0.8)
+2025-04-15 19:11:23 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1294.48ms - Angle: 315°, Intensity: 0.8, Falloff: 1.8
+2025-04-15 19:11:23 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 19:11:24 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 18.23ms - Padding: 2.0%, blur: 1px
+2025-04-15 19:11:24 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 18.40ms - Applied: atmosphere
+2025-04-15 19:11:24 [INFO] cosmos_generator: [cli] Planet generation completed in 64396.38ms
+2025-04-15 19:11:24 [INFO] cosmos_generator: [generator] Successfully generated Desert planet with seed 12345 in 64394.41ms
+2025-04-15 19:11:24 [INFO] cosmos_generator: [generator] Saved to output/planets/result/desert/12345.png
+2025-04-15 19:11:24 [DEBUG] cosmos_generator: [generator] Generation steps:
+    generate_texture: 63014.32ms - Type: Desert, Size: 512x512
+    apply_lighting: 1294.48ms - Angle: 315°, Intensity: 0.8, Falloff: 1.8
+    apply_atmosphere: 18.23ms - Padding: 2.0%, blur: 1px
+    apply_features: 18.40ms - Applied: atmosphere
+```
 
 ## Requirements
 

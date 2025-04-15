@@ -6,7 +6,10 @@ import argparse
 import os
 import sys
 import random
+import time
 from typing import Any
+
+from cosmos_generator.utils.logger import logger
 
 # Try to import the required modules
 try:
@@ -135,11 +138,16 @@ def main(args: argparse.Namespace) -> int:
         params["ocean_style"] = chosen_style
         print(f"Randomly selected Ocean style: {chosen_style}")
 
-    # Create the planet
+    # Create the planet instance
+    start_time = time.time()
     try:
+        # Log only to file, not to console
+        logger.info(f"Generating {planet_type} planet with seed {seed}", "cli", console=False)
         planet = generator.create(planet_type, params)
-        print(f"Generated {planet_type} planet with seed {seed}")
+        print(f"Starting generation of {planet_type} planet with seed {seed}...")
     except Exception as e:
+        duration_ms = (time.time() - start_time) * 1000
+        logger.error(f"Error generating planet: {e}", "cli", exc_info=True)
         print(f"Error generating planet: {e}")
         return 1
 
@@ -150,11 +158,13 @@ def main(args: argparse.Namespace) -> int:
         output_dir = os.path.join("output", "planets", "result", planet_type.lower())
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"{seed}.png")
+        logger.debug(f"Using default output path: {output_path}", "cli")
     else:
         # Ensure the directory exists for the specified output path
         output_dir = os.path.dirname(output_path)
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
+        logger.debug(f"Using custom output path: {output_path}", "cli")
 
     # Always use container for consistent display
     container = Container()
@@ -164,10 +174,22 @@ def main(args: argparse.Namespace) -> int:
         container.set_rotation(args.rotation)
 
     try:
+        print(f"Generating planet... (this may take a while)")
         container.export(output_path)
-        print(f"Saved to {output_path}")
+
+        # Log completion
+        duration_ms = (time.time() - start_time) * 1000
+        print(f"Planet generated and saved to {output_path} in {duration_ms:.2f}ms")
+
+        # Only log to file, not to console
+        logger.info(f"Planet generation completed in {duration_ms:.2f}ms", "cli", console=False)
+        logger.end_generation(True, output_path)
     except Exception as e:
+        logger.error(f"Error saving image: {e}", "cli", exc_info=True)
         print(f"Error saving image: {e}")
+
+        # Log failure
+        logger.end_generation(False, error=str(e))
         return 1
 
     return 0

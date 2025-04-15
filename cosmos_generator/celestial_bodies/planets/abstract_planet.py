@@ -13,8 +13,11 @@ del planeta para que la atmósfera quepa en el tamaño original.
 from typing import Optional
 import math
 import os
+import time
 import numpy as np
 from PIL import Image, ImageDraw, ImageChops, ImageFilter
+
+from cosmos_generator.utils.logger import logger
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
 from cosmos_generator.utils import image_utils, lighting_utils
@@ -76,21 +79,66 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             PIL Image of the planet
         """
-        # Generate base texture
-        texture = self.generate_texture()
+        try:
+            # Start logging generation process
+            params = {
+                "size": self.size,
+                "light_intensity": self.light_intensity,
+                "light_angle": self.light_angle,
+                "has_rings": self.has_rings,
+                "has_atmosphere": self.has_atmosphere,
+                "has_clouds": self.has_clouds,
+            }
+            if self.has_clouds and hasattr(self, "cloud_coverage"):
+                params["cloud_coverage"] = self.cloud_coverage
 
-        # Save the base texture for debugging
-        debug_dir = os.path.join("output", "planets", "debug", "textures", "terrain")
-        os.makedirs(debug_dir, exist_ok=True)
-        texture.save(os.path.join(debug_dir, f"{self.seed}.png"))
+            # Add any planet-specific parameters
+            for key, value in self.params.items():
+                if key not in params:
+                    params[key] = value
 
-        # Apply lighting
-        lit_texture = self.apply_lighting(texture)
+            logger.start_generation(self.PLANET_TYPE, self.seed, params)
 
-        # Apply features
-        result = self.apply_features(lit_texture)
+            # Generate base texture
+            start_time = time.time()
+            try:
+                logger.debug(f"Generating texture for {self.PLANET_TYPE} planet (size: {self.size}x{self.size})", "planet")
+                texture = self.generate_texture()
+                duration_ms = (time.time() - start_time) * 1000
+                logger.log_step("generate_texture", duration_ms, f"Type: {self.PLANET_TYPE}, Size: {self.size}x{self.size}")
+            except Exception as e:
+                duration_ms = (time.time() - start_time) * 1000
+                logger.log_step("generate_texture", duration_ms, f"Error: {str(e)}")
+                raise
 
-        return result
+            # Save the base texture for debugging
+            debug_dir = os.path.join("output", "planets", "debug", "textures", "terrain")
+            os.makedirs(debug_dir, exist_ok=True)
+            texture_path = os.path.join(debug_dir, f"{self.seed}.png")
+            texture.save(texture_path)
+            logger.debug(f"Saved base texture to {texture_path}", "planet")
+
+            # Apply lighting
+            start_time = time.time()
+            try:
+                logger.debug(f"Applying lighting to {self.PLANET_TYPE} planet (angle: {self.light_angle}°, intensity: {self.light_intensity})", "planet")
+                lit_texture = self.apply_lighting(texture)
+                duration_ms = (time.time() - start_time) * 1000
+                logger.log_step("apply_lighting", duration_ms, f"Angle: {self.light_angle}°, Intensity: {self.light_intensity}, Falloff: {self.light_falloff}")
+            except Exception as e:
+                duration_ms = (time.time() - start_time) * 1000
+                logger.log_step("apply_lighting", duration_ms, f"Error: {str(e)}")
+                raise
+
+            # Apply features
+            result = self.apply_features(lit_texture)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error rendering planet: {str(e)}", "planet", exc_info=True)
+            logger.end_generation(False, error=str(e))
+            raise
 
     def generate_texture(self) -> Image.Image:
         """
@@ -128,22 +176,45 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Planet image with features applied
         """
-        result = base_image
+        start_time = time.time()
+        try:
+            result = base_image
+            features_applied = []
 
-        # The order of applying features is important:
-        # 1. First apply atmosphere if enabled (before anything else)
-        if self.has_atmosphere:
-            result = self._apply_atmosphere(result)
+            # The order of applying features is important:
+            # 1. First apply atmosphere if enabled (before anything else)
+            if self.has_atmosphere:
+                logger.debug(f"Applying atmosphere to {self.PLANET_TYPE} planet", "planet")
+                result = self._apply_atmosphere(result)
+                features_applied.append("atmosphere")
 
-        # 2. Then apply clouds if enabled
-        if self.has_clouds:
-            result = self._apply_clouds(result)
+            # 2. Then apply clouds if enabled
+            if self.has_clouds:
+                coverage = getattr(self, "cloud_coverage", 0.5)
+                logger.debug(f"Applying clouds to {self.PLANET_TYPE} planet (coverage: {coverage:.2f})", "planet")
+                result = self._apply_clouds(result)
+                features_applied.append("clouds")
 
-        # 3. Finally apply rings if enabled
-        if self.has_rings:
-            result = self._apply_rings(result)
+            # 3. Finally apply rings if enabled
+            if self.has_rings:
+                logger.debug(f"Applying rings to {self.PLANET_TYPE} planet", "planet")
+                result = self._apply_rings(result)
+                features_applied.append("rings")
 
-        return result
+            # Log features applied
+            if features_applied:
+                features_str = ", ".join(features_applied)
+                duration_ms = (time.time() - start_time) * 1000
+                logger.log_step("apply_features", duration_ms, f"Applied: {features_str}")
+            else:
+                duration_ms = (time.time() - start_time) * 1000
+                logger.log_step("apply_features", duration_ms, "No features applied")
+
+            return result
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.log_step("apply_features", duration_ms, f"Error: {str(e)}")
+            raise
 
     def _apply_atmosphere(self, base_image: Image.Image) -> Image.Image:
         """
@@ -155,98 +226,109 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Planet image with atmosphere
         """
-        # Ensure the planet image has an alpha channel
-        if base_image.mode != "RGBA":
-            base_image = base_image.convert("RGBA")
+        start_time = time.time()
+        try:
+            # Ensure the planet image has an alpha channel
+            if base_image.mode != "RGBA":
+                base_image = base_image.convert("RGBA")
 
-        # Get atmosphere color for this planet type
-        atmosphere_color = self.color_palette.get_atmosphere_color(self.PLANET_TYPE)
+            # Get atmosphere color for this planet type
+            atmosphere_color = self.color_palette.get_atmosphere_color(self.PLANET_TYPE)
 
-        # Make atmosphere more visible by increasing opacity
-        r, g, b, a = atmosphere_color
-        atmosphere_color = (r, g, b, min(255, a * 2))  # Double the opacity, max 255
+            # Make atmosphere more visible by increasing opacity
+            r, g, b, a = atmosphere_color
+            atmosphere_color = (r, g, b, min(255, a * 2))  # Double the opacity, max 255
 
-        # Get the size of the planet image
-        size = base_image.width
+            # Get the size of the planet image
+            size = base_image.width
 
-        # Create a canvas for the atmosphere - much smaller padding for planets without rings
-        if self.has_rings:
-            atmosphere_padding = int(size * 0.15)  # 15% padding for planets with rings
-        else:
-            atmosphere_padding = int(size * 0.02)  # 2% padding for planets without rings (drastically reduced)
-        canvas_size = size + atmosphere_padding * 2
-        result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+            # Create a canvas for the atmosphere - much smaller padding for planets without rings
+            if self.has_rings:
+                atmosphere_padding = int(size * 0.15)  # 15% padding for planets with rings
+            else:
+                atmosphere_padding = int(size * 0.02)  # 2% padding for planets without rings (drastically reduced)
+            canvas_size = size + atmosphere_padding * 2
+            result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
-        # Calculate center and planet radius
-        center = canvas_size // 2
-        planet_radius = size // 2
+            # Calculate center and planet radius
+            center = canvas_size // 2
+            planet_radius = size // 2
 
-        # Create the atmosphere layer
-        atmosphere = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-        atmosphere_draw = ImageDraw.Draw(atmosphere)
+            # Create the atmosphere layer
+            atmosphere = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+            atmosphere_draw = ImageDraw.Draw(atmosphere)
 
-        # Draw the atmosphere as a larger circle
-        atmosphere_radius = planet_radius + atmosphere_padding
-        atmosphere_draw.ellipse(
-            (center - atmosphere_radius, center - atmosphere_radius,
-             center + atmosphere_radius, center + atmosphere_radius),
-            fill=atmosphere_color
-        )
-
-        # Apply blur for a nice glow effect - use smaller blur for sharper edge
-        if self.has_rings:
-            blur_radius = atmosphere_padding // 3
-        else:
-            # Almost no blur for planets without rings - just enough to smooth the edge
-            blur_radius = max(1, atmosphere_padding // 10)  # Minimum blur of 1 pixel
-        atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
-
-        # Paste the atmosphere onto the result
-        result.paste(atmosphere, (0, 0), atmosphere)
-
-        # Paste the planet in the center
-        planet_pos = (center - planet_radius, center - planet_radius)
-        result.paste(base_image, planet_pos, base_image)
-
-        # Add a thin bright halo right at the edge of the planet for extra visibility
-        halo = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-        halo_draw = ImageDraw.Draw(halo)
-
-        # Draw a thin ring at the exact edge of the planet
-        halo_radius = planet_radius + 1  # Just 1 pixel larger than the planet
-
-        # If the planet will have rings, make the halo more visible
-        if self.has_rings:
-            halo_color = (r, g, b, 255)  # Full opacity for the halo
-            halo_width = 3  # Slightly thicker halo for planets with rings
-
-            # Add a second, outer halo for extra visibility with rings
-            outer_halo_radius = planet_radius + 3
-            halo_draw.ellipse(
-                (center - outer_halo_radius, center - outer_halo_radius,
-                 center + outer_halo_radius, center + outer_halo_radius),
-                outline=halo_color, width=1
+            # Draw the atmosphere as a larger circle
+            atmosphere_radius = planet_radius + atmosphere_padding
+            atmosphere_draw.ellipse(
+                (center - atmosphere_radius, center - atmosphere_radius,
+                 center + atmosphere_radius, center + atmosphere_radius),
+                fill=atmosphere_color
             )
-        else:
-            halo_color = (r, g, b, 255)  # Full opacity for the halo
-            halo_width = 2  # Normal width for planets without rings
 
-        # Draw the halo as a thin ring
-        halo_draw.ellipse(
-            (center - halo_radius, center - halo_radius,
-             center + halo_radius, center + halo_radius),
-            outline=halo_color, width=halo_width
-        )
+            # Apply blur for a nice glow effect - use smaller blur for sharper edge
+            if self.has_rings:
+                blur_radius = atmosphere_padding // 3
+            else:
+                # Almost no blur for planets without rings - just enough to smooth the edge
+                blur_radius = max(1, atmosphere_padding // 10)  # Minimum blur of 1 pixel
+            atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
 
-        # Apply a very small blur to soften the halo slightly
-        # For planets with rings, use less blur to keep the halo more defined
-        blur_amount = 0.5 if self.has_rings else 1
-        halo = halo.filter(ImageFilter.GaussianBlur(blur_amount))
+            # Paste the atmosphere onto the result
+            result.paste(atmosphere, (0, 0), atmosphere)
 
-        # Composite the halo onto the result
-        result = Image.alpha_composite(result, halo)
+            # Paste the planet in the center
+            planet_pos = (center - planet_radius, center - planet_radius)
+            result.paste(base_image, planet_pos, base_image)
 
-        return result
+            # Add a thin bright halo right at the edge of the planet for extra visibility
+            halo = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+            halo_draw = ImageDraw.Draw(halo)
+
+            # Draw a thin ring at the exact edge of the planet
+            halo_radius = planet_radius + 1  # Just 1 pixel larger than the planet
+
+            # If the planet will have rings, make the halo more visible
+            if self.has_rings:
+                halo_color = (r, g, b, 255)  # Full opacity for the halo
+                halo_width = 3  # Slightly thicker halo for planets with rings
+
+                # Add a second, outer halo for extra visibility with rings
+                outer_halo_radius = planet_radius + 3
+                halo_draw.ellipse(
+                    (center - outer_halo_radius, center - outer_halo_radius,
+                     center + outer_halo_radius, center + outer_halo_radius),
+                    outline=halo_color, width=1
+                )
+            else:
+                halo_color = (r, g, b, 255)  # Full opacity for the halo
+                halo_width = 2  # Normal width for planets without rings
+
+            # Draw the halo as a thin ring
+            halo_draw.ellipse(
+                (center - halo_radius, center - halo_radius,
+                 center + halo_radius, center + halo_radius),
+                outline=halo_color, width=halo_width
+            )
+
+            # Apply a very small blur to soften the halo slightly
+            # For planets with rings, use less blur to keep the halo more defined
+            blur_amount = 0.5 if self.has_rings else 1
+            halo = halo.filter(ImageFilter.GaussianBlur(blur_amount))
+
+            # Composite the halo onto the result
+            result = Image.alpha_composite(result, halo)
+
+            duration_ms = (time.time() - start_time) * 1000
+            # Log details about the atmosphere
+            padding_percent = atmosphere_padding / planet_radius * 100
+            blur_info = f"blur: {blur_radius}px"
+            logger.log_step("apply_atmosphere", duration_ms, f"Padding: {padding_percent:.1f}%, {blur_info}")
+            return result
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.log_step("apply_atmosphere", duration_ms, f"Error: {str(e)}")
+            raise
 
     def _apply_clouds(self, base_image: Image.Image) -> Image.Image:
         """
@@ -258,178 +340,192 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Planet image with clouds
         """
-        # Get the size of the planet image (may include atmosphere)
-        size = base_image.width
+        start_time = time.time()
+        try:
+            # Ensure the planet image has an alpha channel
+            if base_image.mode != "RGBA":
+                base_image = base_image.convert("RGBA")
 
-        # BALANCED CLOUD GENERATION - BETWEEN FLAT STYLE AND REALISTIC DETAIL
-        # Base cloud layer - cloud shapes with medium frequency and some complexity
-        base_cloud_noise = self.noise_gen.generate_noise_map(
-            self.size, self.size,
-            lambda x, y: self.noise_gen.domain_warp(
-                x, y,
-                lambda dx, dy: self.noise_gen.simplex_warp(dx, dy, 0.3, 0.3),
-                lambda dx, dy: self.noise_gen.fractal_simplex(dx, dy, 4, 0.6, 2.0, 2.2)  # 4 octaves for more cloud-like shapes
+            # Get the size of the planet image (may include atmosphere)
+            size = base_image.width
+
+            # BALANCED CLOUD GENERATION - BETWEEN FLAT STYLE AND REALISTIC DETAIL
+            # Base cloud layer - cloud shapes with medium frequency and some complexity
+            base_cloud_noise = self.noise_gen.generate_noise_map(
+                self.size, self.size,
+                lambda x, y: self.noise_gen.domain_warp(
+                    x, y,
+                    lambda dx, dy: self.noise_gen.simplex_warp(dx, dy, 0.3, 0.3),
+                    lambda dx, dy: self.noise_gen.fractal_simplex(dx, dy, 4, 0.6, 2.0, 2.2)  # 4 octaves for more cloud-like shapes
+                )
             )
-        )
 
-        # Detail layer - moderate detail for cloud texture
-        detail_noise = self.noise_gen.generate_noise_map(
-            self.size, self.size,
-            lambda x, y: self.noise_gen.fractal_simplex(x, y, 3, 0.5, 2.0, 4.5)  # 3 octaves for some detail
-        )
+            # Detail layer - moderate detail for cloud texture
+            detail_noise = self.noise_gen.generate_noise_map(
+                self.size, self.size,
+                lambda x, y: self.noise_gen.fractal_simplex(x, y, 3, 0.5, 2.0, 4.5)  # 3 octaves for some detail
+            )
 
-        # Edge definition layer - creates cloud-like boundaries
-        edge_noise = self.noise_gen.generate_noise_map(
-            self.size, self.size,
-            lambda x, y: self.noise_gen.ridged_simplex(x, y, 3, 0.7, 2.0, 3.0)  # 3 octaves for more natural edges
-        )
+            # Edge definition layer - creates cloud-like boundaries
+            edge_noise = self.noise_gen.generate_noise_map(
+                self.size, self.size,
+                lambda x, y: self.noise_gen.ridged_simplex(x, y, 3, 0.7, 2.0, 3.0)  # 3 octaves for more natural edges
+            )
 
-        # Combine the noise layers to create balanced cloud formations
-        # Create a new array for the combined noise
-        combined_noise = np.zeros((self.size, self.size), dtype=np.float32)
+            # Combine the noise layers to create balanced cloud formations
+            # Create a new array for the combined noise
+            combined_noise = np.zeros((self.size, self.size), dtype=np.float32)
 
-        for y in range(self.size):
-            for x in range(self.size):
-                # Base shape (50%) - cloud formations
-                base = base_cloud_noise[y, x]
-                # Add detail (30%) - more texture for cloud-like appearance
-                detail = detail_noise[y, x]
-                # Add edge definition (20%) - defined but natural boundaries
-                edge = edge_noise[y, x]
+            for y in range(self.size):
+                for x in range(self.size):
+                    # Base shape (50%) - cloud formations
+                    base = base_cloud_noise[y, x]
+                    # Add detail (30%) - more texture for cloud-like appearance
+                    detail = detail_noise[y, x]
+                    # Add edge definition (20%) - defined but natural boundaries
+                    edge = edge_noise[y, x]
 
-                # Combine with balanced weights
-                # More weight on detail for cloud-like texture
-                combined = base * 0.5 + detail * 0.3 + edge * 0.2
+                    # Combine with balanced weights
+                    # More weight on detail for cloud-like texture
+                    combined = base * 0.5 + detail * 0.3 + edge * 0.2
 
-                # Apply a moderate curve to create defined but natural edges
-                if combined > 0.4 and combined < 0.6:
-                    # Create a moderate transition in the middle range
-                    factor = (combined - 0.4) / 0.2  # 0 to 1 in the 0.4-0.6 range
-                    combined = 0.4 + factor * 0.25  # Moderate transition for natural-looking edges
+                    # Apply a moderate curve to create defined but natural edges
+                    if combined > 0.4 and combined < 0.6:
+                        # Create a moderate transition in the middle range
+                        factor = (combined - 0.4) / 0.2  # 0 to 1 in the 0.4-0.6 range
+                        combined = 0.4 + factor * 0.25  # Moderate transition for natural-looking edges
 
-                # Add subtle variation to avoid too uniform appearance
-                variation = (self.rng.random() - 0.5) * 0.05  # Small random variation (-0.025 to 0.025)
-                combined = max(0.0, min(1.0, combined + variation))  # Keep within 0-1 range
+                    # Add subtle variation to avoid too uniform appearance
+                    variation = (self.rng.random() - 0.5) * 0.05  # Small random variation (-0.025 to 0.025)
+                    combined = max(0.0, min(1.0, combined + variation))  # Keep within 0-1 range
 
-                # Store the result
-                combined_noise[y, x] = combined
+                    # Store the result
+                    combined_noise[y, x] = combined
 
-        # Use the combined noise for cloud generation
-        cloud_noise = combined_noise
+            # Use the combined noise for cloud generation
+            cloud_noise = combined_noise
 
-        # Create the cloud mask
-        cloud_mask = Image.new("L", (self.size, self.size), 0)
-        cloud_data = cloud_mask.load()
+            # Create the cloud mask
+            cloud_mask = Image.new("L", (self.size, self.size), 0)
+            cloud_data = cloud_mask.load()
 
-        # Adjust threshold to increase cloud coverage
-        # Lower threshold = more clouds
-        cloud_threshold = 0.45 - (self.cloud_coverage * 0.35)  # More aggressive adjustment
+            # Adjust threshold to increase cloud coverage
+            # Lower threshold = more clouds
+            cloud_threshold = 0.45 - (self.cloud_coverage * 0.35)  # More aggressive adjustment
 
-        # Fill the cloud mask with a balanced approach for cloud-like appearance
-        for y in range(self.size):
-            for x in range(self.size):
-                # Get the noise value at this pixel
-                value = cloud_noise[y, x]
+            # Fill the cloud mask with a balanced approach for cloud-like appearance
+            for y in range(self.size):
+                for x in range(self.size):
+                    # Get the noise value at this pixel
+                    value = cloud_noise[y, x]
 
-                # Use a moderate transition zone for natural-looking cloud edges
-                if value > cloud_threshold - 0.08:  # Moderate transition (0.08)
-                    if value < cloud_threshold:  # Edge zone
-                        # Gradual transition for natural-looking edges
-                        edge_factor = (value - (cloud_threshold - 0.08)) / 0.08  # 0 to 1
-                        # Moderate minimum opacity (50) for softer edges
-                        alpha = int(50 * edge_factor)  # 0 to 50 opacity for edges
-                    else:  # Main cloud zone
-                        # Calculate normalized distance from threshold
-                        normalized = (value - cloud_threshold) / (1.0 - cloud_threshold)
+                    # Use a moderate transition zone for natural-looking cloud edges
+                    if value > cloud_threshold - 0.08:  # Moderate transition (0.08)
+                        if value < cloud_threshold:  # Edge zone
+                            # Gradual transition for natural-looking edges
+                            edge_factor = (value - (cloud_threshold - 0.08)) / 0.08  # 0 to 1
+                            # Moderate minimum opacity (50) for softer edges
+                            alpha = int(50 * edge_factor)  # 0 to 50 opacity for edges
+                        else:  # Main cloud zone
+                            # Calculate normalized distance from threshold
+                            normalized = (value - cloud_threshold) / (1.0 - cloud_threshold)
 
-                        # Three-zone curve for more cloud-like appearance
-                        if normalized < 0.2:  # Outer cloud zone
-                            # Gradual transition from edge to mid-cloud
-                            alpha = int(50 + normalized * 500)  # 50-150 range for outer zone
-                        elif normalized < 0.6:  # Mid-cloud zone
-                            # Moderate opacity for most of the cloud
-                            alpha = int(150 + (normalized - 0.2) * 250)  # 150-250 range for mid zone
-                        else:  # Dense cloud center
-                            # High opacity for cloud centers
-                            alpha = 250  # Near-full opacity for centers, but not completely solid
+                            # Three-zone curve for more cloud-like appearance
+                            if normalized < 0.2:  # Outer cloud zone
+                                # Gradual transition from edge to mid-cloud
+                                alpha = int(50 + normalized * 500)  # 50-150 range for outer zone
+                            elif normalized < 0.6:  # Mid-cloud zone
+                                # Moderate opacity for most of the cloud
+                                alpha = int(150 + (normalized - 0.2) * 250)  # 150-250 range for mid zone
+                            else:  # Dense cloud center
+                                # High opacity for cloud centers
+                                alpha = 250  # Near-full opacity for centers, but not completely solid
 
-                    # Apply the calculated alpha with a small random variation
-                    # This creates a slightly textured appearance even in solid areas
-                    variation = int((self.rng.random() - 0.5) * 15)  # Small random variation (-7 to +7)
-                    alpha = max(0, min(255, alpha + variation))  # Keep within 0-255 range
-                    cloud_data[x, y] = alpha
+                        # Apply the calculated alpha with a small random variation
+                        # This creates a slightly textured appearance even in solid areas
+                        variation = int((self.rng.random() - 0.5) * 15)  # Small random variation (-7 to +7)
+                        alpha = max(0, min(255, alpha + variation))  # Keep within 0-255 range
+                        cloud_data[x, y] = alpha
 
-        # Apply circular mask to the clouds
-        circle_mask = image_utils.create_circle_mask(self.size)
-        cloud_mask = ImageChops.multiply(cloud_mask, circle_mask)
+            # Apply circular mask to the clouds
+            circle_mask = image_utils.create_circle_mask(self.size)
+            cloud_mask = ImageChops.multiply(cloud_mask, circle_mask)
 
-        # Create slightly off-white clouds for more natural appearance
-        # Pure white can look too harsh - a very slight cream tint looks more natural
-        cloud_color = (255, 252, 248, 255)  # Slightly off-white with maximum opacity
+            # Create slightly off-white clouds for more natural appearance
+            # Pure white can look too harsh - a very slight cream tint looks more natural
+            cloud_color = (255, 252, 248, 255)  # Slightly off-white with maximum opacity
 
-        # Create the cloud layer
-        clouds = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(clouds)
-        draw.ellipse((0, 0, self.size-1, self.size-1), fill=cloud_color)
+            # Create the cloud layer
+            clouds = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(clouds)
+            draw.ellipse((0, 0, self.size-1, self.size-1), fill=cloud_color)
 
-        # Apply the cloud mask
-        clouds.putalpha(cloud_mask)
+            # Apply the cloud mask
+            clouds.putalpha(cloud_mask)
 
-        # Create a seed-specific directory for cloud textures
-        seed_clouds_dir = os.path.join("output", "planets", "debug", "textures", "clouds", str(self.seed))
-        os.makedirs(seed_clouds_dir, exist_ok=True)
+            # Create a seed-specific directory for cloud textures
+            seed_clouds_dir = os.path.join("output", "planets", "debug", "textures", "clouds", str(self.seed))
+            os.makedirs(seed_clouds_dir, exist_ok=True)
 
-        # Save the original cloud mask
-        cloud_mask.save(os.path.join(seed_clouds_dir, "mask.png"))
+            # Save the original cloud mask
+            cloud_mask.save(os.path.join(seed_clouds_dir, "mask.png"))
 
-        # Save a copy of the cloud mask with better visibility for reference
-        enhanced_mask = cloud_mask.copy()
-        # Enhance contrast for better visibility when viewed directly
-        for y in range(self.size):
-            for x in range(self.size):
-                pixel = enhanced_mask.getpixel((x, y))
-                if pixel > 0:  # If there's any cloud at all
-                    # Boost low values for better visibility
-                    enhanced_mask.putpixel((x, y), min(255, pixel + 50))
-        enhanced_mask.save(os.path.join(seed_clouds_dir, "texture.png"))
+            # Save a copy of the cloud mask with better visibility for reference
+            enhanced_mask = cloud_mask.copy()
+            # Enhance contrast for better visibility when viewed directly
+            for y in range(self.size):
+                for x in range(self.size):
+                    pixel = enhanced_mask.getpixel((x, y))
+                    if pixel > 0:  # If there's any cloud at all
+                        # Boost low values for better visibility
+                        enhanced_mask.putpixel((x, y), min(255, pixel + 50))
+            enhanced_mask.save(os.path.join(seed_clouds_dir, "texture.png"))
 
-        # Create a normal map from the cloud noise for 3D lighting effect
-        # Use the original cloud_noise directly since it's already in the right format
-        # We don't need to create a separate height map
+            # Create a normal map from the cloud noise for 3D lighting effect
+            # Use the original cloud_noise directly since it's already in the right format
+            # We don't need to create a separate height map
 
-        # Balanced lighting for cloud-like appearance
-        lit_clouds = lighting_utils.apply_directional_light(
-            clouds,
-            lighting_utils.calculate_normal_map(cloud_noise, 2.0),  # Moderate height (2.0) for some depth
-            light_direction=(
-                -math.cos(math.radians(self.light_angle)),
-                -math.sin(math.radians(self.light_angle)),
-                1.0
-            ),
-            ambient=0.7,  # Balanced ambient light (0.7)
-            diffuse=0.7,  # Balanced diffuse (0.7) for moderate shadows
-            specular=0.15  # Light specular (0.15) for subtle highlights on cloud tops
-        )
+            # Balanced lighting for cloud-like appearance
+            lit_clouds = lighting_utils.apply_directional_light(
+                clouds,
+                lighting_utils.calculate_normal_map(cloud_noise, 2.0),  # Moderate height (2.0) for some depth
+                light_direction=(
+                    -math.cos(math.radians(self.light_angle)),
+                    -math.sin(math.radians(self.light_angle)),
+                    1.0
+                ),
+                ambient=0.7,  # Balanced ambient light (0.7)
+                diffuse=0.7,  # Balanced diffuse (0.7) for moderate shadows
+                specular=0.15  # Light specular (0.15) for subtle highlights on cloud tops
+            )
 
-        # Apply a very subtle blur to soften the edges slightly
-        # This creates a slightly more natural cloud-like appearance without losing definition
-        lit_clouds = lit_clouds.filter(ImageFilter.GaussianBlur(0.5))  # Very subtle blur (0.5)
+            # Apply a very subtle blur to soften the edges slightly
+            # This creates a slightly more natural cloud-like appearance without losing definition
+            lit_clouds = lit_clouds.filter(ImageFilter.GaussianBlur(0.5))  # Very subtle blur (0.5)
 
-        # If the image size is different from the planet size (due to atmosphere or rings),
-        # we need to center the clouds on the planet
-        if size != self.size:
-            # Create a new image with the same size as the base image
-            centered_clouds = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-            # Calculate the offset to center the clouds
-            offset = (size - self.size) // 2
-            # Paste the clouds in the center
-            centered_clouds.paste(lit_clouds, (offset, offset), lit_clouds)
-            lit_clouds = centered_clouds
+            # If the image size is different from the planet size (due to atmosphere or rings),
+            # we need to center the clouds on the planet
+            if size != self.size:
+                # Create a new image with the same size as the base image
+                centered_clouds = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+                # Calculate the offset to center the clouds
+                offset = (size - self.size) // 2
+                # Paste the clouds in the center
+                centered_clouds.paste(lit_clouds, (offset, offset), lit_clouds)
+                lit_clouds = centered_clouds
 
-        # Composite clouds over the planet
-        result = Image.alpha_composite(base_image, lit_clouds)
+            # Composite clouds over the planet
+            result = Image.alpha_composite(base_image, lit_clouds)
 
-        return result
+            duration_ms = (time.time() - start_time) * 1000
+            # Log details about the clouds
+            threshold = cloud_threshold
+            logger.log_step("apply_clouds", duration_ms, f"Coverage: {self.cloud_coverage:.2f}, Threshold: {threshold:.2f}")
+            return result
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.log_step("apply_clouds", duration_ms, f"Error: {str(e)}")
+            raise
 
     def _apply_rings(self, base_image: Image.Image) -> Image.Image:
         """
@@ -441,225 +537,235 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Planet image with Saturn-like rings
         """
-        # Asegurarse de que la imagen tiene canal alfa
-        if base_image.mode != "RGBA":
-            base_image = base_image.convert("RGBA")
+        start_time = time.time()
+        try:
+            # Asegurarse de que la imagen tiene canal alfa
+            if base_image.mode != "RGBA":
+                base_image = base_image.convert("RGBA")
 
-        # Obtener el color base para los anillos
-        base_ring_color = self.color_palette.get_ring_color(self.PLANET_TYPE)
+            # Obtener el color base para los anillos
+            base_ring_color = self.color_palette.get_ring_color(self.PLANET_TYPE)
 
-        # IMPORTANTE: Usar el tamaño original del planeta, no el tamaño de la imagen con atmósfera
-        # Esto asegura que los anillos se basen en el diámetro del planeta, no en la atmósfera
-        original_planet_size = self.size
-        planet_radius = original_planet_size // 2
+            # IMPORTANTE: Usar el tamaño original del planeta, no el tamaño de la imagen con atmósfera
+            # Esto asegura que los anillos se basen en el diámetro del planeta, no en la atmósfera
+            original_planet_size = self.size
+            planet_radius = original_planet_size // 2
 
-        # Obtener el tamaño actual de la imagen (puede incluir atmósfera)
-        current_image_size = base_image.width
+            # Obtener el tamaño actual de la imagen (puede incluir atmósfera)
+            current_image_size = base_image.width
 
-        # Crear un canvas más grande para los anillos (3.0 veces el tamaño del planeta original)
-        ring_width_factor = 3.0
-        canvas_size = int(original_planet_size * ring_width_factor)
-        result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+            # Crear un canvas más grande para los anillos (3.0 veces el tamaño del planeta original)
+            ring_width_factor = 3.0
+            canvas_size = int(original_planet_size * ring_width_factor)
+            result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
-        # Posición central del canvas
-        center_x, center_y = canvas_size // 2, canvas_size // 2
+            # Posición central del canvas
+            center_x, center_y = canvas_size // 2, canvas_size // 2
 
-        # Calcular el offset para centrar la imagen actual (con atmósfera) en el canvas
-        planet_offset = (canvas_size - current_image_size) // 2
+            # Calcular el offset para centrar la imagen actual (con atmósfera) en el canvas
+            planet_offset = (canvas_size - current_image_size) // 2
 
-        # Factor de compresión vertical para los anillos
-        vertical_factor = 0.3  # Más pronunciado para mejor efecto visual
+            # Factor de compresión vertical para los anillos
+            vertical_factor = 0.3  # Más pronunciado para mejor efecto visual
 
-        # Determinar complejidad del sistema de anillos (1-3)
-        ring_complexity = self.rng.randint(1, 3)
+            # Determinar complejidad del sistema de anillos (1-3)
+            ring_complexity = self.rng.randint(1, 3)
 
-        # Crear capa para el planeta (para máscaras)
-        planet_layer = Image.new("1", (canvas_size, canvas_size), 0)
-        draw_planet = ImageDraw.Draw(planet_layer)
-        draw_planet.ellipse(
-            [center_x - planet_radius, center_y - planet_radius,
-            center_x + planet_radius, center_y + planet_radius],
-            fill=1
-        )
-
-        # Crear máscara para la mitad frontal
-        front_mask = Image.new("L", (canvas_size, canvas_size), 0)
-        draw_front = ImageDraw.Draw(front_mask)
-        draw_front.rectangle([0, center_y, canvas_size, canvas_size], fill=255)
-
-        # Definiciones de anillos según la complejidad
-        ring_definitions = []
-
-        if ring_complexity == 1:
-            # Sistema simple (3-4 anillos)
-            ring_definitions = [
-                (1.2, 1.35, 0.95, 0.8),  # Anillo interno
-                (1.4, 1.6, 1.0, 0.95),   # Anillo medio brillante
-                (1.65, 1.8, 0.9, 0.85),  # Anillo externo
-            ]
-            # Quizás añadir un anillo más
-            if self.rng.random() > 0.5:
-                ring_definitions.append((1.9, 2.0, 0.8, 0.7))
-
-        elif ring_complexity == 2:
-            # Sistema intermedio (5-7 anillos)
-            ring_definitions = [
-                (1.2, 1.3, 0.9, 0.75),    # Anillo interno (C)
-                (1.35, 1.45, 0.95, 0.9),  # Anillo B interno
-                (1.5, 1.65, 1.0, 0.95),   # Anillo B medio (brillante)
-                (1.7, 1.85, 0.9, 0.85),   # Anillo A interno
-                (1.9, 2.05, 0.85, 0.8),   # Anillo A externo
-            ]
-            # Quizás añadir anillos adicionales
-            if self.rng.random() > 0.4:
-                ring_definitions.append((2.1, 2.15, 0.75, 0.7))
-
-        else:
-            # Sistema complejo (tipo Saturno, 8+ anillos)
-            ring_definitions = [
-                (1.2, 1.25, 0.8, 0.7),    # Anillo D (muy fino)
-                (1.28, 1.38, 0.9, 0.75),  # Anillo C
-                (1.4, 1.48, 0.95, 0.9),   # Anillo B interno
-                (1.5, 1.6, 1.0, 0.95),    # Anillo B medio (brillante)
-                (1.63, 1.68, 0.9, 0.85),  # Anillo B externo
-                (1.7, 1.72, 0.7, 0.6),    # División Cassini
-                (1.74, 1.85, 0.95, 0.9),  # Anillo A interno
-                (1.86, 1.88, 0.7, 0.65),  # Hueco de Encke
-                (1.9, 2.0, 0.9, 0.85),    # Anillo A externo
-                (2.1, 2.12, 0.75, 0.7)    # Anillo F (fino, aislado)
-            ]
-
-        # Añadir anillos finos aleatorios para variedad
-        num_extra_rings = 0
-        if ring_complexity == 1:
-            num_extra_rings = self.rng.randint(0, 1)
-        elif ring_complexity == 2:
-            num_extra_rings = self.rng.randint(1, 2)
-        else:
-            num_extra_rings = self.rng.randint(2, 4)
-
-        for _ in range(num_extra_rings):
-            pos = 1.25 + 0.8 * self.rng.random()
-            thickness = 0.005 + 0.01 * self.rng.random()
-            opacity = 0.7 + 0.3 * self.rng.random()
-            brightness = 0.7 + 0.3 * self.rng.random()
-            ring_definitions.append((pos, pos + thickness, opacity, brightness))
-
-        # Ordenar los anillos por radio interno
-        ring_definitions.sort(key=lambda x: x[0])
-
-        # Procesar cada anillo - PRIMERO LOS ARCOS TRASEROS
-        for inner_factor, outer_factor, opacity, brightness in ring_definitions:
-            # Calcular dimensiones
-            outer_rx = int(planet_radius * outer_factor)
-            outer_ry = int(outer_rx * vertical_factor)
-
-            inner_rx = int(planet_radius * inner_factor)
-            inner_ry = int(inner_rx * vertical_factor)
-
-            # Variar ligeramente el color
-            r, g, b, a = base_ring_color
-            color_var = 0.1
-
-            # Color con brillo, opacidad y variación
-            ring_color = (
-                max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                max(0, min(255, int(a * opacity)))
-            )
-
-            # Crear capa para el anillo
-            ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
-            draw_ring = ImageDraw.Draw(ring_layer)
-
-            # Dibujar elipse externa
-            draw_ring.ellipse(
-                [center_x - outer_rx, center_y - outer_ry,
-                center_x + outer_rx, center_y + outer_ry],
+            # Crear capa para el planeta (para máscaras)
+            planet_layer = Image.new("1", (canvas_size, canvas_size), 0)
+            draw_planet = ImageDraw.Draw(planet_layer)
+            draw_planet.ellipse(
+                [center_x - planet_radius, center_y - planet_radius,
+                center_x + planet_radius, center_y + planet_radius],
                 fill=1
             )
 
-            # Dibujar elipse interna (agujero)
-            draw_ring.ellipse(
-                [center_x - inner_rx, center_y - inner_ry,
-                center_x + inner_rx, center_y + inner_ry],
-                fill=0
-            )
+            # Crear máscara para la mitad frontal
+            front_mask = Image.new("L", (canvas_size, canvas_size), 0)
+            draw_front = ImageDraw.Draw(front_mask)
+            draw_front.rectangle([0, center_y, canvas_size, canvas_size], fill=255)
 
-            # Arcos externos: diferencia entre anillo y planeta
-            ring_arcs = ImageChops.subtract(ring_layer.convert("L"), planet_layer.convert("L"))
+            # Definiciones de anillos según la complejidad
+            ring_definitions = []
 
-            # Color más oscuro para los arcos (detrás del planeta)
-            shadow_factor = 0.6
-            arcs_color = (
-                int(ring_color[0] * shadow_factor),
-                int(ring_color[1] * shadow_factor),
-                int(ring_color[2] * shadow_factor),
-                ring_color[3]
-            )
+            if ring_complexity == 1:
+                # Sistema simple (3-4 anillos)
+                ring_definitions = [
+                    (1.2, 1.35, 0.95, 0.8),  # Anillo interno
+                    (1.4, 1.6, 1.0, 0.95),   # Anillo medio brillante
+                    (1.65, 1.8, 0.9, 0.85),  # Anillo externo
+                ]
+                # Quizás añadir un anillo más
+                if self.rng.random() > 0.5:
+                    ring_definitions.append((1.9, 2.0, 0.8, 0.7))
 
-            # Crear arcos coloreados
-            ring_arcs_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-            ring_arcs_colored.paste(arcs_color, mask=ring_arcs)
+            elif ring_complexity == 2:
+                # Sistema intermedio (5-7 anillos)
+                ring_definitions = [
+                    (1.2, 1.3, 0.9, 0.75),    # Anillo interno (C)
+                    (1.35, 1.45, 0.95, 0.9),  # Anillo B interno
+                    (1.5, 1.65, 1.0, 0.95),   # Anillo B medio (brillante)
+                    (1.7, 1.85, 0.9, 0.85),   # Anillo A interno
+                    (1.9, 2.05, 0.85, 0.8),   # Anillo A externo
+                ]
+                # Quizás añadir anillos adicionales
+                if self.rng.random() > 0.4:
+                    ring_definitions.append((2.1, 2.15, 0.75, 0.7))
 
-            # Añadir arcos (detrás del planeta)
-            result.paste(ring_arcs_colored, (0, 0), ring_arcs_colored)
+            else:
+                # Sistema complejo (tipo Saturno, 8+ anillos)
+                ring_definitions = [
+                    (1.2, 1.25, 0.8, 0.7),    # Anillo D (muy fino)
+                    (1.28, 1.38, 0.9, 0.75),  # Anillo C
+                    (1.4, 1.48, 0.95, 0.9),   # Anillo B interno
+                    (1.5, 1.6, 1.0, 0.95),    # Anillo B medio (brillante)
+                    (1.63, 1.68, 0.9, 0.85),  # Anillo B externo
+                    (1.7, 1.72, 0.7, 0.6),    # División Cassini
+                    (1.74, 1.85, 0.95, 0.9),  # Anillo A interno
+                    (1.86, 1.88, 0.7, 0.65),  # Hueco de Encke
+                    (1.9, 2.0, 0.9, 0.85),    # Anillo A externo
+                    (2.1, 2.12, 0.75, 0.7)    # Anillo F (fino, aislado)
+                ]
 
-        # Añadir el planeta sobre los anillos traseros
-        result.paste(base_image, (planet_offset, planet_offset), base_image)
+            # Añadir anillos finos aleatorios para variedad
+            num_extra_rings = 0
+            if ring_complexity == 1:
+                num_extra_rings = self.rng.randint(0, 1)
+            elif ring_complexity == 2:
+                num_extra_rings = self.rng.randint(1, 2)
+            else:
+                num_extra_rings = self.rng.randint(2, 4)
 
-        # AHORA AÑADIR BANDAS FRONTALES
-        for inner_factor, outer_factor, opacity, brightness in ring_definitions:
-            # Calcular dimensiones
-            outer_rx = int(planet_radius * outer_factor)
-            outer_ry = int(outer_rx * vertical_factor)
+            for _ in range(num_extra_rings):
+                pos = 1.25 + 0.8 * self.rng.random()
+                thickness = 0.005 + 0.01 * self.rng.random()
+                opacity = 0.7 + 0.3 * self.rng.random()
+                brightness = 0.7 + 0.3 * self.rng.random()
+                ring_definitions.append((pos, pos + thickness, opacity, brightness))
 
-            inner_rx = int(planet_radius * inner_factor)
-            inner_ry = int(inner_rx * vertical_factor)
+            # Ordenar los anillos por radio interno
+            ring_definitions.sort(key=lambda x: x[0])
 
-            # Variar ligeramente el color
-            r, g, b, a = base_ring_color
-            color_var = 0.1
+            # Procesar cada anillo - PRIMERO LOS ARCOS TRASEROS
+            for inner_factor, outer_factor, opacity, brightness in ring_definitions:
+                # Calcular dimensiones
+                outer_rx = int(planet_radius * outer_factor)
+                outer_ry = int(outer_rx * vertical_factor)
 
-            # Color con brillo, opacidad y variación
-            ring_color = (
-                max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                max(0, min(255, int(a * opacity)))
-            )
+                inner_rx = int(planet_radius * inner_factor)
+                inner_ry = int(inner_rx * vertical_factor)
 
-            # Crear capa para el anillo
-            ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
-            draw_ring = ImageDraw.Draw(ring_layer)
+                # Variar ligeramente el color
+                r, g, b, a = base_ring_color
+                color_var = 0.1
 
-            # Dibujar elipse externa
-            draw_ring.ellipse(
-                [center_x - outer_rx, center_y - outer_ry,
-                center_x + outer_rx, center_y + outer_ry],
-                fill=1
-            )
+                # Color con brillo, opacidad y variación
+                ring_color = (
+                    max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                    max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                    max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                    max(0, min(255, int(a * opacity)))
+                )
 
-            # Dibujar elipse interna (agujero)
-            draw_ring.ellipse(
-                [center_x - inner_rx, center_y - inner_ry,
-                center_x + inner_rx, center_y + inner_ry],
-                fill=0
-            )
+                # Crear capa para el anillo
+                ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
+                draw_ring = ImageDraw.Draw(ring_layer)
 
-            # Intersección entre anillo y planeta
-            ring_intersection = ImageChops.logical_and(ring_layer, planet_layer)
+                # Dibujar elipse externa
+                draw_ring.ellipse(
+                    [center_x - outer_rx, center_y - outer_ry,
+                    center_x + outer_rx, center_y + outer_ry],
+                    fill=1
+                )
 
-            # La banda frontal es solo la mitad frontal de la intersección
-            ring_front = ImageChops.multiply(ring_intersection.convert("L"), front_mask)
+                # Dibujar elipse interna (agujero)
+                draw_ring.ellipse(
+                    [center_x - inner_rx, center_y - inner_ry,
+                    center_x + inner_rx, center_y + inner_ry],
+                    fill=0
+                )
 
-            # Crear banda frontal coloreada
-            ring_front_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-            ring_front_colored.paste(ring_color, mask=ring_front)
+                # Arcos externos: diferencia entre anillo y planeta
+                ring_arcs = ImageChops.subtract(ring_layer.convert("L"), planet_layer.convert("L"))
 
-            # Añadir la banda frontal sobre el planeta
-            result.paste(ring_front_colored, (0, 0), ring_front_colored)
+                # Color más oscuro para los arcos (detrás del planeta)
+                shadow_factor = 0.6
+                arcs_color = (
+                    int(ring_color[0] * shadow_factor),
+                    int(ring_color[1] * shadow_factor),
+                    int(ring_color[2] * shadow_factor),
+                    ring_color[3]
+                )
 
-        # IMPORTANTE: NO redimensionar el resultado, devolver imagen completa con anillos
-        return result
+                # Crear arcos coloreados
+                ring_arcs_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+                ring_arcs_colored.paste(arcs_color, mask=ring_arcs)
+
+                # Añadir arcos (detrás del planeta)
+                result.paste(ring_arcs_colored, (0, 0), ring_arcs_colored)
+
+            # Añadir el planeta sobre los anillos traseros
+            result.paste(base_image, (planet_offset, planet_offset), base_image)
+
+            # AHORA AÑADIR BANDAS FRONTALES
+            for inner_factor, outer_factor, opacity, brightness in ring_definitions:
+                # Calcular dimensiones
+                outer_rx = int(planet_radius * outer_factor)
+                outer_ry = int(outer_rx * vertical_factor)
+
+                inner_rx = int(planet_radius * inner_factor)
+                inner_ry = int(inner_rx * vertical_factor)
+
+                # Variar ligeramente el color
+                r, g, b, a = base_ring_color
+                color_var = 0.1
+
+                # Color con brillo, opacidad y variación
+                ring_color = (
+                    max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                    max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                    max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                    max(0, min(255, int(a * opacity)))
+                )
+
+                # Crear capa para el anillo
+                ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
+                draw_ring = ImageDraw.Draw(ring_layer)
+
+                # Dibujar elipse externa
+                draw_ring.ellipse(
+                    [center_x - outer_rx, center_y - outer_ry,
+                    center_x + outer_rx, center_y + outer_ry],
+                    fill=1
+                )
+
+                # Dibujar elipse interna (agujero)
+                draw_ring.ellipse(
+                    [center_x - inner_rx, center_y - inner_ry,
+                    center_x + inner_rx, center_y + inner_ry],
+                    fill=0
+                )
+
+                # Intersección entre anillo y planeta
+                ring_intersection = ImageChops.logical_and(ring_layer, planet_layer)
+
+                # La banda frontal es solo la mitad frontal de la intersección
+                ring_front = ImageChops.multiply(ring_intersection.convert("L"), front_mask)
+
+                # Crear banda frontal coloreada
+                ring_front_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+                ring_front_colored.paste(ring_color, mask=ring_front)
+
+                # Añadir la banda frontal sobre el planeta
+                result.paste(ring_front_colored, (0, 0), ring_front_colored)
+
+            # IMPORTANTE: NO redimensionar el resultado, devolver imagen completa con anillos
+            duration_ms = (time.time() - start_time) * 1000
+            # Log details about the rings
+            ring_count = len(ring_definitions)
+            logger.log_step("apply_rings", duration_ms, f"Complexity: {ring_complexity}, Rings: {ring_count}, Factor: {ring_width_factor}")
+            return result
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.log_step("apply_rings", duration_ms, f"Error: {str(e)}")
+            raise

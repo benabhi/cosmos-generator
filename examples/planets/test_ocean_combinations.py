@@ -5,8 +5,8 @@ Example script to test various Ocean planet combinations.
 import os
 import sys
 
-# Add the parent directory to the path so we can import the package
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project root directory to the path so we can import the package
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from cosmos_generator import PlanetGenerator
 from cosmos_generator.utils.container import Container
@@ -17,7 +17,7 @@ def main():
     Generate Ocean planets with various combinations of features.
     """
     # Create output directory
-    output_dir = "output/examples/test_ocean_combinations"
+    output_dir = "output/planets/examples/test_ocean_combinations"
     os.makedirs(output_dir, exist_ok=True)
 
     # Create generator

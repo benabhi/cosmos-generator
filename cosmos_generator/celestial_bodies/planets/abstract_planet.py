@@ -80,7 +80,7 @@ class AbstractPlanet(AbstractCelestialBody):
         texture = self.generate_texture()
 
         # Save the base texture for debugging
-        debug_dir = os.path.join("output", "debug", "textures", "terrain")
+        debug_dir = os.path.join("output", "planets", "debug", "textures", "terrain")
         os.makedirs(debug_dir, exist_ok=True)
         texture.save(os.path.join(debug_dir, f"{self.seed}.png"))
 
@@ -376,7 +376,7 @@ class AbstractPlanet(AbstractCelestialBody):
         clouds.putalpha(cloud_mask)
 
         # Create a seed-specific directory for cloud textures
-        seed_clouds_dir = os.path.join("output", "debug", "textures", "clouds", str(self.seed))
+        seed_clouds_dir = os.path.join("output", "planets", "debug", "textures", "clouds", str(self.seed))
         os.makedirs(seed_clouds_dir, exist_ok=True)
 
         # Save the original cloud mask

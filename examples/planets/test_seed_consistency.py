@@ -7,8 +7,8 @@ import sys
 import hashlib
 from PIL import Image
 
-# Add the parent directory to the path so we can import the package
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project root directory to the path so we can import the package
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from cosmos_generator.core.planet_generator import PlanetGenerator
 
@@ -33,7 +33,7 @@ def test_seed_consistency():
     Test that planets generated with the same seed are identical.
     """
     # Create output directory
-    output_dir = "output/test_seed_consistency"
+    output_dir = "output/planets/examples/test_seed_consistency"
     os.makedirs(output_dir, exist_ok=True)
 
     # Test parameters

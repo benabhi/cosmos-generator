@@ -5,8 +5,8 @@ Example script to test the cloud feature on different planet types.
 import os
 import sys
 
-# Add the parent directory to the path so we can import the package
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project root directory to the path so we can import the package
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from cosmos_generator import PlanetGenerator
 from cosmos_generator.utils.container import Container
@@ -17,7 +17,7 @@ def main():
     Generate planets with different cloud coverages and planet types.
     """
     # Create output directory
-    output_dir = "output/examples/test_clouds"
+    output_dir = "output/planets/examples/test_clouds"
     os.makedirs(output_dir, exist_ok=True)
 
     # Create generator

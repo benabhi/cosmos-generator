@@ -6,6 +6,7 @@ This is the main entry point for the CLI, which dispatches to subcommands.
 import argparse
 import sys
 import os
+import importlib.util
 import importlib
 import pkgutil
 from typing import Dict, Callable, List, Optional
@@ -72,6 +73,23 @@ class CosmosGeneratorCLI:
                     # Store the main function for this subcommand
                     if hasattr(module, 'main'):
                         self.subcommands[module_name] = module.main
+
+            # Manually register the planet subcommand
+            try:
+                # Import the module directly
+                spec = importlib.util.spec_from_file_location(
+                    "planet",
+                    os.path.join(package_path, "planet.py")
+                )
+                planet_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(planet_module)
+
+                if hasattr(planet_module, 'register_subcommand'):
+                    planet_module.register_subcommand(self.subparsers)
+                    if hasattr(planet_module, 'main'):
+                        self.subcommands['planet'] = planet_module.main
+            except Exception as e:
+                print(f"Error importing planet subcommand: {e}")
         except ImportError:
             # If the subcommands package doesn't exist yet, just continue
             pass

@@ -5,8 +5,8 @@ Example script to test the improved ring opacity and solid rings.
 import os
 import sys
 
-# Add the parent directory to the path so we can import the package
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project root directory to the path so we can import the package
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from cosmos_generator import PlanetGenerator
 
@@ -16,7 +16,7 @@ def main():
     Generate planets with rings to test the improved ring opacity and solid rings.
     """
     # Create output directory
-    output_dir = "output/test_ring_opacity"
+    output_dir = "output/planets/examples/test_ring_opacity"
     os.makedirs(output_dir, exist_ok=True)
 
     # Create generator

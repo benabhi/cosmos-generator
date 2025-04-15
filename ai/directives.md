@@ -1,0 +1,2 @@
+* Siempre que se hagan cambios verificar si es necesario actualizar el README.md del proyecto.
+* Activar el virtualenv (carpeta venv) que esta en la raiz del proyecto si no se encuentra una dependencia.

@@ -75,23 +75,30 @@ python -m cosmos_generator planet --help
 
 ```bash
 # Con ruta de salida personalizada
-python -m cosmos_generator planet --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere --light-angle 30
+python -m cosmos_generator planet generate --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere --light-angle 30
 
-# Con ruta de salida por defecto (output/planets/desert/987.png)
-python -m cosmos_generator planet --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
+# Con ruta de salida por defecto (output/planets/result/desert/987.png)
+python -m cosmos_generator planet generate --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
 
 # Generar planeta con nubes (cobertura de 0.7 o 70%)
-python -m cosmos_generator planet --type ocean --clouds 0.7 --seed 12345
+python -m cosmos_generator planet generate --type ocean --clouds 0.7 --seed 12345
 
 # Listar tipos de planetas disponibles
-python -m cosmos_generator planet --list-types
+python -m cosmos_generator planet generate --list-types
+
+# Limpiar archivos generados de planetas
+python -m cosmos_generator planet clean         # Limpia todos los archivos
+python -m cosmos_generator planet clean --debug    # Limpia solo archivos de depuración
+python -m cosmos_generator planet clean --examples # Limpia solo archivos de ejemplos
+python -m cosmos_generator planet clean --results  # Limpia solo archivos de resultados
+python -m cosmos_generator planet clean --dry-run  # Muestra qué se eliminaría sin eliminar nada
 ```
 
-Opciones del subcomando `planet`:
+Opciones del subcomando `planet generate`:
 - `--type TYPE`: Tipo de planeta (desert, furnace, etc.) - insensible a mayúsculas/minúsculas
 - `--size SIZE`: Tamaño de la imagen en píxeles (default: 512)
 - `--seed SEED`: Semilla para generación reproducible (default: aleatorio)
-- `--output FILE`: Ruta del archivo de salida (default: output/planets/[type]/[seed].png)
+- `--output FILE`: Ruta del archivo de salida (default: output/planets/result/[type]/[seed].png)
 - `--rings`: Añadir anillos
 - `--atmosphere`: Añadir atmósfera
 - `--clouds VALUE`: Añadir nubes con cobertura específica (0.0-1.0, donde 1.0 es cobertura total)
@@ -100,6 +107,52 @@ Opciones del subcomando `planet`:
 - `--rotation DEG`: Rotación en grados
 - `--list-types`: Listar tipos de planetas disponibles
 - `--help`: Mostrar ayuda
+
+Opciones del subcomando `planet clean`:
+- `--debug`: Eliminar solo archivos de depuración (texturas, etc.)
+- `--examples`: Eliminar solo archivos de ejemplos
+- `--results`: Eliminar solo archivos de resultados finales
+- `--all`: Eliminar todos los archivos (por defecto si no se especifica ninguna opción)
+- `--dry-run`: Mostrar qué archivos se eliminarían sin eliminarlos realmente
+- `--help`: Mostrar ayuda
+
+## Estructura de Carpetas de Output
+
+Cosmos Generator organiza los archivos generados en la siguiente estructura de carpetas:
+
+```
+output/
+└── planets/                # Carpeta principal para planetas
+    ├── debug/              # Archivos de depuración
+    │   └── textures/       # Texturas generadas durante el proceso
+    │       ├── terrain/    # Texturas base de terreno
+    │       │   └── [seed].png
+    │       └── clouds/     # Texturas de nubes
+    │           └── [seed]/
+    │               ├── texture.png  # Textura de nubes
+    │               └── mask.png     # Máscara de nubes
+    ├── examples/           # Ejemplos generados por los scripts de ejemplo
+    │   ├── test_clouds/
+    │   ├── test_ocean/
+    │   ├── test_atmosphere/
+    │   └── ...
+    └── result/             # Resultados finales organizados por tipo
+        ├── desert/         # Planetas tipo desierto
+        │   └── [seed].png
+        ├── ocean/          # Planetas tipo océano
+        │   └── [seed].png
+        └── .../            # Otros tipos de planetas
+```
+
+### Descripción de las Carpetas
+
+- **debug**: Contiene archivos intermedios generados durante el proceso de creación, útiles para depuración y análisis.
+  - **textures/terrain**: Texturas base de terreno antes de aplicar iluminación y efectos.
+  - **textures/clouds**: Texturas y máscaras de nubes utilizadas en planetas con nubes.
+
+- **examples**: Contiene imágenes generadas por los scripts de ejemplo en la carpeta `examples/planets/`.
+
+- **result**: Contiene los planetas finales generados, organizados por tipo. Esta es la ubicación por defecto donde se guardan los planetas cuando se usa el CLI sin especificar una ruta de salida.
 
 ## Requirements
 

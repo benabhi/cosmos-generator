@@ -20,6 +20,7 @@ from PIL import Image, ImageDraw, ImageChops, ImageFilter
 from cosmos_generator.utils.logger import logger
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
+from cosmos_generator.features.rings import Rings
 from cosmos_generator.utils import image_utils, lighting_utils
 
 
@@ -71,6 +72,9 @@ class AbstractPlanet(AbstractCelestialBody):
         self.has_atmosphere = has_atmosphere
         self.has_clouds = kwargs.get("clouds", False)
         self.cloud_coverage = kwargs.get("cloud_coverage", 0.5)
+
+        # Create a rings generator with the same seed
+        self.rings_generator = Rings(seed=self.seed)
 
     def render(self) -> Image.Image:
         """
@@ -244,9 +248,10 @@ class AbstractPlanet(AbstractCelestialBody):
 
             # Create a canvas for the atmosphere - much smaller padding for planets without rings
             if self.has_rings:
-                atmosphere_padding = int(size * 0.15)  # 15% padding for planets with rings
+                # Muy poca atmósfera para planetas con anillos para evitar el borde translúcido
+                atmosphere_padding = int(size * 0.01)  # Solo 1% de padding para planetas con anillos
             else:
-                atmosphere_padding = int(size * 0.02)  # 2% padding for planets without rings (drastically reduced)
+                atmosphere_padding = int(size * 0.02)  # 2% padding para planetas sin anillos
             canvas_size = size + atmosphere_padding * 2
             result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
@@ -539,230 +544,28 @@ class AbstractPlanet(AbstractCelestialBody):
         """
         start_time = time.time()
         try:
-            # Asegurarse de que la imagen tiene canal alfa
-            if base_image.mode != "RGBA":
-                base_image = base_image.convert("RGBA")
+            # Get the ring color for this planet type
+            ring_color = self.color_palette.get_ring_color(self.PLANET_TYPE)
 
-            # Obtener el color base para los anillos
-            base_ring_color = self.color_palette.get_ring_color(self.PLANET_TYPE)
-
-            # IMPORTANTE: Usar el tamaño original del planeta, no el tamaño de la imagen con atmósfera
-            # Esto asegura que los anillos se basen en el diámetro del planeta, no en la atmósfera
+            # IMPORTANT: Pass the original planet size to the rings generator
+            # This ensures rings are based on the actual planet size, not the image with atmosphere
             original_planet_size = self.size
-            planet_radius = original_planet_size // 2
 
-            # Obtener el tamaño actual de la imagen (puede incluir atmósfera)
-            current_image_size = base_image.width
-
-            # Crear un canvas más grande para los anillos (3.0 veces el tamaño del planeta original)
-            ring_width_factor = 3.0
-            canvas_size = int(original_planet_size * ring_width_factor)
-            result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-
-            # Posición central del canvas
-            center_x, center_y = canvas_size // 2, canvas_size // 2
-
-            # Calcular el offset para centrar la imagen actual (con atmósfera) en el canvas
-            planet_offset = (canvas_size - current_image_size) // 2
-
-            # Factor de compresión vertical para los anillos
-            vertical_factor = 0.3  # Más pronunciado para mejor efecto visual
-
-            # Determinar complejidad del sistema de anillos (1-3)
-            ring_complexity = self.rng.randint(1, 3)
-
-            # Crear capa para el planeta (para máscaras)
-            planet_layer = Image.new("1", (canvas_size, canvas_size), 0)
-            draw_planet = ImageDraw.Draw(planet_layer)
-            draw_planet.ellipse(
-                [center_x - planet_radius, center_y - planet_radius,
-                center_x + planet_radius, center_y + planet_radius],
-                fill=1
+            # Apply rings using the Rings class
+            result = self.rings_generator.apply_rings(
+                planet_image=base_image,
+                planet_type=self.PLANET_TYPE,
+                color=ring_color,
+                original_planet_size=original_planet_size  # Pass the original planet size
             )
 
-            # Crear máscara para la mitad frontal
-            front_mask = Image.new("L", (canvas_size, canvas_size), 0)
-            draw_front = ImageDraw.Draw(front_mask)
-            draw_front.rectangle([0, center_y, canvas_size, canvas_size], fill=255)
+            # Get ring complexity and count from the rings generator
+            ring_complexity = self.rng.randint(1, 3)  # Same logic as in Rings class
+            ring_count = len(self.rings_generator.last_ring_definitions) if hasattr(self.rings_generator, 'last_ring_definitions') else 0
+            ring_width_factor = 3.0  # Standard factor used in Rings class
 
-            # Definiciones de anillos según la complejidad
-            ring_definitions = []
-
-            if ring_complexity == 1:
-                # Sistema simple (3-4 anillos)
-                ring_definitions = [
-                    (1.2, 1.35, 0.95, 0.8),  # Anillo interno
-                    (1.4, 1.6, 1.0, 0.95),   # Anillo medio brillante
-                    (1.65, 1.8, 0.9, 0.85),  # Anillo externo
-                ]
-                # Quizás añadir un anillo más
-                if self.rng.random() > 0.5:
-                    ring_definitions.append((1.9, 2.0, 0.8, 0.7))
-
-            elif ring_complexity == 2:
-                # Sistema intermedio (5-7 anillos)
-                ring_definitions = [
-                    (1.2, 1.3, 0.9, 0.75),    # Anillo interno (C)
-                    (1.35, 1.45, 0.95, 0.9),  # Anillo B interno
-                    (1.5, 1.65, 1.0, 0.95),   # Anillo B medio (brillante)
-                    (1.7, 1.85, 0.9, 0.85),   # Anillo A interno
-                    (1.9, 2.05, 0.85, 0.8),   # Anillo A externo
-                ]
-                # Quizás añadir anillos adicionales
-                if self.rng.random() > 0.4:
-                    ring_definitions.append((2.1, 2.15, 0.75, 0.7))
-
-            else:
-                # Sistema complejo (tipo Saturno, 8+ anillos)
-                ring_definitions = [
-                    (1.2, 1.25, 0.8, 0.7),    # Anillo D (muy fino)
-                    (1.28, 1.38, 0.9, 0.75),  # Anillo C
-                    (1.4, 1.48, 0.95, 0.9),   # Anillo B interno
-                    (1.5, 1.6, 1.0, 0.95),    # Anillo B medio (brillante)
-                    (1.63, 1.68, 0.9, 0.85),  # Anillo B externo
-                    (1.7, 1.72, 0.7, 0.6),    # División Cassini
-                    (1.74, 1.85, 0.95, 0.9),  # Anillo A interno
-                    (1.86, 1.88, 0.7, 0.65),  # Hueco de Encke
-                    (1.9, 2.0, 0.9, 0.85),    # Anillo A externo
-                    (2.1, 2.12, 0.75, 0.7)    # Anillo F (fino, aislado)
-                ]
-
-            # Añadir anillos finos aleatorios para variedad
-            num_extra_rings = 0
-            if ring_complexity == 1:
-                num_extra_rings = self.rng.randint(0, 1)
-            elif ring_complexity == 2:
-                num_extra_rings = self.rng.randint(1, 2)
-            else:
-                num_extra_rings = self.rng.randint(2, 4)
-
-            for _ in range(num_extra_rings):
-                pos = 1.25 + 0.8 * self.rng.random()
-                thickness = 0.005 + 0.01 * self.rng.random()
-                opacity = 0.7 + 0.3 * self.rng.random()
-                brightness = 0.7 + 0.3 * self.rng.random()
-                ring_definitions.append((pos, pos + thickness, opacity, brightness))
-
-            # Ordenar los anillos por radio interno
-            ring_definitions.sort(key=lambda x: x[0])
-
-            # Procesar cada anillo - PRIMERO LOS ARCOS TRASEROS
-            for inner_factor, outer_factor, opacity, brightness in ring_definitions:
-                # Calcular dimensiones
-                outer_rx = int(planet_radius * outer_factor)
-                outer_ry = int(outer_rx * vertical_factor)
-
-                inner_rx = int(planet_radius * inner_factor)
-                inner_ry = int(inner_rx * vertical_factor)
-
-                # Variar ligeramente el color
-                r, g, b, a = base_ring_color
-                color_var = 0.1
-
-                # Color con brillo, opacidad y variación
-                ring_color = (
-                    max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                    max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                    max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                    max(0, min(255, int(a * opacity)))
-                )
-
-                # Crear capa para el anillo
-                ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
-                draw_ring = ImageDraw.Draw(ring_layer)
-
-                # Dibujar elipse externa
-                draw_ring.ellipse(
-                    [center_x - outer_rx, center_y - outer_ry,
-                    center_x + outer_rx, center_y + outer_ry],
-                    fill=1
-                )
-
-                # Dibujar elipse interna (agujero)
-                draw_ring.ellipse(
-                    [center_x - inner_rx, center_y - inner_ry,
-                    center_x + inner_rx, center_y + inner_ry],
-                    fill=0
-                )
-
-                # Arcos externos: diferencia entre anillo y planeta
-                ring_arcs = ImageChops.subtract(ring_layer.convert("L"), planet_layer.convert("L"))
-
-                # Color más oscuro para los arcos (detrás del planeta)
-                shadow_factor = 0.6
-                arcs_color = (
-                    int(ring_color[0] * shadow_factor),
-                    int(ring_color[1] * shadow_factor),
-                    int(ring_color[2] * shadow_factor),
-                    ring_color[3]
-                )
-
-                # Crear arcos coloreados
-                ring_arcs_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-                ring_arcs_colored.paste(arcs_color, mask=ring_arcs)
-
-                # Añadir arcos (detrás del planeta)
-                result.paste(ring_arcs_colored, (0, 0), ring_arcs_colored)
-
-            # Añadir el planeta sobre los anillos traseros
-            result.paste(base_image, (planet_offset, planet_offset), base_image)
-
-            # AHORA AÑADIR BANDAS FRONTALES
-            for inner_factor, outer_factor, opacity, brightness in ring_definitions:
-                # Calcular dimensiones
-                outer_rx = int(planet_radius * outer_factor)
-                outer_ry = int(outer_rx * vertical_factor)
-
-                inner_rx = int(planet_radius * inner_factor)
-                inner_ry = int(inner_rx * vertical_factor)
-
-                # Variar ligeramente el color
-                r, g, b, a = base_ring_color
-                color_var = 0.1
-
-                # Color con brillo, opacidad y variación
-                ring_color = (
-                    max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                    max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                    max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
-                    max(0, min(255, int(a * opacity)))
-                )
-
-                # Crear capa para el anillo
-                ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
-                draw_ring = ImageDraw.Draw(ring_layer)
-
-                # Dibujar elipse externa
-                draw_ring.ellipse(
-                    [center_x - outer_rx, center_y - outer_ry,
-                    center_x + outer_rx, center_y + outer_ry],
-                    fill=1
-                )
-
-                # Dibujar elipse interna (agujero)
-                draw_ring.ellipse(
-                    [center_x - inner_rx, center_y - inner_ry,
-                    center_x + inner_rx, center_y + inner_ry],
-                    fill=0
-                )
-
-                # Intersección entre anillo y planeta
-                ring_intersection = ImageChops.logical_and(ring_layer, planet_layer)
-
-                # La banda frontal es solo la mitad frontal de la intersección
-                ring_front = ImageChops.multiply(ring_intersection.convert("L"), front_mask)
-
-                # Crear banda frontal coloreada
-                ring_front_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-                ring_front_colored.paste(ring_color, mask=ring_front)
-
-                # Añadir la banda frontal sobre el planeta
-                result.paste(ring_front_colored, (0, 0), ring_front_colored)
-
-            # IMPORTANTE: NO redimensionar el resultado, devolver imagen completa con anillos
             duration_ms = (time.time() - start_time) * 1000
             # Log details about the rings
-            ring_count = len(ring_definitions)
             logger.log_step("apply_rings", duration_ms, f"Complexity: {ring_complexity}, Rings: {ring_count}, Factor: {ring_width_factor}")
             return result
         except Exception as e:

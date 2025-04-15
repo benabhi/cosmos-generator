@@ -111,7 +111,8 @@ class Rings:
 
     def apply_rings(self, planet_image: Image.Image, planet_type: str,
                    tilt: float = 0.0, light_angle: float = 45.0,
-                   color: Optional[RGBA] = None, detail: float = 1.0) -> Image.Image:
+                   color: Optional[RGBA] = None, detail: float = 1.0,
+                   original_planet_size: Optional[int] = None) -> Image.Image:
         """
         Apply a Saturn-like ring system with multiple concentric rings of varying widths and opacities.
 
@@ -136,24 +137,55 @@ class Rings:
         else:
             base_ring_color = color
 
+        # Get the size of the planet image (may include atmosphere)
+        planet_image_size = planet_image.width
+
+        # Use the original planet size if provided, otherwise use the image size
+        # This is important for planets with atmosphere, where the image is larger than the actual planet
+        actual_planet_size = original_planet_size if original_planet_size is not None else planet_image_size
+
         # Create a larger image to accommodate the rings
-        planet_size = planet_image.width
-        ring_width_factor = 2.5  # Rings extend this much beyond planet radius
-        canvas_size = int(planet_size * ring_width_factor)
+        ring_width_factor = 3.0  # Rings extend this much beyond planet radius (same as in AbstractPlanet)
+        canvas_size = int(planet_image_size * ring_width_factor)  # Use image size for canvas
         result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
         # Calculate planet position and dimensions
         center_x, center_y = canvas_size // 2, canvas_size // 2
-        planet_radius = planet_size // 2
-        planet_offset = (canvas_size - planet_size) // 2
+
+        # Detect if the planet image already has padding (e.g., from atmosphere)
+        # We need to find the actual planet radius within the image
+        # First, check if the image has an alpha channel and find the non-transparent area
+        if planet_image.mode == "RGBA":
+            # Get the alpha channel
+            alpha = planet_image.split()[3]
+            # Find the bounding box of the non-transparent area
+            bbox = alpha.getbbox()
+            if bbox:
+                # Calculate the actual planet radius from the bounding box
+                actual_width = bbox[2] - bbox[0]
+                actual_height = bbox[3] - bbox[1]
+                # Use the smaller dimension to ensure we're inside the planet
+                actual_size = min(actual_width, actual_height)
+                planet_radius = actual_size // 2
+            else:
+                # Fallback if no non-transparent area is found
+                planet_radius = actual_planet_size // 2
+        else:
+            # If no alpha channel, use the image size
+            planet_radius = actual_planet_size // 2
+
+        planet_offset = (canvas_size - planet_image_size) // 2
 
         # Calculate vertical compression factor based on tilt
-        tilt_factor = abs(math.sin(math.radians(tilt)))
-        vertical_factor = 0.3 + 0.2 * (1 - tilt_factor)  # Between 30-50% based on tilt
+        # Use a fixed vertical factor of 0.3 to match AbstractPlanet implementation
+        vertical_factor = 0.3  # Same as in AbstractPlanet
 
         # Create the planet layer (for masking)
+        # We need to create a mask that matches the actual planet, not including atmosphere
         planet_layer = Image.new("1", (canvas_size, canvas_size), 0)
         draw_planet = ImageDraw.Draw(planet_layer)
+
+        # Draw the planet as a circle with the calculated radius
         draw_planet.ellipse(
             [center_x - planet_radius, center_y - planet_radius,
              center_x + planet_radius, center_y + planet_radius],
@@ -292,6 +324,9 @@ class Rings:
 
         # Sort the rings by inner radius
         ring_definitions.sort(key=lambda x: x[0])
+
+        # Store the ring definitions for later reference
+        self.last_ring_definitions = ring_definitions
 
         # Process each ring
         for i, (inner_factor, outer_factor, opacity, brightness, is_solid) in enumerate(ring_definitions):

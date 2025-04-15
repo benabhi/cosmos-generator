@@ -3,11 +3,22 @@ Command-line interface for Cosmos Generator.
 """
 import argparse
 import sys
+import os
 import random
 from typing import Dict, Any, Optional, List
 
-from cosmos_generator.core.planet_generator import PlanetGenerator
-from cosmos_generator.utils.viewport import Viewport
+# Add the parent directory to the path so we can import the package
+sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
+# Now we can import our modules
+try:
+    from cosmos_generator.core.planet_generator import PlanetGenerator
+    from cosmos_generator.utils.viewport import Viewport
+except ImportError:
+    # Try with direct imports if the package structure import fails
+    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+    from core.planet_generator import PlanetGenerator
+    from utils.viewport import Viewport
 
 
 def parse_args() -> argparse.Namespace:

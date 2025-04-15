@@ -1,5 +1,9 @@
 """
 Container management for celestial bodies.
+
+Esta clase proporciona un contenedor para mostrar cuerpos celestes con un tamaño fijo de 512x512 píxeles.
+Maneja de forma diferente los planetas con anillos y sin anillos, asegurando que se muestren correctamente
+y con las proporciones adecuadas.
 """
 from typing import Any
 from PIL import Image, ImageDraw
@@ -10,18 +14,20 @@ from cosmos_generator.utils.image_utils import rotate_image
 class Container:
     """
     Manages view perspective and rotation for celestial bodies.
-    Proporciona una vista fija para cada tipo de planeta.
+
+    Esta clase proporciona un contenedor de tamaño fijo (512x512 píxeles) para mostrar
+    cuerpos celestes. Aplica una vista fija para cada tipo de planeta:
+    - Planetas con anillos: Muestra el planeta con una parte de los anillos visible
+    - Planetas sin anillos: Muestra el planeta completo
+
+    También permite rotar el contenido, lo que será útil para futuras funcionalidades.
     """
 
-    def __init__(self, width: int = 512, height: int = 512):
+    def __init__(self):
         """
-        Initialize a container with fixed dimensions.
-
-        Args:
-            width: Container width in pixels (fixed at 512)
-            height: Container height in pixels (fixed at 512)
+        Initialize a container with fixed dimensions of 512x512 pixels.
         """
-        # Forzar tamaño fijo de 512x512
+        # Tamaño fijo de 512x512 píxeles
         self.width = 512
         self.height = 512
         self.rotation = 0.0
@@ -54,19 +60,20 @@ class Container:
         """
         self.rotation = (self.rotation + angle) % 360
 
-    def reset(self) -> None:
-        """
-        Reset the container to its initial state.
-        """
-        self.rotation = 0.0
 
     def render(self) -> Image.Image:
         """
         Render the content with the current container settings.
 
         Genera la imagen del planeta con una vista fija según el tipo:
-        - Planetas con anillos: Vista equivalente a zoom 0.75 en el viewport anterior
-        - Planetas sin anillos: Vista completa
+        - Planetas con anillos: Vista con factor 0.75 para mostrar parte de los anillos
+        - Planetas sin anillos: Vista completa del planeta
+
+        El proceso consiste en:
+        1. Obtener la imagen del contenido
+        2. Aplicar rotación si es necesario
+        3. Recortar un área cuadrada basada en el tipo de planeta
+        4. Redimensionar el recorte a 512x512 píxeles
 
         La imagen final siempre será de 512x512 píxeles.
 
@@ -108,19 +115,21 @@ class Container:
 
         # Determinar el tipo de contenido y aplicar la vista fija adecuada
         if has_rings:
-            # Para planetas con anillos, usamos un zoom fijo de 0.75
-            # para acercar un poco más y mostrar mejor los anillos
+            # Para planetas con anillos, usamos un factor fijo de 0.75
+            # Este valor fue determinado experimentalmente para mostrar una buena
+            # porción de los anillos mientras se mantiene el planeta claramente visible
             fixed_zoom = 0.75
 
             # Para planetas con anillos, queremos un recorte que muestre una buena parte de los anillos
-            # pero que también permita ver el planeta con suficiente detalle
+            # pero que también permita ver el planeta con suficiente detalle.
             #
-            # Un zoom de 0.75 significa que queremos ver el 75% del tamaño total
-            # Esto nos da un buen equilibrio entre mostrar los anillos y ver el planeta con detalle
+            # Un factor de 0.75 significa que queremos ver el 75% del tamaño total de la imagen.
+            # Este valor proporciona un buen equilibrio entre mostrar los anillos y ver el planeta.
             crop_size = int(min(content_width, content_height) * fixed_zoom)
         else:
-            # Para planetas sin anillos, mostramos la vista completa
-            # pero asegurándonos de que sea un recorte cuadrado
+            # Para planetas sin anillos, mostramos la vista completa del planeta
+            # Usamos un recorte cuadrado para mantener la proporción y evitar distorsiones
+            # al redimensionar a 512x512
             crop_size = min(content_width, content_height)
 
         # Calcular las coordenadas de recorte, centradas en el planeta
@@ -159,10 +168,12 @@ class Container:
             crop_right = content_width
             crop_bottom = content_height
 
-        # Recortar la imagen
+        # Recortar la imagen usando las coordenadas calculadas
+        # Esto nos da un recorte cuadrado centrado en el planeta
         cropped_image = content_image.crop((crop_left, crop_top, crop_right, crop_bottom))
 
-        # Redimensionar al tamaño del container (512x512)
+        # Redimensionar al tamaño fijo del container (512x512)
+        # Usamos el algoritmo LANCZOS para obtener la mejor calidad de imagen
         container_image = cropped_image.resize((self.width, self.height), Image.LANCZOS)
 
         return container_image

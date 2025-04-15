@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-Example script to generate a planet using the Cosmos Generator library.
+Example script to generate a planet with rings using the Cosmos Generator library.
+
+Este ejemplo muestra cómo:
+1. Crear un planeta con anillos y atmósfera
+2. Guardar la imagen original del planeta
+3. Usar la clase Container para mostrar el planeta con un tamaño fijo de 512x512
+4. Aplicar rotación al planeta dentro del Container
 """
 import os
 import sys
@@ -10,12 +16,16 @@ import random
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from cosmos_generator.core.planet_generator import PlanetGenerator
-from cosmos_generator.utils.viewport import Viewport
+from cosmos_generator.utils.container import Container
 
 
 def main():
     """
     Generate a desert planet with rings and atmosphere.
+
+    Este ejemplo demuestra la generación de un planeta tipo desierto con anillos
+    y atmósfera, y cómo usar la clase Container para mostrar el planeta con
+    un tamaño fijo de 512x512 píxeles.
     """
     # Create a planet generator
     generator = PlanetGenerator()
@@ -50,25 +60,18 @@ def main():
     planet.save(os.path.join(output_dir, f"desert_planet_{seed}.png"))
     print(f"Saved to output/desert_planet_{seed}.png")
 
-    # Crear viewports con diferentes niveles de zoom para demostrar el comportamiento
-    zoom_levels = [0.3, 0.5, 0.7, 1.0]
+    # Usar Container para mostrar el planeta
+    container = Container()
+    container.set_content(planet)
+    container.export(os.path.join(output_dir, "planet_container.png"))
+    print(f"Saved to output/planet_container.png using container")
 
-    for zoom in zoom_levels:
-        # Crear viewport con el nivel de zoom actual
-        viewport = Viewport(initial_zoom=zoom)
-        viewport.set_content(planet)
-
-        # Guardar la imagen con el nivel de zoom en el nombre del archivo
-        filename = f"planet_zoom_{zoom:.1f}.png"
-        viewport.export(os.path.join(output_dir, filename))
-        print(f"Saved viewport with zoom {zoom:.1f} to output/{filename}")
-
-    # Viewport con rotación para demostrar que también funciona con rotación
-    viewport_rotated = Viewport(initial_zoom=0.7)
-    viewport_rotated.set_content(planet)
-    viewport_rotated.rotate(45)
-    viewport_rotated.export(os.path.join(output_dir, "planet_rotated.png"))
-    print(f"Saved rotated viewport to output/planet_rotated.png")
+    # Probar rotación con Container
+    container_rotated = Container()
+    container_rotated.set_content(planet)
+    container_rotated.rotate(45)
+    container_rotated.export(os.path.join(output_dir, "planet_container_rotated.png"))
+    print(f"Saved to output/planet_container_rotated.png using container with rotation")
 
 
 if __name__ == "__main__":

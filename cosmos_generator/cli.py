@@ -5,7 +5,6 @@ import argparse
 import sys
 import os
 import random
-from typing import Dict, Any, Optional, List
 
 # Add the parent directory to the path so we can import the package
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -13,12 +12,12 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 # Now we can import our modules
 try:
     from cosmos_generator.core.planet_generator import PlanetGenerator
-    from cosmos_generator.utils.viewport import Viewport
+    from cosmos_generator.utils.container import Container
 except ImportError:
     # Try with direct imports if the package structure import fails
     sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
     from core.planet_generator import PlanetGenerator
-    from utils.viewport import Viewport
+    from utils.container import Container
 
 
 def parse_args() -> argparse.Namespace:
@@ -36,8 +35,8 @@ def parse_args() -> argparse.Namespace:
     # Required arguments
     parser.add_argument("--type", type=str, required=True,
                        help="Planet type (Desert, Furnace, etc.)")
-    parser.add_argument("--output", type=str, required=True,
-                       help="Output file path")
+    parser.add_argument("--output", type=str, default=None,
+                       help="Output file path (default: output/planets/[type]/[seed].png)")
 
     # Optional arguments
     parser.add_argument("--size", type=int, default=512,
@@ -59,19 +58,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--light-angle", type=float, default=45.0,
                        help="Light source angle (0-359)")
 
-    # Viewport
-    parser.add_argument("--viewport-width", type=int, default=None,
-                       help="Viewport width")
-    parser.add_argument("--viewport-height", type=int, default=None,
-                       help="Viewport height")
-    parser.add_argument("--zoom", type=float, default=1.0,
-                       help="Zoom factor (0.1-5.0)")
+    # Container
     parser.add_argument("--rotation", type=float, default=0.0,
                        help="Rotation in degrees")
-    parser.add_argument("--pan-x", type=int, default=0,
-                       help="Horizontal pan offset")
-    parser.add_argument("--pan-y", type=int, default=0,
-                       help="Vertical pan offset")
 
     # List available planet types
     parser.add_argument("--list-types", action="store_true",
@@ -99,13 +88,23 @@ def main() -> int:
             print(f"  - {planet_type}")
         return 0
 
-    # Validate planet type
-    if args.type not in generator.get_celestial_types():
+    # Convert planet type to title case for case-insensitive matching
+    input_type = args.type.title()
+
+    # Get available types and create a case-insensitive mapping
+    available_types = generator.get_celestial_types()
+    type_mapping = {t.lower(): t for t in available_types}
+
+    # Validate planet type (case-insensitive)
+    if input_type.lower() not in type_mapping:
         print(f"Error: Unknown planet type '{args.type}'")
         print("Available types:")
-        for planet_type in generator.get_celestial_types():
+        for planet_type in available_types:
             print(f"  - {planet_type}")
         return 1
+
+    # Get the correct case for the planet type
+    planet_type = type_mapping[input_type.lower()]
 
     # Generate random seed if not provided
     seed = args.seed if args.seed is not None else random.randint(0, 2**32 - 1)
@@ -132,36 +131,38 @@ def main() -> int:
 
     # Create the planet
     try:
-        planet = generator.create(args.type, params)
-        print(f"Generated {args.type} planet with seed {seed}")
+        planet = generator.create(planet_type, params)
+        print(f"Generated {planet_type} planet with seed {seed}")
     except Exception as e:
         print(f"Error generating planet: {e}")
         return 1
 
-    # Use viewport if specified
-    if args.viewport_width or args.viewport_height or args.zoom != 1.0 or args.rotation != 0.0 or args.pan_x != 0 or args.pan_y != 0:
-        viewport_width = args.viewport_width if args.viewport_width else args.size
-        viewport_height = args.viewport_height if args.viewport_height else args.size
-
-        viewport = Viewport(width=viewport_width, height=viewport_height, initial_zoom=args.zoom)
-        viewport.set_content(planet)
-        viewport.set_rotation(args.rotation)
-        viewport.set_pan(args.pan_x, args.pan_y)
-
-        try:
-            viewport.export(args.output)
-            print(f"Saved to {args.output}")
-        except Exception as e:
-            print(f"Error saving image: {e}")
-            return 1
+    # Determine output path
+    output_path = args.output
+    if output_path is None:
+        # Create default output directory structure
+        output_dir = os.path.join("output", "planets", planet_type.lower())
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, f"{seed}.png")
     else:
-        # Save directly
-        try:
-            planet.save(args.output)
-            print(f"Saved to {args.output}")
-        except Exception as e:
-            print(f"Error saving image: {e}")
-            return 1
+        # Ensure the directory exists for the specified output path
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+
+    # Always use container for consistent display
+    container = Container()
+    container.set_content(planet)
+
+    if args.rotation != 0.0:
+        container.set_rotation(args.rotation)
+
+    try:
+        container.export(output_path)
+        print(f"Saved to {output_path}")
+    except Exception as e:
+        print(f"Error saving image: {e}")
+        return 1
 
     return 0
 

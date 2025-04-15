@@ -1,10 +1,18 @@
 """
 Abstract base class for all planet types.
+
+Esta clase proporciona la estructura base para todos los tipos de planetas,
+incluye la lógica para generar planetas con características como atmósfera,
+nubes y anillos. También maneja la iluminación y el renderizado final.
+
+Los planetas generados pueden tener un tamaño fijo de 512x512 píxeles,
+pero cuando tienen anillos, se genera un canvas más grande (3x el tamaño)
+para acomodar los anillos. Cuando tienen atmósfera, se ajusta el tamaño
+del planeta para que la atmósfera quepa en el tamaño original.
 """
-from typing import Dict, Any, Optional, Tuple, List
-import random
+from typing import Optional
 import math
-from PIL import Image, ImageDraw, ImageFilter, ImageChops
+from PIL import Image, ImageDraw, ImageChops
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
 from cosmos_generator.features.atmosphere import Atmosphere
@@ -14,6 +22,14 @@ from cosmos_generator.utils import image_utils, lighting_utils
 class AbstractPlanet(AbstractCelestialBody):
     """
     Base class for all planet types with common generation flow.
+
+    Esta clase implementa el flujo de generación común para todos los planetas:
+    1. Generar la textura base del planeta
+    2. Aplicar iluminación a la textura
+    3. Aplicar características adicionales (nubes, atmósfera, anillos)
+
+    Las clases derivadas deben implementar el método generate_texture() para
+    crear la textura específica de cada tipo de planeta.
     """
 
     # Planet type identifier

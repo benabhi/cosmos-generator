@@ -89,7 +89,7 @@ cosmos_generator/
 │   ├── lighting_utils.py
 │   ├── math_utils.py
 │   ├── random_utils.py
-│   └── viewport.py
+│   └── container.py
 └── cli.py
 ```
 
@@ -120,7 +120,7 @@ cosmos_generator/
 - **LightingUtils**: Handles lighting and shading calculations
 - **MathUtils**: Common mathematical operations
 - **RandomUtils**: Seeded random number generation
-- **Viewport**: Manages view perspective, zoom, pan, and rotation
+- **Container**: Manages view perspective and rotation with fixed size display
 
 ### 3.3 Ring System Implementation
 The ring system will use the following approach:

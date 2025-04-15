@@ -68,7 +68,7 @@ cosmos_generator/
 - **lighting_utils.py**: Handles lighting and shading calculations
 - **math_utils.py**: Common mathematical operations
 - **random_utils.py**: Seeded random number generation
-- **viewport.py**: Manages view perspective, zoom, pan, and rotation
+- **container.py**: Manages view perspective and rotation with fixed size display
 
 ### CLI
 

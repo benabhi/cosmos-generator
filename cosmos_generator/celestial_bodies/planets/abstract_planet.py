@@ -162,8 +162,11 @@ class AbstractPlanet(AbstractCelestialBody):
         # Get the size of the planet image
         size = base_image.width
 
-        # Create a larger canvas for the atmosphere (30% larger than the planet)
-        atmosphere_padding = int(size * 0.15)  # 15% padding on each side
+        # Create a canvas for the atmosphere - much smaller padding for planets without rings
+        if self.has_rings:
+            atmosphere_padding = int(size * 0.15)  # 15% padding for planets with rings
+        else:
+            atmosphere_padding = int(size * 0.02)  # 2% padding for planets without rings (drastically reduced)
         canvas_size = size + atmosphere_padding * 2
         result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
@@ -184,7 +187,11 @@ class AbstractPlanet(AbstractCelestialBody):
         )
 
         # Apply blur for a nice glow effect - use smaller blur for sharper edge
-        blur_radius = atmosphere_padding // 3
+        if self.has_rings:
+            blur_radius = atmosphere_padding // 3
+        else:
+            # Almost no blur for planets without rings - just enough to smooth the edge
+            blur_radius = max(1, atmosphere_padding // 10)  # Minimum blur of 1 pixel
         atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
 
         # Paste the atmosphere onto the result

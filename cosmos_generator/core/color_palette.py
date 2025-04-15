@@ -25,7 +25,7 @@ class ColorPalette:
         """
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
         self.rng = random.Random(self.seed)
-        
+
         # Predefined color palettes for different planet types
         self.planet_palettes: Dict[str, Dict[str, List[Color]]] = {
             "Desert": {
@@ -103,7 +103,7 @@ class ColorPalette:
                 "core": [(255, 215, 0), (255, 255, 0)],  # Exposed core
             },
         }
-        
+
         # Atmospheric color palettes
         self.atmosphere_palettes: Dict[str, List[RGBA]] = {
             "Desert": [(255, 200, 150, 60), (255, 220, 180, 40)],
@@ -119,21 +119,21 @@ class ColorPalette:
             "Vital": [(150, 200, 255, 60), (200, 230, 255, 40)],
             "Shattered": [(255, 100, 50, 80), (255, 150, 100, 60)],
         }
-        
-        # Ring color palettes
+
+        # Ring color palettes - Increased opacity for better visibility
         self.ring_palettes: Dict[str, List[RGBA]] = {
-            "Desert": [(210, 180, 140, 150), (244, 164, 96, 130), (222, 184, 135, 100)],
-            "Furnace": [(139, 0, 0, 150), (178, 34, 34, 130), (165, 42, 42, 100)],
-            "Grave": [(105, 105, 105, 150), (128, 128, 128, 130), (169, 169, 169, 100)],
-            "Ice": [(240, 248, 255, 150), (240, 255, 255, 130), (230, 230, 250, 100)],
-            "Jovian": [(255, 222, 173, 150), (222, 184, 135, 130), (210, 180, 140, 100)],
-            "Jungle": [(34, 139, 34, 150), (0, 128, 0, 130), (0, 100, 0, 100)],
-            "Living": [(221, 160, 221, 150), (218, 112, 214, 130), (186, 85, 211, 100)],
-            "Ocean": [(0, 128, 128, 150), (0, 139, 139, 130), (32, 178, 170, 100)],
-            "Rocky": [(112, 128, 144, 150), (119, 136, 153, 130), (128, 128, 128, 100)],
-            "Tainted": [(85, 107, 47, 150), (107, 142, 35, 130), (128, 128, 0, 100)],
-            "Vital": [(0, 128, 128, 150), (46, 139, 87, 130), (60, 179, 113, 100)],
-            "Shattered": [(139, 0, 0, 150), (165, 42, 42, 130), (178, 34, 34, 100)],
+            "Desert": [(210, 180, 140, 200), (244, 164, 96, 180), (222, 184, 135, 160)],
+            "Furnace": [(139, 0, 0, 200), (178, 34, 34, 180), (165, 42, 42, 160)],
+            "Grave": [(105, 105, 105, 200), (128, 128, 128, 180), (169, 169, 169, 160)],
+            "Ice": [(240, 248, 255, 200), (240, 255, 255, 180), (230, 230, 250, 160)],
+            "Jovian": [(255, 222, 173, 200), (222, 184, 135, 180), (210, 180, 140, 160)],
+            "Jungle": [(34, 139, 34, 200), (0, 128, 0, 180), (0, 100, 0, 160)],
+            "Living": [(221, 160, 221, 200), (218, 112, 214, 180), (186, 85, 211, 160)],
+            "Ocean": [(0, 128, 128, 200), (0, 139, 139, 180), (32, 178, 170, 160)],
+            "Rocky": [(112, 128, 144, 200), (119, 136, 153, 180), (128, 128, 128, 160)],
+            "Tainted": [(85, 107, 47, 200), (107, 142, 35, 180), (128, 128, 0, 160)],
+            "Vital": [(0, 128, 128, 200), (46, 139, 87, 180), (60, 179, 113, 160)],
+            "Shattered": [(139, 0, 0, 200), (165, 42, 42, 180), (178, 34, 34, 160)],
         }
 
     def get_random_color(self, planet_type: str, category: str = "base") -> Color:
@@ -149,13 +149,13 @@ class ColorPalette:
         """
         if planet_type not in self.planet_palettes:
             raise ValueError(f"Unknown planet type: {planet_type}")
-            
+
         palette = self.planet_palettes[planet_type]
         if category not in palette:
             raise ValueError(f"Unknown color category '{category}' for planet type '{planet_type}'")
-            
+
         return self.rng.choice(palette[category])
-    
+
     def get_atmosphere_color(self, planet_type: str) -> RGBA:
         """
         Get a random atmospheric color for a specific planet type.
@@ -168,9 +168,9 @@ class ColorPalette:
         """
         if planet_type not in self.atmosphere_palettes:
             raise ValueError(f"Unknown planet type: {planet_type}")
-            
+
         return self.rng.choice(self.atmosphere_palettes[planet_type])
-    
+
     def get_ring_color(self, planet_type: str) -> RGBA:
         """
         Get a random ring color for a specific planet type.
@@ -183,9 +183,9 @@ class ColorPalette:
         """
         if planet_type not in self.ring_palettes:
             raise ValueError(f"Unknown planet type: {planet_type}")
-            
+
         return self.rng.choice(self.ring_palettes[planet_type])
-    
+
     def blend_colors(self, color1: Color, color2: Color, ratio: float = 0.5) -> Color:
         """
         Blend two colors together.
@@ -228,7 +228,7 @@ class ColorPalette:
             return (r, g, b, a)
         else:
             raise ValueError("Invalid color formats")
-    
+
     def adjust_brightness(self, color: Color, factor: float) -> Color:
         """
         Adjust the brightness of a color.

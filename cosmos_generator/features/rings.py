@@ -177,34 +177,35 @@ class Rings:
 
         # Base ring definitions for Saturn-like appearance with maximum opacity
         # We'll select from these based on the complexity level
+        # Format: (inner_radius_factor, outer_radius_factor, opacity, brightness, is_solid)
         all_possible_rings = [
-            # (inner_radius_factor, outer_radius_factor, opacity, brightness)
+            # (inner_radius_factor, outer_radius_factor, opacity, brightness, is_solid)
             # D Ring (innermost, thin and faint)
-            (1.20, 1.23, 0.9, 0.7),
+            (1.20, 1.23, 0.9, 0.7, False),
             # C Ring (darker, brownish)
-            (1.24, 1.35, 0.98, 0.75),
+            (1.24, 1.35, 0.98, 0.75, False),
             # B Ring Inner (bright and dense)
-            (1.36, 1.45, 1.0, 0.95),
+            (1.36, 1.45, 1.0, 0.95, True),  # Solid ring
             # B Ring Middle (brightest section)
-            (1.46, 1.55, 1.0, 1.0),
+            (1.46, 1.55, 1.0, 1.0, True),   # Solid ring
             # B Ring Outer (bright with some structure)
-            (1.56, 1.65, 1.0, 0.9),
+            (1.56, 1.65, 1.0, 0.9, False),
             # Cassini Division (prominent gap)
-            (1.66, 1.70, 0.8, 0.6),
+            (1.66, 1.70, 0.8, 0.6, False),
             # A Ring Inner (bright)
-            (1.71, 1.85, 0.98, 0.9),
+            (1.71, 1.85, 0.98, 0.9, True),  # Solid ring
             # Encke Gap (thin dark gap)
-            (1.86, 1.87, 0.7, 0.5),
+            (1.86, 1.87, 0.7, 0.5, False),
             # A Ring Middle
-            (1.88, 1.95, 0.98, 0.85),
+            (1.88, 1.95, 0.98, 0.85, False),
             # Keeler Gap (very thin)
-            (1.96, 1.965, 0.7, 0.4),
+            (1.96, 1.965, 0.7, 0.4, False),
             # A Ring Outer (slightly fainter)
-            (1.97, 2.05, 0.95, 0.8),
+            (1.97, 2.05, 0.95, 0.8, False),
             # F Ring (thin, isolated outer ring)
-            (2.10, 2.12, 0.9, 0.7),
+            (2.10, 2.12, 0.9, 0.7, True),   # Solid ring
             # G Ring (very faint, wide)
-            (2.15, 2.20, 0.85, 0.5)
+            (2.15, 2.20, 0.85, 0.5, False)
         ]
 
         # Select rings based on complexity level
@@ -256,14 +257,18 @@ class Rings:
             num_additional_rings = rng.randint(2, 5)  # Many additional rings
 
         # Add the base rings with some variation
-        for inner, outer, opacity, brightness in base_ring_definitions:
+        for inner, outer, opacity, brightness, is_solid in base_ring_definitions:
             # Vary the opacity and brightness for more realistic appearance
             # Use minimal variation for opacity to keep rings very solid
             varied_opacity = min(1.0, max(0.7, opacity * (0.9 + 0.15 * rng.random())))
             varied_brightness = min(1.0, max(0.7, brightness * (0.95 + 0.1 * rng.random())))
 
+            # For solid rings, set opacity to 1.0
+            if is_solid:
+                varied_opacity = 1.0
+
             # Add to the ring definitions
-            ring_definitions.append((inner, outer, varied_opacity, varied_brightness))
+            ring_definitions.append((inner, outer, varied_opacity, varied_brightness, is_solid))
 
         # Add some additional thin rings at random positions
         for _ in range(num_additional_rings):
@@ -275,15 +280,21 @@ class Rings:
             # Use very high opacity values for solid look
             opacity = 0.8 + 0.2 * rng.random()
             brightness = 0.8 + 0.2 * rng.random()
+            # Randomly decide if this ring is solid (25% chance)
+            is_solid = rng.random() < 0.25
+
+            # If solid, set opacity to 1.0
+            if is_solid:
+                opacity = 1.0
 
             # Add to the ring definitions
-            ring_definitions.append((position, position + thickness, opacity, brightness))
+            ring_definitions.append((position, position + thickness, opacity, brightness, is_solid))
 
         # Sort the rings by inner radius
         ring_definitions.sort(key=lambda x: x[0])
 
         # Process each ring
-        for i, (inner_factor, outer_factor, opacity, brightness) in enumerate(ring_definitions):
+        for i, (inner_factor, outer_factor, opacity, brightness, is_solid) in enumerate(ring_definitions):
             # Calculate this ring's dimensions
             outer_rx = int(planet_radius * outer_factor)
             outer_ry = int(outer_rx * vertical_factor)  # Apply vertical compression
@@ -293,6 +304,10 @@ class Rings:
 
             # Vary the color for each ring
             r, g, b, a = base_ring_color
+
+            # For solid rings, ensure full opacity
+            if is_solid:
+                opacity = 1.0
 
             # Apply brightness and opacity adjustments
             ring_color = (
@@ -356,7 +371,7 @@ class Rings:
         result.paste(planet_image, (planet_offset, planet_offset), planet_image)
 
         # Now add the front bands (parts of rings that pass in front of the planet)
-        for i, (inner_factor, outer_factor, opacity, brightness) in enumerate(ring_definitions):
+        for i, (inner_factor, outer_factor, opacity, brightness, is_solid) in enumerate(ring_definitions):
             # Calculate this ring's dimensions
             outer_rx = int(planet_radius * outer_factor)
             outer_ry = int(outer_rx * vertical_factor)  # Apply vertical compression
@@ -366,6 +381,10 @@ class Rings:
 
             # Vary the color for each ring
             r, g, b, a = base_ring_color
+
+            # For solid rings, ensure full opacity
+            if is_solid:
+                opacity = 1.0
 
             # Apply brightness and opacity adjustments
             ring_color = (

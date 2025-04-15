@@ -28,7 +28,25 @@ class AbstractPlanet(AbstractCelestialBody):
             size: Size of the planet image in pixels
             **kwargs: Additional parameters for customization
         """
-        super().__init__(seed=seed, size=size, **kwargs)
+        # Store the original requested size for later use
+        original_size = size
+
+        # Feature flags (need to check these before adjusting size)
+        has_atmosphere = kwargs.get("atmosphere", False)
+        atmosphere_intensity = kwargs.get("atmosphere_intensity", 0.5)
+        has_rings = kwargs.get("rings", False)
+
+        # Create a params dictionary to store additional parameters
+        self.params = {"original_size": original_size}
+
+        # Adjust size if the planet has atmosphere to ensure it fits in the viewport
+        if has_atmosphere:
+            # Reduce size by a small amount to accommodate the atmosphere
+            atmosphere_padding = int(size * 0.05 * atmosphere_intensity)  # 2-5% padding
+            adjusted_size = size - atmosphere_padding * 2
+            super().__init__(seed=seed, size=adjusted_size, **kwargs)
+        else:
+            super().__init__(seed=seed, size=size, **kwargs)
 
         # Default lighting parameters
         self.light_angle = kwargs.get("light_angle", 45.0)
@@ -36,9 +54,9 @@ class AbstractPlanet(AbstractCelestialBody):
         self.light_falloff = kwargs.get("light_falloff", 0.6)
 
         # Feature flags
-        self.has_rings = kwargs.get("rings", False)
-        self.has_atmosphere = kwargs.get("atmosphere", False)
-        self.atmosphere_intensity = kwargs.get("atmosphere_intensity", 0.5)
+        self.has_rings = has_rings
+        self.has_atmosphere = has_atmosphere
+        self.atmosphere_intensity = atmosphere_intensity
         self.has_clouds = kwargs.get("clouds", False)
         self.cloud_coverage = kwargs.get("cloud_coverage", 0.5)
 
@@ -98,17 +116,43 @@ class AbstractPlanet(AbstractCelestialBody):
         """
         result = base_image
 
-        # Apply atmosphere if enabled
-        if self.has_atmosphere:
-            result = self._apply_atmosphere(result)
-
         # Apply clouds if enabled
         if self.has_clouds:
             result = self._apply_clouds(result)
 
-        # Apply rings if enabled
+        # The order of applying features is important:
+        # 1. First apply rings if enabled (they need the base planet without atmosphere)
+        planet_with_rings = None
         if self.has_rings:
-            result = self._apply_rings(result)
+            planet_with_rings = self._apply_rings(result)
+
+        # 2. Then apply atmosphere if enabled
+        if self.has_atmosphere:
+            # If we have rings, apply atmosphere to the base planet first
+            atmosphere_result = self._apply_atmosphere(result)
+
+            # If we have rings, composite the atmosphere with the rings
+            if planet_with_rings is not None:
+                # Get the size of the rings image
+                rings_size = planet_with_rings.width
+
+                # Create a new image with the same size as the rings
+                final_result = Image.new("RGBA", (rings_size, rings_size), (0, 0, 0, 0))
+
+                # Calculate the offset to center the atmosphere in the rings image
+                offset = (rings_size - atmosphere_result.width) // 2
+
+                # Paste the atmosphere in the center
+                final_result.paste(atmosphere_result, (offset, offset), atmosphere_result)
+
+                # Composite with the rings
+                result = Image.alpha_composite(final_result, planet_with_rings)
+            else:
+                # No rings, just use the atmosphere result
+                result = atmosphere_result
+        elif self.has_rings:
+            # We have rings but no atmosphere
+            result = planet_with_rings
 
         return result
 
@@ -487,5 +531,11 @@ class AbstractPlanet(AbstractCelestialBody):
 
             # Add the front band on top of the planet
             result.paste(ring_front_colored, (0, 0), ring_front_colored)
+
+        # Resize the result to match the original requested size
+        # This ensures that the image with rings respects the viewport size
+        original_size = self.params.get("original_size", self.size)
+        if canvas_size != original_size:
+            result = result.resize((original_size, original_size), Image.LANCZOS)
 
         return result

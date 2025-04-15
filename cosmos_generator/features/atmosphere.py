@@ -53,8 +53,19 @@ class Atmosphere:
         # Extract color components
         r, g, b, a = atmosphere_color
 
-        # Create a new image for the result (same size as planet)
+        # Create a much brighter color for the edge highlight
+        # Use pure white for maximum visibility and luminosity
+        highlight_color = (
+            255,  # Pure white for maximum brightness
+            255,
+            255,
+            255  # Full opacity
+        )
+
+        # Get the size of the planet image
         size = planet_image.width
+
+        # Create a new image for the result
         result = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
         # Create a mask for the planet
@@ -62,18 +73,25 @@ class Atmosphere:
         planet_draw = ImageDraw.Draw(planet_mask)
         planet_draw.ellipse((0, 0, size-1, size-1), fill=255)
 
-        # Create a slightly larger mask for the atmosphere edge
-        # Make the difference more significant for a visible line
-        atmosphere_size = int(size * (1.0 + 0.04 * intensity))  # Outer edge
+        # Create a mask for the atmosphere (slightly larger than the planet)
+        # Use a small difference to make the line fine but visible
+        atmosphere_size = size + int(size * 0.02 * intensity)  # 1-2% larger
         atmosphere_mask = Image.new("L", (atmosphere_size, atmosphere_size), 0)
         atmosphere_draw = ImageDraw.Draw(atmosphere_mask)
         atmosphere_draw.ellipse((0, 0, atmosphere_size-1, atmosphere_size-1), fill=255)
 
-        # Resize to match the planet size
-        atmosphere_mask = atmosphere_mask.resize((size, size), Image.LANCZOS)
+        # Calculate the offset to center the atmosphere mask
+        offset = (size - atmosphere_size) // 2
+
+        # Create a new image for the atmosphere
+        atmosphere = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+
+        # Paste the atmosphere mask into the atmosphere image
+        atmosphere_with_offset = Image.new("L", (size, size), 0)
+        atmosphere_with_offset.paste(atmosphere_mask, (offset, offset))
 
         # Create the ring by subtracting the planet mask from the atmosphere mask
-        ring_mask = ImageChops.subtract(atmosphere_mask, planet_mask)
+        ring_mask = ImageChops.subtract(atmosphere_with_offset, planet_mask)
 
         # Calculate light direction
         light_rad = math.radians(light_angle)
@@ -82,77 +100,82 @@ class Atmosphere:
 
         # Create a light mask with a gradient based on light direction
         light_mask = Image.new("L", (size, size), 0)
-        light_array = np.zeros((size, size), dtype=np.uint8)
+        light_draw = ImageDraw.Draw(light_mask)
 
-        center_x, center_y = size // 2, size // 2
-        radius = size // 2
-
-        # Fill the light mask with a gradient based on light direction
+        # Draw a gradient circle for the light mask
         for y in range(size):
             for x in range(size):
-                # Calculate position relative to center
-                dx = (x - center_x) / radius
-                dy = (y - center_y) / radius
-                distance = math.sqrt(dx*dx + dy*dy)
-
-                # Skip if too far from the edge
-                if distance < 0.9 or distance > 1.1:
+                # Skip if not in the ring area
+                if ring_mask.getpixel((x, y)) == 0:
                     continue
 
-                # Calculate surface normal at this point
-                # For a sphere, the normal is just the normalized vector from center to point
-                nx, ny = dx, dy  # Normalized direction from center
+                # Calculate position relative to center
+                dx = (x - size/2) / (size/2)
+                dy = (y - size/2) / (size/2)
 
-                # Calculate dot product with light direction (2D)
-                dot = nx * light_x + ny * light_y
+                # Calculate dot product with light direction
+                dot = dx * light_x + dy * light_y
 
                 # Apply lighting factor
                 if dot < 0:
                     # Point is facing away from light
-                    factor = 0.2  # Darker in shadow
+                    factor = 0.3  # Darker in shadow but still visible
                 else:
                     # Brighter in light
-                    factor = 0.2 + 0.8 * (dot ** 0.5)
+                    factor = 0.3 + 0.7 * dot
 
                 # Set light mask value
-                light_array[y, x] = min(255, int(255 * factor))
-
-        # Convert back to image
-        light_mask = Image.fromarray(light_array)
+                light_mask.putpixel((x, y), min(255, int(255 * factor)))
 
         # Apply the light mask to the ring mask
         lit_ring_mask = ImageChops.multiply(ring_mask, light_mask)
 
-        # Create a much brighter color for the edge highlight
-        highlight_color = (
-            min(255, int(r * 3.0)),  # Much brighter red
-            min(255, int(g * 3.0)),  # Much brighter green
-            min(255, int(b * 3.0)),  # Much brighter blue
-            min(255, 255)            # Full opacity for visibility
-        )
+        # Create a colored version of the lit ring
+        colored_ring = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
-        # Create a new layer for the atmosphere ring
-        atmosphere_ring = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-
-        # Draw the atmosphere ring with the highlight color
+        # Draw the colored ring pixel by pixel
         for y in range(size):
             for x in range(size):
                 mask_value = lit_ring_mask.getpixel((x, y))
                 if mask_value > 0:
-                    # Scale the alpha by the mask value
-                    alpha = min(255, int(highlight_color[3] * (mask_value / 255.0)))
-                    atmosphere_ring.putpixel((x, y), (
+                    # Use the mask value to determine the alpha
+                    alpha = min(255, int(255 * (mask_value / 255.0)))
+                    colored_ring.putpixel((x, y), (
                         highlight_color[0],
                         highlight_color[1],
                         highlight_color[2],
                         alpha
                     ))
 
-        # Apply a very slight blur to soften the edge but keep it defined
-        atmosphere_ring = atmosphere_ring.filter(ImageFilter.GaussianBlur(1))
+        # Apply a very slight blur to soften the edge
+        colored_ring = colored_ring.filter(ImageFilter.GaussianBlur(1))
 
-        # Create the final image by compositing the planet and atmosphere ring
-        result = Image.alpha_composite(result, atmosphere_ring)
+        # Increase the brightness of the ring to make it glow
+        # We'll do this by creating multiple blurred copies and adding them on top
+
+        # First glow layer - slightly blurred
+        glow_ring1 = colored_ring.copy()
+        glow_ring1 = glow_ring1.filter(ImageFilter.GaussianBlur(2))
+
+        # Second glow layer - more blurred for a wider glow
+        glow_ring2 = colored_ring.copy()
+        glow_ring2 = glow_ring2.filter(ImageFilter.GaussianBlur(4))
+
+        # Create a new image to composite all the glows
+        enhanced_ring = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+
+        # Add the layers from bottom to top
+        enhanced_ring.paste(glow_ring2, (0, 0), glow_ring2)  # Widest glow at bottom
+        enhanced_ring.paste(glow_ring1, (0, 0), glow_ring1)  # Medium glow in middle
+        enhanced_ring.paste(colored_ring, (0, 0), colored_ring)  # Sharp edge on top
+
+        # Replace the colored ring with the enhanced version
+        colored_ring = enhanced_ring
+
+        # Composite the colored ring onto the result
+        result = Image.alpha_composite(result, colored_ring)
+
+        # Composite the planet on top of the result
         result = Image.alpha_composite(result, planet_image)
 
         return result

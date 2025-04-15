@@ -4,3 +4,5 @@
 [ ] Crar una carpeta que tenga notas de directivas para la ia.
 [ ] Hacer un comando que limpie el output
 [ ] Quitar un poco de realismo a las nubes
+[ ] Documentar la carpeta debug en el README
+[ ] Crear un archivo de log

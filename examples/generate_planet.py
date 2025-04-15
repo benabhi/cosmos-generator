@@ -19,18 +19,18 @@ def main():
     """
     # Create a planet generator
     generator = PlanetGenerator()
-    
+
     # Print available planet types
     print("Available planet types:")
     for planet_type in generator.get_celestial_types():
         print(f"  - {planet_type}")
-    
+
     # Generate a random seed
     seed = random.randint(0, 2**32 - 1)
-    
+
     # Create a desert planet with rings and atmosphere
     planet = generator.create("Desert", {
-        "size": 1024,
+        "size": 512,  # Tamaño fijo de 512x512
         "seed": seed,
         "rings": True,
         "atmosphere": True,
@@ -41,25 +41,34 @@ def main():
             "falloff": 0.7
         }
     })
-    
+
     print(f"Generated Desert planet with seed {seed}")
-    
+
     # Save the planet image
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
     planet.save(os.path.join(output_dir, f"desert_planet_{seed}.png"))
     print(f"Saved to output/desert_planet_{seed}.png")
-    
-    # Create a viewport for more control
-    viewport = Viewport(width=800, height=600, initial_zoom=1.0)
-    viewport.set_content(planet)
-    viewport.zoom_in(1.5)
-    viewport.rotate(45)
-    viewport.pan(50, -30)
-    
-    # Export the viewport image
-    viewport.export(os.path.join(output_dir, f"desert_planet_{seed}_viewport.png"))
-    print(f"Saved viewport to output/desert_planet_{seed}_viewport.png")
+
+    # Crear viewports con diferentes niveles de zoom para demostrar el comportamiento
+    zoom_levels = [0.3, 0.5, 0.7, 1.0]
+
+    for zoom in zoom_levels:
+        # Crear viewport con el nivel de zoom actual
+        viewport = Viewport(initial_zoom=zoom)
+        viewport.set_content(planet)
+
+        # Guardar la imagen con el nivel de zoom en el nombre del archivo
+        filename = f"planet_zoom_{zoom:.1f}.png"
+        viewport.export(os.path.join(output_dir, filename))
+        print(f"Saved viewport with zoom {zoom:.1f} to output/{filename}")
+
+    # Viewport con rotación para demostrar que también funciona con rotación
+    viewport_rotated = Viewport(initial_zoom=0.7)
+    viewport_rotated.set_content(planet)
+    viewport_rotated.rotate(45)
+    viewport_rotated.export(os.path.join(output_dir, "planet_rotated.png"))
+    print(f"Saved rotated viewport to output/planet_rotated.png")
 
 
 if __name__ == "__main__":

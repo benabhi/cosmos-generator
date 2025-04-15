@@ -26,10 +26,10 @@ class CelestialGenerator:
         self.noise_gen = NoiseGenerator(seed=self.seed)
         self.color_palette = ColorPalette(seed=self.seed)
         self.texture_gen = TextureGenerator(seed=self.seed)
-        
+
         # Registry for celestial body types
         self.celestial_types: Dict[str, Type] = {}
-        
+
     def register_celestial_type(self, name: str, cls: Type) -> None:
         """
         Register a celestial body type.
@@ -39,7 +39,7 @@ class CelestialGenerator:
             cls: Class for the celestial body type
         """
         self.celestial_types[name] = cls
-        
+
     def get_celestial_types(self) -> List[str]:
         """
         Get a list of registered celestial body types.
@@ -48,7 +48,7 @@ class CelestialGenerator:
             List of celestial body type names
         """
         return list(self.celestial_types.keys())
-    
+
     def create(self, celestial_type: str, params: Optional[Dict[str, Any]] = None) -> Any:
         """
         Create a celestial body of the specified type.
@@ -62,18 +62,21 @@ class CelestialGenerator:
         """
         if celestial_type not in self.celestial_types:
             raise ValueError(f"Unknown celestial type: {celestial_type}")
-            
+
         # Create a new seed based on the base seed and celestial type
-        type_seed = self.seed + hash(celestial_type) % 1000000
-        
+        # Use a deterministic method that doesn't rely on hash() which can vary between sessions
+        # We'll use a simple string-to-int conversion based on character codes
+        type_int = sum(ord(c) * (i + 1) for i, c in enumerate(celestial_type.lower()))
+        type_seed = self.seed + type_int % 1000000
+
         # Merge default parameters with provided parameters
         default_params = {
             "seed": type_seed,
             "size": 512,
         }
-        
+
         if params:
             default_params.update(params)
-            
+
         # Create the celestial body
         return self.celestial_types[celestial_type](**default_params)

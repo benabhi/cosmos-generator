@@ -167,7 +167,7 @@ class Rings:
 
         # Generate a variable number of rings with varying properties
         # We'll use the seed to determine the number and properties of rings
-        rng = random.Random(self.seed if hasattr(self, 'seed') else None)
+        rng = self.rng  # Use the existing random generator initialized with the seed
 
         # Determine the ring system complexity (1-3)
         # 1: Minimal rings (few bands)

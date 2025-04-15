@@ -220,18 +220,23 @@ class OceanPlanet(AbstractPlanet):
 
                 if add_shimmer:
                     # Use the waves noise for the shimmer effect
-                    # For water world, make shimmer much more visible and abundant
+                    # Use the same shimmer effect for both styles, but more intense for water world
+                    shimmer_intensity = waves_noise[y, x]
+
                     if self.ocean_style == "water_world":
-                        shimmer_intensity = waves_noise[y, x] * 0.9  # Much higher intensity for water world
-                        if shimmer_intensity > 0.7:  # Much lower threshold for more shimmer
-                            alpha = int(255 * (shimmer_intensity - 0.7) * 8)  # Much more visible
-                            shimmer_data[x, y] = (255, 255, 255, min(alpha, 70))  # Higher cap for more visible reflections
+                        # More intense shimmer for water world
+                        if shimmer_intensity > 0.65:  # Lower threshold for more shimmer
+                            # Calculate alpha based on intensity
+                            alpha = int(255 * (shimmer_intensity - 0.65) * 10)  # More intense
+                            # Brighter reflections for water world
+                            shimmer_data[x, y] = (255, 255, 255, min(alpha, 100))  # Higher cap
                     else:
                         # Normal shimmer for archipelago
-                        shimmer_intensity = waves_noise[y, x] * 0.7  # Reduce intensity
-                        if shimmer_intensity > 0.85:  # Only the brightest spots
-                            alpha = int(255 * (shimmer_intensity - 0.85) * 5)  # Scale up for visibility
-                            shimmer_data[x, y] = (255, 255, 255, min(alpha, 40))  # Cap at 40 for subtlety
+                        if shimmer_intensity > 0.75:  # Higher threshold for less shimmer
+                            # Calculate alpha based on intensity
+                            alpha = int(255 * (shimmer_intensity - 0.75) * 8)  # Less intense
+                            # Normal reflections for archipelago
+                            shimmer_data[x, y] = (255, 255, 255, min(alpha, 80))  # Lower cap
 
         # Apply the circle mask to the shimmer
         shimmer_alpha = shimmer.split()[3]

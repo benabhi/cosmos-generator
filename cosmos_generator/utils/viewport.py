@@ -124,6 +124,7 @@ class Viewport:
         Render the content with the current viewport settings.
 
         Genera la imagen completa del planeta y luego recorta un área basada en el zoom.
+        Maneja de forma diferente los planetas con anillos y sin anillos.
 
         Returns:
             Rendered image
@@ -134,6 +135,14 @@ class Viewport:
             draw = ImageDraw.Draw(image)
             draw.text((10, 10), "No content set", fill=(255, 255, 255))
             return image
+
+        # Detectar si el contenido es un planeta con anillos o con atmósfera
+        has_rings = False
+        has_atmosphere = False
+        if hasattr(self.content, "has_rings"):
+            has_rings = self.content.has_rings
+        if hasattr(self.content, "has_atmosphere"):
+            has_atmosphere = self.content.has_atmosphere
 
         # Get the content image
         if hasattr(self.content, "render"):
@@ -157,13 +166,40 @@ class Viewport:
         center_y = content_height // 2
 
         # Calcular el tamaño del área a recortar basado en el zoom
-        # Zoom 1.0 significa ver una porción más pequeña (más zoom)
-        # Zoom 0.3 significa ver más contenido (menos zoom)
-        #
-        # Para un zoom de 1.0, queremos recortar un área del tamaño del viewport (512x512)
-        # Para un zoom de 0.3, queremos recortar un área más grande (aproximadamente 1706x1706)
-        # que luego se redimensionará a 512x512
-        crop_size = int(self.width / self.zoom)
+        # El comportamiento del zoom es diferente para planetas con y sin anillos
+
+        # Determinar el tipo de contenido y aplicar la lógica de zoom adecuada
+
+        # Obtener el tamaño original del contenido para calcular el factor de escala
+        original_size = 512  # Tamaño predeterminado
+
+        # Verificar si el contenido tiene un tamaño original almacenado
+        if hasattr(self.content, "params") and "original_size" in self.content.params:
+            original_size = self.content.params["original_size"]
+
+        # Calcular el factor de escala basado en el tamaño del contenido vs. el viewport
+        content_scale = content_width / original_size
+
+        # Zoom 1.0 = tamaño normal (ver el planeta completo)
+        # Zoom 0.3 = zoom out (ver el planeta más pequeño, con más espacio alrededor)
+
+        if has_rings:
+            # Para planetas con anillos, usamos la escala original
+            # que funciona bien con el canvas expandido que tienen los anillos
+            crop_size = int(self.width / self.zoom)
+        else:
+            # Para planetas sin anillos, necesitamos asegurarnos de que el tamaño
+            # del planeta sea consistente independientemente de si tiene atmósfera o no
+
+            # Invertimos la escala: 1.0 -> 1.0, 0.3 -> 3.33
+            inverse_zoom = 1.0 / self.zoom
+
+            # Ajustar el factor de zoom para que sea más notorio
+            # y compensar por cualquier cambio en el tamaño debido a la atmósfera
+            zoom_factor = inverse_zoom * content_scale
+
+            # Calculamos el tamaño del recorte
+            crop_size = int(self.width * zoom_factor)
 
         # Calcular las coordenadas de recorte, centradas en el planeta pero con desplazamiento por pan
         # El centro del planeta debe estar en el centro del viewport

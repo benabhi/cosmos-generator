@@ -13,6 +13,7 @@ from cosmos_generator.core.texture_generator import TextureGenerator
 
 # Import utility classes
 from cosmos_generator.utils.viewport import Viewport
+from cosmos_generator.utils.container import Container
 
 # Import feature classes
 from cosmos_generator.features.atmosphere import Atmosphere

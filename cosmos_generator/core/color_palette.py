@@ -136,6 +136,23 @@ class ColorPalette:
             "Shattered": [(139, 0, 0, 200), (165, 42, 42, 180), (178, 34, 34, 160)],
         }
 
+        # Cloud color palettes - Pure white with maximum opacity for all planet types
+        # This ensures clouds are always clearly visible regardless of planet color
+        self.cloud_palettes: Dict[str, List[RGBA]] = {
+            "Desert": [(255, 255, 255, 255)],      # Pure white for all planet types
+            "Furnace": [(255, 255, 255, 255)],    # Pure white for all planet types
+            "Grave": [(255, 255, 255, 255)],      # Pure white for all planet types
+            "Ice": [(255, 255, 255, 255)],        # Pure white for all planet types
+            "Jovian": [(255, 255, 255, 255)],     # Pure white for all planet types
+            "Jungle": [(255, 255, 255, 255)],     # Pure white for all planet types
+            "Living": [(255, 255, 255, 255)],     # Pure white for all planet types
+            "Ocean": [(255, 255, 255, 255)],      # Pure white for all planet types
+            "Rocky": [(255, 255, 255, 255)],      # Pure white for all planet types
+            "Tainted": [(255, 255, 255, 255)],    # Pure white for all planet types
+            "Vital": [(255, 255, 255, 255)],      # Pure white for all planet types
+            "Shattered": [(255, 255, 255, 255)],  # Pure white for all planet types
+        }
+
     def get_random_color(self, planet_type: str, category: str = "base") -> Color:
         """
         Get a random color from a specific planet type and category.
@@ -185,6 +202,22 @@ class ColorPalette:
             raise ValueError(f"Unknown planet type: {planet_type}")
 
         return self.rng.choice(self.ring_palettes[planet_type])
+
+    def get_cloud_color(self, planet_type: str) -> RGBA:
+        """
+        Get a random cloud color for a specific planet type.
+
+        Args:
+            planet_type: The type of planet
+
+        Returns:
+            An RGBA color for the clouds
+        """
+        if planet_type not in self.cloud_palettes:
+            # Default to white clouds if planet type not found
+            return (255, 255, 255, 180)
+
+        return self.rng.choice(self.cloud_palettes[planet_type])
 
     def blend_colors(self, color1: Color, color2: Color, ratio: float = 0.5) -> Color:
         """

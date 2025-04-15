@@ -80,6 +80,9 @@ python -m cosmos_generator planet --type desert --size 512 --seed 987 --output p
 # Con ruta de salida por defecto (output/planets/desert/987.png)
 python -m cosmos_generator planet --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
 
+# Generar planeta con nubes (cobertura de 0.7 o 70%)
+python -m cosmos_generator planet --type ocean --clouds 0.7 --seed 12345
+
 # Listar tipos de planetas disponibles
 python -m cosmos_generator planet --list-types
 ```
@@ -91,6 +94,7 @@ Opciones del subcomando `planet`:
 - `--output FILE`: Ruta del archivo de salida (default: output/planets/[type]/[seed].png)
 - `--rings`: Añadir anillos
 - `--atmosphere`: Añadir atmósfera
+- `--clouds VALUE`: Añadir nubes con cobertura específica (0.0-1.0, donde 1.0 es cobertura total)
 - `--light-intensity VALUE`: Intensidad de la luz (0.0-2.0)
 - `--light-angle DEG`: Ángulo de la fuente de luz (0-359)
 - `--rotation DEG`: Rotación en grados

@@ -17,7 +17,7 @@ def main():
     Generate Ocean planets with various combinations of features.
     """
     # Create output directory
-    output_dir = "output/test_ocean_combinations"
+    output_dir = "output/examples/test_ocean_combinations"
     os.makedirs(output_dir, exist_ok=True)
 
     # Create generator

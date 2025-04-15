@@ -256,208 +256,148 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Planet image with Saturn-like rings
         """
-        # Get base ring color for this planet type
+        # Asegurarse de que la imagen tiene canal alfa
+        if base_image.mode != "RGBA":
+            base_image = base_image.convert("RGBA")
+
+        # Obtener el color base para los anillos
         base_ring_color = self.color_palette.get_ring_color(self.PLANET_TYPE)
 
-        # Create a larger image to accommodate the rings
-        ring_width_factor = 2.5  # Rings extend this much beyond planet radius
+        # Crear un canvas más grande para los anillos (3.0 veces el tamaño del planeta)
+        ring_width_factor = 3.0  # Aumentado de 2.5 a 3.0 para mejor visualización
         canvas_size = int(self.size * ring_width_factor)
         result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
-        # Calculate planet position and dimensions
+        # Posición central y dimensiones del planeta
         center_x, center_y = canvas_size // 2, canvas_size // 2
         planet_radius = self.size // 2
         planet_offset = (canvas_size - self.size) // 2
 
-        # Calculate vertical compression factor
-        vertical_factor = 0.4  # Vertical radius as a fraction of horizontal radius
+        # Factor de compresión vertical para los anillos
+        vertical_factor = 0.3  # Más pronunciado para mejor efecto visual
 
-        # Create a random number generator with the same seed for consistency
-        rng = random.Random(self.seed)
+        # Determinar complejidad del sistema de anillos (1-3)
+        ring_complexity = self.rng.randint(1, 3)
 
-        # Determine the ring system complexity (1-3)
-        # 1: Minimal rings (few bands)
-        # 2: Medium complexity (moderate number of bands)
-        # 3: Full Saturn-like complexity (many bands)
-        ring_complexity = rng.randint(1, 3)
-
-        # Create the planet layer (for masking)
+        # Crear capa para el planeta (para máscaras)
         planet_layer = Image.new("1", (canvas_size, canvas_size), 0)
         draw_planet = ImageDraw.Draw(planet_layer)
         draw_planet.ellipse(
             [center_x - planet_radius, center_y - planet_radius,
-             center_x + planet_radius, center_y + planet_radius],
+            center_x + planet_radius, center_y + planet_radius],
             fill=1
         )
 
-        # Create a mask for the front half (only the bottom half of the image)
+        # Crear máscara para la mitad frontal
         front_mask = Image.new("L", (canvas_size, canvas_size), 0)
         draw_front = ImageDraw.Draw(front_mask)
         draw_front.rectangle([0, center_y, canvas_size, canvas_size], fill=255)
 
-        # Define the Saturn-like ring system with multiple rings and varying widths/opacities
-        # Base ring definitions with maximum opacity
-        # We'll select from these based on the complexity level
-        all_possible_rings = [
-            # (inner_radius_factor, outer_radius_factor, opacity, brightness)
-            # D Ring (innermost, thin and faint)
-            (1.20, 1.23, 0.9, 0.7),
-            # C Ring (darker, brownish)
-            (1.24, 1.35, 0.98, 0.75),
-            # B Ring Inner (bright and dense)
-            (1.36, 1.45, 1.0, 0.95),
-            # B Ring Middle (brightest section)
-            (1.46, 1.55, 1.0, 1.0),
-            # B Ring Outer (bright with some structure)
-            (1.56, 1.65, 1.0, 0.9),
-            # Cassini Division (prominent gap)
-            (1.66, 1.70, 0.8, 0.6),
-            # A Ring Inner (bright)
-            (1.71, 1.85, 0.98, 0.9),
-            # Encke Gap (thin dark gap)
-            (1.86, 1.87, 0.7, 0.5),
-            # A Ring Middle
-            (1.88, 1.95, 0.98, 0.85),
-            # Keeler Gap (very thin)
-            (1.96, 1.965, 0.7, 0.4),
-            # A Ring Outer (slightly fainter)
-            (1.97, 2.05, 0.95, 0.8),
-            # F Ring (thin, isolated outer ring)
-            (2.10, 2.12, 0.9, 0.7),
-            # G Ring (very faint, wide)
-            (2.15, 2.20, 0.85, 0.5)
-        ]
-
-        # Select rings based on complexity level
-        base_rings_selected = []
-
-        if ring_complexity == 1:  # Minimal rings
-            # Select only 3-4 main rings
-            main_rings = [
-                all_possible_rings[1],  # C Ring
-                all_possible_rings[3],  # B Ring Middle
-                all_possible_rings[6],  # A Ring Inner
-            ]
-            # Maybe add one more
-            if rng.random() > 0.5:
-                main_rings.append(all_possible_rings[10])  # A Ring Outer
-
-            base_rings_selected = main_rings
-
-        elif ring_complexity == 2:  # Medium complexity
-            # Select 6-8 rings
-            main_rings = [
-                all_possible_rings[1],  # C Ring
-                all_possible_rings[2],  # B Ring Inner
-                all_possible_rings[3],  # B Ring Middle
-                all_possible_rings[4],  # B Ring Outer
-                all_possible_rings[6],  # A Ring Inner
-                all_possible_rings[8],  # A Ring Middle
-            ]
-            # Maybe add 1-2 more
-            if rng.random() > 0.3:
-                main_rings.append(all_possible_rings[10])  # A Ring Outer
-            if rng.random() > 0.5:
-                main_rings.append(all_possible_rings[12])  # F Ring
-
-            base_rings_selected = main_rings
-
-        else:  # Full complexity (all rings)
-            base_rings_selected = all_possible_rings
-
-        # Add some random thin rings
-        extra_rings = []
-
-        # Determine how many additional thin rings to add based on complexity
-        if ring_complexity == 1:
-            num_extra_rings = rng.randint(0, 2)  # Few or no additional rings
-        elif ring_complexity == 2:
-            num_extra_rings = rng.randint(1, 3)  # Some additional rings
-        else:
-            num_extra_rings = rng.randint(2, 5)  # Many additional rings
-
-        for _ in range(num_extra_rings):
-            # Random position between 1.25 and 2.1
-            pos = 1.25 + 0.85 * rng.random()
-            # Very thin ring
-            thickness = 0.005 + 0.015 * rng.random()
-            # Random opacity (very high values for solid look)
-            opacity = 0.8 + 0.2 * rng.random()
-            # Random brightness
-            brightness = 0.8 + 0.2 * rng.random()
-
-            extra_rings.append((pos, pos + thickness, opacity, brightness))
-
-        # Combine and sort all rings
+        # Definiciones de anillos según la complejidad
         ring_definitions = []
 
-        # Add base rings with variation
-        for inner, outer, opacity, brightness in base_rings_selected:
-            # Vary the opacity and brightness for more realistic appearance
-            # Use minimal variation for opacity to keep rings very solid
-            varied_opacity = min(1.0, max(0.7, opacity * (0.9 + 0.15 * rng.random())))
-            varied_brightness = min(1.0, max(0.7, brightness * (0.95 + 0.1 * rng.random())))
+        if ring_complexity == 1:
+            # Sistema simple (3-4 anillos)
+            ring_definitions = [
+                (1.2, 1.35, 0.95, 0.8),  # Anillo interno
+                (1.4, 1.6, 1.0, 0.95),   # Anillo medio brillante
+                (1.65, 1.8, 0.9, 0.85),  # Anillo externo
+            ]
+            # Quizás añadir un anillo más
+            if self.rng.random() > 0.5:
+                ring_definitions.append((1.9, 2.0, 0.8, 0.7))
 
-            ring_definitions.append((inner, outer, varied_opacity, varied_brightness))
+        elif ring_complexity == 2:
+            # Sistema intermedio (5-7 anillos)
+            ring_definitions = [
+                (1.2, 1.3, 0.9, 0.75),    # Anillo interno (C)
+                (1.35, 1.45, 0.95, 0.9),  # Anillo B interno
+                (1.5, 1.65, 1.0, 0.95),   # Anillo B medio (brillante)
+                (1.7, 1.85, 0.9, 0.85),   # Anillo A interno
+                (1.9, 2.05, 0.85, 0.8),   # Anillo A externo
+            ]
+            # Quizás añadir anillos adicionales
+            if self.rng.random() > 0.4:
+                ring_definitions.append((2.1, 2.15, 0.75, 0.7))
 
-        # Add extra rings
-        ring_definitions.extend(extra_rings)
+        else:
+            # Sistema complejo (tipo Saturno, 8+ anillos)
+            ring_definitions = [
+                (1.2, 1.25, 0.8, 0.7),    # Anillo D (muy fino)
+                (1.28, 1.38, 0.9, 0.75),  # Anillo C
+                (1.4, 1.48, 0.95, 0.9),   # Anillo B interno
+                (1.5, 1.6, 1.0, 0.95),    # Anillo B medio (brillante)
+                (1.63, 1.68, 0.9, 0.85),  # Anillo B externo
+                (1.7, 1.72, 0.7, 0.6),    # División Cassini
+                (1.74, 1.85, 0.95, 0.9),  # Anillo A interno
+                (1.86, 1.88, 0.7, 0.65),  # Hueco de Encke
+                (1.9, 2.0, 0.9, 0.85),    # Anillo A externo
+                (2.1, 2.12, 0.75, 0.7)    # Anillo F (fino, aislado)
+            ]
 
-        # Sort by inner radius
+        # Añadir anillos finos aleatorios para variedad
+        num_extra_rings = 0
+        if ring_complexity == 1:
+            num_extra_rings = self.rng.randint(0, 1)
+        elif ring_complexity == 2:
+            num_extra_rings = self.rng.randint(1, 2)
+        else:
+            num_extra_rings = self.rng.randint(2, 4)
+
+        for _ in range(num_extra_rings):
+            pos = 1.25 + 0.8 * self.rng.random()
+            thickness = 0.005 + 0.01 * self.rng.random()
+            opacity = 0.7 + 0.3 * self.rng.random()
+            brightness = 0.7 + 0.3 * self.rng.random()
+            ring_definitions.append((pos, pos + thickness, opacity, brightness))
+
+        # Ordenar los anillos por radio interno
         ring_definitions.sort(key=lambda x: x[0])
 
-        # Note: We already created the random number generator above
-
-        # Process each ring
-        for i, (inner_factor, outer_factor, opacity, brightness) in enumerate(ring_definitions):
-            # Calculate this ring's dimensions
+        # Procesar cada anillo - PRIMERO LOS ARCOS TRASEROS
+        for inner_factor, outer_factor, opacity, brightness in ring_definitions:
+            # Calcular dimensiones
             outer_rx = int(planet_radius * outer_factor)
-            outer_ry = int(outer_rx * vertical_factor)  # Apply vertical compression
+            outer_ry = int(outer_rx * vertical_factor)
 
             inner_rx = int(planet_radius * inner_factor)
-            inner_ry = int(inner_rx * vertical_factor)  # Apply vertical compression
+            inner_ry = int(inner_rx * vertical_factor)
 
-            # Vary the color slightly for each ring
+            # Variar ligeramente el color
             r, g, b, a = base_ring_color
-            color_variation = 0.1  # Amount to vary the color
+            color_var = 0.1
 
-            # Apply brightness, opacity and slight color variation
+            # Color con brillo, opacidad y variación
             ring_color = (
-                max(0, min(255, int(r * brightness * (1 + (rng.random() - 0.5) * color_variation)))),
-                max(0, min(255, int(g * brightness * (1 + (rng.random() - 0.5) * color_variation)))),
-                max(0, min(255, int(b * brightness * (1 + (rng.random() - 0.5) * color_variation)))),
+                max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
                 max(0, min(255, int(a * opacity)))
             )
 
-            # Create the ring layer (ellipse with hole)
+            # Crear capa para el anillo
             ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
             draw_ring = ImageDraw.Draw(ring_layer)
 
-            # Draw outer ellipse
+            # Dibujar elipse externa
             draw_ring.ellipse(
-                [center_x - outer_rx, center_y - outer_ry, center_x + outer_rx, center_y + outer_ry],
+                [center_x - outer_rx, center_y - outer_ry,
+                center_x + outer_rx, center_y + outer_ry],
                 fill=1
             )
 
-            # Draw inner ellipse (hole)
+            # Dibujar elipse interna (agujero)
             draw_ring.ellipse(
-                [center_x - inner_rx, center_y - inner_ry, center_x + inner_rx, center_y + inner_ry],
+                [center_x - inner_rx, center_y - inner_ry,
+                center_x + inner_rx, center_y + inner_ry],
                 fill=0
             )
 
-            # External arcs: difference between the ring and the planet
+            # Arcos externos: diferencia entre anillo y planeta
             ring_arcs = ImageChops.subtract(ring_layer.convert("L"), planet_layer.convert("L"))
 
-            # Intersection between the ring and the planet
-            ring_intersection = ImageChops.logical_and(ring_layer, planet_layer)
-
-            # The front band is only the front half of the intersection
-            ring_front = ImageChops.multiply(ring_intersection.convert("L"), front_mask)
-
-            # Apply lighting to the ring color based on light angle
-            shadow_factor = 0.6  # Darkness of the shadow
-
-            # Slightly darker color for the arcs (parts behind the planet)
+            # Color más oscuro para los arcos (detrás del planeta)
+            shadow_factor = 0.6
             arcs_color = (
                 int(ring_color[0] * shadow_factor),
                 int(ring_color[1] * shadow_factor),
@@ -465,77 +405,67 @@ class AbstractPlanet(AbstractCelestialBody):
                 ring_color[3]
             )
 
-            # Create the colored ring arcs
+            # Crear arcos coloreados
             ring_arcs_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
             ring_arcs_colored.paste(arcs_color, mask=ring_arcs)
 
-            # Create the colored front band
-            ring_front_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-            ring_front_colored.paste(ring_color, mask=ring_front)
-
-            # Composite the rings in the correct Z-buffer order:
-            # 1. Ring arcs (behind the planet)
+            # Añadir arcos (detrás del planeta)
             result.paste(ring_arcs_colored, (0, 0), ring_arcs_colored)
 
-            # Note: We'll add the front bands after the planet is added
-
-        # Add the planet on top of the rings that are behind it
+        # Añadir el planeta sobre los anillos traseros
         result.paste(base_image, (planet_offset, planet_offset), base_image)
 
-        # Now add the front bands (parts of rings that pass in front of the planet)
-        for i, (inner_factor, outer_factor, opacity, brightness) in enumerate(ring_definitions):
-            # Calculate this ring's dimensions
+        # AHORA AÑADIR BANDAS FRONTALES
+        for inner_factor, outer_factor, opacity, brightness in ring_definitions:
+            # Calcular dimensiones
             outer_rx = int(planet_radius * outer_factor)
-            outer_ry = int(outer_rx * vertical_factor)  # Apply vertical compression
+            outer_ry = int(outer_rx * vertical_factor)
 
             inner_rx = int(planet_radius * inner_factor)
-            inner_ry = int(inner_rx * vertical_factor)  # Apply vertical compression
+            inner_ry = int(inner_rx * vertical_factor)
 
-            # Vary the color slightly for each ring
+            # Variar ligeramente el color
             r, g, b, a = base_ring_color
-            color_variation = 0.1  # Amount to vary the color
+            color_var = 0.1
 
-            # Apply brightness, opacity and slight color variation
+            # Color con brillo, opacidad y variación
             ring_color = (
-                max(0, min(255, int(r * brightness * (1 + (rng.random() - 0.5) * color_variation)))),
-                max(0, min(255, int(g * brightness * (1 + (rng.random() - 0.5) * color_variation)))),
-                max(0, min(255, int(b * brightness * (1 + (rng.random() - 0.5) * color_variation)))),
+                max(0, min(255, int(r * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                max(0, min(255, int(g * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
+                max(0, min(255, int(b * brightness * (1 + (self.rng.random() - 0.5) * color_var)))),
                 max(0, min(255, int(a * opacity)))
             )
 
-            # Create the ring layer (ellipse with hole)
+            # Crear capa para el anillo
             ring_layer = Image.new("1", (canvas_size, canvas_size), 0)
             draw_ring = ImageDraw.Draw(ring_layer)
 
-            # Draw outer ellipse
+            # Dibujar elipse externa
             draw_ring.ellipse(
-                [center_x - outer_rx, center_y - outer_ry, center_x + outer_rx, center_y + outer_ry],
+                [center_x - outer_rx, center_y - outer_ry,
+                center_x + outer_rx, center_y + outer_ry],
                 fill=1
             )
 
-            # Draw inner ellipse (hole)
+            # Dibujar elipse interna (agujero)
             draw_ring.ellipse(
-                [center_x - inner_rx, center_y - inner_ry, center_x + inner_rx, center_y + inner_ry],
+                [center_x - inner_rx, center_y - inner_ry,
+                center_x + inner_rx, center_y + inner_ry],
                 fill=0
             )
 
-            # Intersection between the ring and the planet
+            # Intersección entre anillo y planeta
             ring_intersection = ImageChops.logical_and(ring_layer, planet_layer)
 
-            # The front band is only the front half of the intersection
+            # La banda frontal es solo la mitad frontal de la intersección
             ring_front = ImageChops.multiply(ring_intersection.convert("L"), front_mask)
 
-            # Create the colored front band
+            # Crear banda frontal coloreada
             ring_front_colored = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
             ring_front_colored.paste(ring_color, mask=ring_front)
 
-            # Add the front band on top of the planet
+            # Añadir la banda frontal sobre el planeta
             result.paste(ring_front_colored, (0, 0), ring_front_colored)
 
-        # Resize the result to match the original requested size
-        # This ensures that the image with rings respects the viewport size
-        original_size = self.params.get("original_size", self.size)
-        if canvas_size != original_size:
-            result = result.resize((original_size, original_size), Image.LANCZOS)
-
+        # IMPORTANTE: NO redimensionar el resultado, devolver imagen completa con anillos
         return result

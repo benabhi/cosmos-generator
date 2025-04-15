@@ -58,25 +58,44 @@ container.export("desert_planet_container.png")
 
 ### Command Line Interface
 
-```bash
-# Con ruta de salida personalizada
-python -m cosmos_generator --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere --light-angle 30
+Cosmos Generator utiliza una estructura de subcomandos para organizar sus funcionalidades:
 
-# Con ruta de salida por defecto (output/planets/desert/987.png)
-python -m cosmos_generator --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
+```bash
+# Mostrar ayuda general
+python -m cosmos_generator --help
+
+# Mostrar versión
+python -m cosmos_generator --version
+
+# Mostrar ayuda específica para el subcomando planet
+python -m cosmos_generator planet --help
 ```
 
-Options:
-- `--type TYPE`: Planet type (desert, furnace, etc.) - case insensitive
-- `--size SIZE`: Image size in pixels (default: 512)
-- `--seed SEED`: Seed for reproducible generation (default: random)
-- `--output FILE`: Output file path (default: output/planets/[type]/[seed].png)
-- `--rings`: Add rings
-- `--atmosphere`: Add atmosphere
-- `--light-intensity VALUE`: Light intensity (0.0-2.0)
-- `--light-angle DEG`: Light source angle (0-359)
-- `--rotation DEG`: Rotation in degrees
-- `--help`: Display help
+#### Generación de Planetas
+
+```bash
+# Con ruta de salida personalizada
+python -m cosmos_generator planet --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere --light-angle 30
+
+# Con ruta de salida por defecto (output/planets/desert/987.png)
+python -m cosmos_generator planet --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
+
+# Listar tipos de planetas disponibles
+python -m cosmos_generator planet --list-types
+```
+
+Opciones del subcomando `planet`:
+- `--type TYPE`: Tipo de planeta (desert, furnace, etc.) - insensible a mayúsculas/minúsculas
+- `--size SIZE`: Tamaño de la imagen en píxeles (default: 512)
+- `--seed SEED`: Semilla para generación reproducible (default: aleatorio)
+- `--output FILE`: Ruta del archivo de salida (default: output/planets/[type]/[seed].png)
+- `--rings`: Añadir anillos
+- `--atmosphere`: Añadir atmósfera
+- `--light-intensity VALUE`: Intensidad de la luz (0.0-2.0)
+- `--light-angle DEG`: Ángulo de la fuente de luz (0-359)
+- `--rotation DEG`: Rotación en grados
+- `--list-types`: Listar tipos de planetas disponibles
+- `--help`: Mostrar ayuda
 
 ## Requirements
 

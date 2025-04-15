@@ -32,10 +32,10 @@ class CosmosGeneratorCLI:
             help="Subcommand to execute"
         )
         self.subcommands: Dict[str, Callable] = {}
-
+        
         # Register all available subcommands
         self._discover_subcommands()
-
+        
         # Add version information
         self.parser.add_argument(
             "--version", action="store_true",
@@ -51,24 +51,24 @@ class CosmosGeneratorCLI:
         try:
             # Import the subcommands package
             from cosmos_generator import subcommands
-
+            
             # Get the package path
             package_path = os.path.dirname(subcommands.__file__)
-
+            
             # Iterate through all modules in the package
             for _, module_name, is_pkg in pkgutil.iter_modules([package_path]):
                 # Skip __init__.py
                 if module_name.startswith('_'):
                     continue
-
+                
                 # Import the module
                 module = importlib.import_module(f"cosmos_generator.subcommands.{module_name}")
-
+                
                 # Check if the module has a register_subcommand function
                 if hasattr(module, 'register_subcommand'):
                     # Register the subcommand
                     module.register_subcommand(self.subparsers)
-
+                    
                     # Store the main function for this subcommand
                     if hasattr(module, 'main'):
                         self.subcommands[module_name] = module.main
@@ -79,26 +79,26 @@ class CosmosGeneratorCLI:
     def run(self, args: Optional[List[str]] = None) -> int:
         """
         Parse arguments and dispatch to the appropriate subcommand.
-
+        
         Args:
             args: Command line arguments (defaults to sys.argv[1:])
-
+            
         Returns:
             Exit code
         """
         parsed_args = self.parser.parse_args(args)
-
+        
         # Handle version information
         if hasattr(parsed_args, 'version') and parsed_args.version:
             from cosmos_generator import __version__
             print(f"Cosmos Generator v{__version__}")
             return 0
-
+        
         # If no subcommand was specified, show help
         if not parsed_args.subcommand:
             self.parser.print_help()
             return 1
-
+        
         # Dispatch to the appropriate subcommand
         if parsed_args.subcommand in self.subcommands:
             return self.subcommands[parsed_args.subcommand](parsed_args)
@@ -111,7 +111,7 @@ class CosmosGeneratorCLI:
 def main() -> int:
     """
     Main entry point for the command-line interface.
-
+    
     Returns:
         Exit code
     """

@@ -198,22 +198,38 @@ class Atmosphere:
         # Get the size of the planet image
         size = planet_image.width
 
-        # Create a mask for the planet
-        planet_mask = Image.new("L", (size, size), 0)
-        planet_draw = ImageDraw.Draw(planet_mask)
-        planet_draw.ellipse((0, 0, size-1, size-1), fill=255)
+        # Calculate the atmospheric thickness (fixed at 10% of planet radius)
+        atmo_thickness = int(size * 0.1)  # 10% of planet size
 
-        # Create a new image for the atmosphere
-        atmosphere = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        # Create a larger canvas to accommodate the atmosphere
+        canvas_size = size + atmo_thickness * 2
+        result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+
+        # Calculate center and planet radius
+        center = canvas_size // 2
+        planet_radius = size // 2
+
+        # Create the atmosphere layer
+        atmosphere = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
         atmosphere_draw = ImageDraw.Draw(atmosphere)
-        atmosphere_draw.ellipse((0, 0, size-1, size-1), fill=atmosphere_color)
 
-        # Apply multiple blur passes for a nice glow effect
-        blur_radius = int(5 + 15 * intensity)  # Scale blur with intensity
-        for _ in range(3):  # Multiple passes create a smoother glow
-            atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
+        # Draw the atmosphere as a larger circle
+        atmo_radius = planet_radius + atmo_thickness
+        atmosphere_draw.ellipse(
+            (center - atmo_radius, center - atmo_radius,
+             center + atmo_radius, center + atmo_radius),
+            fill=atmosphere_color
+        )
 
-        # Composite the planet on top of the atmosphere
-        result = Image.alpha_composite(atmosphere, planet_image)
+        # Apply blur for a nice glow effect
+        blur_radius = int(5 + 10 * intensity)  # Scale blur with intensity
+        atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
+
+        # Paste the atmosphere onto the result
+        result.paste(atmosphere, (0, 0), atmosphere)
+
+        # Paste the planet in the center
+        planet_pos = (center - planet_radius, center - planet_radius)
+        result.paste(planet_image, planet_pos, planet_image)
 
         return result

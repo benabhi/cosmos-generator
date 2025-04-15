@@ -47,8 +47,8 @@ def parse_args() -> argparse.Namespace:
     # Features
     parser.add_argument("--rings", action="store_true",
                        help="Add rings")
-    parser.add_argument("--atmosphere", type=float, default=None,
-                       help="Atmosphere intensity (0.0-1.0)")
+    parser.add_argument("--atmosphere", action="store_true",
+                       help="Add atmosphere")
     parser.add_argument("--clouds", type=float, default=None,
                        help="Cloud coverage (0.0-1.0)")
 
@@ -121,9 +121,8 @@ def main() -> int:
     if args.rings:
         params["rings"] = True
 
-    if args.atmosphere is not None:
+    if args.atmosphere:
         params["atmosphere"] = True
-        params["atmosphere_intensity"] = max(0.0, min(1.0, args.atmosphere))
 
     if args.clouds is not None:
         params["clouds"] = True

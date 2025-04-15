@@ -12,10 +12,9 @@ del planeta para que la atmósfera quepa en el tamaño original.
 """
 from typing import Optional
 import math
-from PIL import Image, ImageDraw, ImageChops
+from PIL import Image, ImageDraw, ImageChops, ImageFilter
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
-from cosmos_generator.features.atmosphere import Atmosphere
 from cosmos_generator.utils import image_utils, lighting_utils
 
 
@@ -49,20 +48,13 @@ class AbstractPlanet(AbstractCelestialBody):
 
         # Feature flags (need to check these before adjusting size)
         has_atmosphere = kwargs.get("atmosphere", False)
-        atmosphere_intensity = kwargs.get("atmosphere_intensity", 0.5)
         has_rings = kwargs.get("rings", False)
 
         # Create a params dictionary to store additional parameters
         self.params = {"original_size": original_size}
 
-        # Adjust size if the planet has atmosphere to ensure it fits in the viewport
-        if has_atmosphere:
-            # Reduce size by a small amount to accommodate the atmosphere
-            atmosphere_padding = int(size * 0.05 * atmosphere_intensity)  # 2-5% padding
-            adjusted_size = size - atmosphere_padding * 2
-            super().__init__(seed=seed, size=adjusted_size, **kwargs)
-        else:
-            super().__init__(seed=seed, size=size, **kwargs)
+        # No need to adjust size for atmosphere anymore, as we handle it in _apply_atmosphere
+        super().__init__(seed=seed, size=size, **kwargs)
 
         # Default lighting parameters
         self.light_angle = kwargs.get("light_angle", 45.0)
@@ -72,7 +64,6 @@ class AbstractPlanet(AbstractCelestialBody):
         # Feature flags
         self.has_rings = has_rings
         self.has_atmosphere = has_atmosphere
-        self.atmosphere_intensity = atmosphere_intensity
         self.has_clouds = kwargs.get("clouds", False)
         self.cloud_coverage = kwargs.get("cloud_coverage", 0.5)
 
@@ -132,50 +123,24 @@ class AbstractPlanet(AbstractCelestialBody):
         """
         result = base_image
 
-        # Apply clouds if enabled
+        # The order of applying features is important:
+        # 1. First apply atmosphere if enabled (before anything else)
+        if self.has_atmosphere:
+            result = self._apply_atmosphere(result)
+
+        # 2. Then apply clouds if enabled
         if self.has_clouds:
             result = self._apply_clouds(result)
 
-        # The order of applying features is important:
-        # 1. First apply rings if enabled (they need the base planet without atmosphere)
-        planet_with_rings = None
+        # 3. Finally apply rings if enabled
         if self.has_rings:
-            planet_with_rings = self._apply_rings(result)
-
-        # 2. Then apply atmosphere if enabled
-        if self.has_atmosphere:
-            # If we have rings, apply atmosphere to the base planet first
-            atmosphere_result = self._apply_atmosphere(result)
-
-            # If we have rings, composite the atmosphere with the rings
-            if planet_with_rings is not None:
-                # Get the size of the rings image
-                rings_size = planet_with_rings.width
-
-                # Create a new image with the same size as the rings
-                final_result = Image.new("RGBA", (rings_size, rings_size), (0, 0, 0, 0))
-
-                # Calculate the offset to center the atmosphere in the rings image
-                offset = (rings_size - atmosphere_result.width) // 2
-
-                # Paste the atmosphere in the center
-                final_result.paste(atmosphere_result, (offset, offset), atmosphere_result)
-
-                # Composite with the rings
-                result = Image.alpha_composite(final_result, planet_with_rings)
-            else:
-                # No rings, just use the atmosphere result
-                result = atmosphere_result
-        elif self.has_rings:
-            # We have rings but no atmosphere
-            result = planet_with_rings
+            result = self._apply_rings(result)
 
         return result
 
     def _apply_atmosphere(self, base_image: Image.Image) -> Image.Image:
         """
-        Apply atmospheric glow to the planet with a fine light line around the edge.
-        The atmosphere will be darker in shadowed areas and brighter in lit areas.
+        Apply a simple atmospheric glow to the planet with a fine light line around the edge.
 
         Args:
             base_image: Base planet image
@@ -183,18 +148,72 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Planet image with atmosphere
         """
+        # Ensure the planet image has an alpha channel
+        if base_image.mode != "RGBA":
+            base_image = base_image.convert("RGBA")
+
         # Get atmosphere color for this planet type
         atmosphere_color = self.color_palette.get_atmosphere_color(self.PLANET_TYPE)
 
-        # Use the atmosphere feature with the light angle
-        atmosphere_feature = Atmosphere(seed=self.seed)
-        result = atmosphere_feature.apply_atmosphere(
-            planet_image=base_image,
-            planet_type=self.PLANET_TYPE,
-            intensity=self.atmosphere_intensity,
-            color=atmosphere_color,
-            light_angle=self.light_angle
+        # Make atmosphere more visible by increasing opacity
+        r, g, b, a = atmosphere_color
+        atmosphere_color = (r, g, b, min(255, a * 2))  # Double the opacity, max 255
+
+        # Get the size of the planet image
+        size = base_image.width
+
+        # Create a larger canvas for the atmosphere (30% larger than the planet)
+        atmosphere_padding = int(size * 0.15)  # 15% padding on each side
+        canvas_size = size + atmosphere_padding * 2
+        result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+
+        # Calculate center and planet radius
+        center = canvas_size // 2
+        planet_radius = size // 2
+
+        # Create the atmosphere layer
+        atmosphere = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+        atmosphere_draw = ImageDraw.Draw(atmosphere)
+
+        # Draw the atmosphere as a larger circle
+        atmosphere_radius = planet_radius + atmosphere_padding
+        atmosphere_draw.ellipse(
+            (center - atmosphere_radius, center - atmosphere_radius,
+             center + atmosphere_radius, center + atmosphere_radius),
+            fill=atmosphere_color
         )
+
+        # Apply blur for a nice glow effect - use smaller blur for sharper edge
+        blur_radius = atmosphere_padding // 3
+        atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
+
+        # Paste the atmosphere onto the result
+        result.paste(atmosphere, (0, 0), atmosphere)
+
+        # Paste the planet in the center
+        planet_pos = (center - planet_radius, center - planet_radius)
+        result.paste(base_image, planet_pos, base_image)
+
+        # Add a thin bright halo right at the edge of the planet for extra visibility
+        halo = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+        halo_draw = ImageDraw.Draw(halo)
+
+        # Draw a thin ring at the exact edge of the planet
+        halo_radius = planet_radius + 1  # Just 1 pixel larger than the planet
+        halo_color = (r, g, b, 255)  # Full opacity for the halo
+
+        # Draw the halo as a thin ring
+        halo_draw.ellipse(
+            (center - halo_radius, center - halo_radius,
+             center + halo_radius, center + halo_radius),
+            outline=halo_color, width=2
+        )
+
+        # Apply a very small blur to soften the halo slightly
+        halo = halo.filter(ImageFilter.GaussianBlur(1))
+
+        # Composite the halo onto the result
+        result = Image.alpha_composite(result, halo)
 
         return result
 
@@ -267,7 +286,7 @@ class AbstractPlanet(AbstractCelestialBody):
         Apply a Saturn-like ring system with multiple concentric rings of varying widths and opacities.
 
         Args:
-            base_image: Base planet image
+            base_image: Base planet image (may include atmosphere)
 
         Returns:
             Planet image with Saturn-like rings
@@ -279,15 +298,24 @@ class AbstractPlanet(AbstractCelestialBody):
         # Obtener el color base para los anillos
         base_ring_color = self.color_palette.get_ring_color(self.PLANET_TYPE)
 
-        # Crear un canvas más grande para los anillos (3.0 veces el tamaño del planeta)
-        ring_width_factor = 3.0  # Aumentado de 2.5 a 3.0 para mejor visualización
-        canvas_size = int(self.size * ring_width_factor)
+        # IMPORTANTE: Usar el tamaño original del planeta, no el tamaño de la imagen con atmósfera
+        # Esto asegura que los anillos se basen en el diámetro del planeta, no en la atmósfera
+        original_planet_size = self.size
+        planet_radius = original_planet_size // 2
+
+        # Obtener el tamaño actual de la imagen (puede incluir atmósfera)
+        current_image_size = base_image.width
+
+        # Crear un canvas más grande para los anillos (3.0 veces el tamaño del planeta original)
+        ring_width_factor = 3.0
+        canvas_size = int(original_planet_size * ring_width_factor)
         result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
-        # Posición central y dimensiones del planeta
+        # Posición central del canvas
         center_x, center_y = canvas_size // 2, canvas_size // 2
-        planet_radius = self.size // 2
-        planet_offset = (canvas_size - self.size) // 2
+
+        # Calcular el offset para centrar la imagen actual (con atmósfera) en el canvas
+        planet_offset = (canvas_size - current_image_size) // 2
 
         # Factor de compresión vertical para los anillos
         vertical_factor = 0.3  # Más pronunciado para mejor efecto visual

@@ -43,9 +43,7 @@ planet = generator.create("Desert", {
         "angle": 45,
         "falloff": 0.7
     },
-    "atmosphere": {
-        "intensity": 0.8
-    }
+    "atmosphere": True
 })
 
 # Basic save method
@@ -62,10 +60,10 @@ container.export("desert_planet_container.png")
 
 ```bash
 # Con ruta de salida personalizada
-python -m cosmos_generator --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere 0.7 --light-angle 30
+python -m cosmos_generator --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere --light-angle 30
 
 # Con ruta de salida por defecto (output/planets/desert/987.png)
-python -m cosmos_generator --type desert --size 512 --seed 987 --rings --atmosphere 0.7 --light-angle 30
+python -m cosmos_generator --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
 ```
 
 Options:
@@ -74,7 +72,7 @@ Options:
 - `--seed SEED`: Seed for reproducible generation (default: random)
 - `--output FILE`: Output file path (default: output/planets/[type]/[seed].png)
 - `--rings`: Add rings
-- `--atmosphere VALUE`: Atmosphere intensity (0.0-1.0)
+- `--atmosphere`: Add atmosphere
 - `--light-intensity VALUE`: Light intensity (0.0-2.0)
 - `--light-angle DEG`: Light source angle (0-359)
 - `--rotation DEG`: Rotation in degrees

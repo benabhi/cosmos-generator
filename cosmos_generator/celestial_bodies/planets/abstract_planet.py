@@ -200,17 +200,34 @@ class AbstractPlanet(AbstractCelestialBody):
 
         # Draw a thin ring at the exact edge of the planet
         halo_radius = planet_radius + 1  # Just 1 pixel larger than the planet
-        halo_color = (r, g, b, 255)  # Full opacity for the halo
+
+        # If the planet will have rings, make the halo more visible
+        if self.has_rings:
+            halo_color = (r, g, b, 255)  # Full opacity for the halo
+            halo_width = 3  # Slightly thicker halo for planets with rings
+
+            # Add a second, outer halo for extra visibility with rings
+            outer_halo_radius = planet_radius + 3
+            halo_draw.ellipse(
+                (center - outer_halo_radius, center - outer_halo_radius,
+                 center + outer_halo_radius, center + outer_halo_radius),
+                outline=halo_color, width=1
+            )
+        else:
+            halo_color = (r, g, b, 255)  # Full opacity for the halo
+            halo_width = 2  # Normal width for planets without rings
 
         # Draw the halo as a thin ring
         halo_draw.ellipse(
             (center - halo_radius, center - halo_radius,
              center + halo_radius, center + halo_radius),
-            outline=halo_color, width=2
+            outline=halo_color, width=halo_width
         )
 
         # Apply a very small blur to soften the halo slightly
-        halo = halo.filter(ImageFilter.GaussianBlur(1))
+        # For planets with rings, use less blur to keep the halo more defined
+        blur_amount = 0.5 if self.has_rings else 1
+        halo = halo.filter(ImageFilter.GaussianBlur(blur_amount))
 
         # Composite the halo onto the result
         result = Image.alpha_composite(result, halo)

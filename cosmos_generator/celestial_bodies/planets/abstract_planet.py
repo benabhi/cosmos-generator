@@ -80,7 +80,7 @@ class AbstractPlanet(AbstractCelestialBody):
         texture = self.generate_texture()
 
         # Save the base texture for debugging
-        debug_dir = os.path.join("output", "debug", "textures", "planets")
+        debug_dir = os.path.join("output", "debug", "textures", "terrain")
         os.makedirs(debug_dir, exist_ok=True)
         texture.save(os.path.join(debug_dir, f"{self.seed}.png"))
 
@@ -387,14 +387,13 @@ class AbstractPlanet(AbstractCelestialBody):
         # Apply the cloud mask
         clouds.putalpha(cloud_mask)
 
-        # Save the cloud mask for debugging
-        debug_dir = os.path.join("output", "debug")
-        os.makedirs(debug_dir, exist_ok=True)
-        cloud_mask.save(os.path.join(debug_dir, f"cloud_mask_{self.PLANET_TYPE}_{self.seed}.png"))
-
-        # Save the cloud texture in the specified location
-        clouds_dir = os.path.join("output", "textures", "clouds")
+        # Save both cloud mask and enhanced cloud texture in the same location
+        clouds_dir = os.path.join("output", "debug", "textures", "clouds")
         os.makedirs(clouds_dir, exist_ok=True)
+
+        # Save the original cloud mask
+        cloud_mask.save(os.path.join(clouds_dir, f"mask_{self.seed}.png"))
+
         # Save a copy of the cloud mask with better visibility for reference
         enhanced_mask = cloud_mask.copy()
         # Enhance contrast for better visibility when viewed directly
@@ -404,7 +403,7 @@ class AbstractPlanet(AbstractCelestialBody):
                 if pixel > 0:  # If there's any cloud at all
                     # Boost low values for better visibility
                     enhanced_mask.putpixel((x, y), min(255, pixel + 50))
-        enhanced_mask.save(os.path.join(clouds_dir, f"{self.seed}.png"))
+        enhanced_mask.save(os.path.join(clouds_dir, f"cloud_{self.seed}.png"))
 
         # Create a normal map from the cloud noise for 3D lighting effect
         # Use the original cloud_noise directly since it's already in the right format

@@ -3,9 +3,11 @@ Abstract base class for all planet types.
 """
 from typing import Dict, Any, Optional, Tuple, List
 import random
+import math
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
+from cosmos_generator.features.atmosphere import Atmosphere
 from cosmos_generator.utils import image_utils, lighting_utils
 
 
@@ -112,7 +114,8 @@ class AbstractPlanet(AbstractCelestialBody):
 
     def _apply_atmosphere(self, base_image: Image.Image) -> Image.Image:
         """
-        Apply atmospheric glow to the planet.
+        Apply atmospheric glow to the planet with a fine light line around the edge.
+        The atmosphere will be darker in shadowed areas and brighter in lit areas.
 
         Args:
             base_image: Base planet image
@@ -123,27 +126,15 @@ class AbstractPlanet(AbstractCelestialBody):
         # Get atmosphere color for this planet type
         atmosphere_color = self.color_palette.get_atmosphere_color(self.PLANET_TYPE)
 
-        # Create a larger circle for the atmosphere
-        atmosphere_size = int(self.size * (1.0 + 0.1 * self.atmosphere_intensity))
-        atmosphere = Image.new("RGBA", (atmosphere_size, atmosphere_size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(atmosphere)
-
-        # Draw the atmosphere circle
-        draw.ellipse((0, 0, atmosphere_size-1, atmosphere_size-1), fill=atmosphere_color)
-
-        # Blur the atmosphere
-        blur_radius = int(self.size * 0.05 * self.atmosphere_intensity)
-        atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
-
-        # Create a new image for the result
-        result = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
-
-        # Paste the atmosphere centered on the result
-        offset = (self.size - atmosphere_size) // 2
-        result.paste(atmosphere, (offset, offset), atmosphere)
-
-        # Paste the planet on top
-        result.paste(base_image, (0, 0), base_image)
+        # Use the atmosphere feature with the light angle
+        atmosphere_feature = Atmosphere(seed=self.seed)
+        result = atmosphere_feature.apply_atmosphere(
+            planet_image=base_image,
+            planet_type=self.PLANET_TYPE,
+            intensity=self.atmosphere_intensity,
+            color=atmosphere_color,
+            light_angle=self.light_angle
+        )
 
         return result
 

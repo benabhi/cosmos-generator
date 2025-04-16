@@ -8,6 +8,8 @@ import shutil
 
 from typing import Any, List
 
+import config
+
 
 def register_subcommand(subparsers: Any) -> None:
     """
@@ -51,8 +53,7 @@ def main(args: argparse.Namespace) -> int:
     clean_examples = args.examples or args.all or not (args.debug or args.examples or args.results)
     clean_results = args.results or args.all or not (args.debug or args.examples or args.results)
 
-    # Base output directory
-    base_dir = "output/planets"
+    # Base output directory is defined in config.py
 
     # Initialize counters
     files_removed = 0
@@ -67,21 +68,21 @@ def main(args: argparse.Namespace) -> int:
     if clean_debug:
         # Add debug directories to clean
         dirs_to_clean.extend([
-            os.path.join(base_dir, "debug", "textures", "clouds"),
-            os.path.join(base_dir, "debug", "textures", "terrain")
+            config.PLANETS_CLOUDS_TEXTURES_DIR,
+            config.PLANETS_TERRAIN_TEXTURES_DIR
         ])
 
         # Add log file to files to clean
-        log_file = os.path.join(base_dir, "debug", "planets.log")
+        log_file = config.PLANETS_LOG_FILE
         if os.path.exists(log_file):
             files_to_clean.append(log_file)
 
     if clean_examples:
-        dirs_to_clean.append(os.path.join(base_dir, "examples"))
+        dirs_to_clean.append(config.PLANETS_EXAMPLES_DIR)
 
     if clean_results:
         # Get all planet type directories in the result directory
-        result_dir = os.path.join(base_dir, "result")
+        result_dir = config.PLANETS_RESULT_DIR
         if os.path.exists(result_dir):
             planet_types = [d for d in os.listdir(result_dir)
                            if os.path.isdir(os.path.join(result_dir, d))]

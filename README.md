@@ -5,7 +5,7 @@ A Python library for procedurally generating detailed images of celestial bodies
 ## Features
 
 - Generate 12 different planet types with unique visual characteristics
-- Fixed resolution of 512x512 pixels for consistent display
+- Fixed resolution of 512x512 pixels for consistent display (not configurable by users)
 - Container class for displaying planets with proper proportions
 - PNG output format with transparency
 - Random seed or specified seed for reproducibility
@@ -35,7 +35,6 @@ generator = PlanetGenerator()
 
 # Generate desert planet with rings and atmosphere
 planet = generator.create("Desert", {
-    "size": 512,  # Tamaño fijo de 512x512
     "seed": 12345,
     "rings": True,
     "lighting": {
@@ -75,10 +74,10 @@ python -m cosmos_generator planet --help
 
 ```bash
 # Con ruta de salida personalizada
-python -m cosmos_generator planet generate --type desert --size 512 --seed 987 --output planet.png --rings --atmosphere --light-angle 30
+python -m cosmos_generator planet generate --type desert --seed 987 --output planet.png --rings --atmosphere --light-angle 30
 
 # Con ruta de salida por defecto (output/planets/result/desert/987.png)
-python -m cosmos_generator planet generate --type desert --size 512 --seed 987 --rings --atmosphere --light-angle 30
+python -m cosmos_generator planet generate --type desert --seed 987 --rings --atmosphere --light-angle 30
 
 # Generar planeta con nubes (cobertura de 0.7 o 70%)
 python -m cosmos_generator planet generate --type ocean --clouds 0.7 --seed 12345
@@ -104,7 +103,6 @@ python -m cosmos_generator planet logs --path          # Show the log file path
 
 Opciones del subcomando `planet generate`:
 - `--type TYPE`: Tipo de planeta (desert, furnace, etc.) - insensible a mayúsculas/minúsculas
-- `--size SIZE`: Tamaño de la imagen en píxeles (default: 512)
 - `--seed SEED`: Semilla para generación reproducible (default: aleatorio)
 - `--output FILE`: Ruta del archivo de salida (default: output/planets/result/[type]/[seed].png)
 - `--rings`: Añadir anillos
@@ -113,6 +111,7 @@ Opciones del subcomando `planet generate`:
 - `--light-intensity VALUE`: Intensidad de la luz (0.0-2.0)
 - `--light-angle DEG`: Ángulo de la fuente de luz (0-359)
 - `--rotation DEG`: Rotación en grados
+- `--zoom VALUE`: Nivel de zoom (0.0-1.0, donde 0.0=muy lejos/pequeño, 1.0=muy cerca/grande)
 - `--list-types`: Listar tipos de planetas disponibles
 - `--help`: Mostrar ayuda
 

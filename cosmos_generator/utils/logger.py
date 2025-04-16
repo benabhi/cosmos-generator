@@ -8,6 +8,9 @@ import logging
 import datetime
 from typing import Optional, Dict, Any, List
 
+import config
+from cosmos_generator.utils.directory_utils import ensure_directory_exists, ensure_file_directory
+
 
 class CosmosLogger:
     """
@@ -58,9 +61,10 @@ class CosmosLogger:
 
         # Set default log file if not provided
         if log_file is None:
-            log_dir = os.path.join("output", "planets", "debug")
-            os.makedirs(log_dir, exist_ok=True)
-            log_file = os.path.join(log_dir, "planets.log")
+            log_file = config.PLANETS_LOG_FILE
+
+        # Ensure the log directory exists
+        ensure_file_directory(log_file)
 
         # Create logger
         self.logger = logging.getLogger("cosmos_generator")
@@ -275,6 +279,8 @@ class CosmosLogger:
             List of log lines
         """
         if not os.path.exists(self.log_file):
+            # Ensure the log directory exists in case it was deleted
+            ensure_file_directory(self.log_file)
             return []
 
         with open(self.log_file, 'r') as f:

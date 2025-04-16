@@ -8,30 +8,56 @@ y con las proporciones adecuadas.
 from typing import Any
 from PIL import Image, ImageDraw
 
+import config
 from cosmos_generator.utils.image_utils import rotate_image
+from cosmos_generator.utils.logger import logger
 
 
 class Container:
     """
-    Manages view perspective and rotation for celestial bodies.
+    Manages view perspective, zoom and rotation for celestial bodies.
 
     Esta clase proporciona un contenedor de tamaño fijo (512x512 píxeles) para mostrar
-    cuerpos celestes. Aplica una vista fija para cada tipo de planeta:
-    - Planetas con anillos: Muestra el planeta con una parte de los anillos visible
-    - Planetas sin anillos: Muestra el planeta completo
+    cuerpos celestes. Aplica una vista adaptada para cada tipo de planeta:
+    - Planetas con anillos: Zoom por defecto de 0.5 para mostrar más de los anillos
+    - Planetas sin anillos: Zoom por defecto de 1.1 para mostrar el planeta con más detalle
 
-    También permite rotar el contenido, lo que será útil para futuras funcionalidades.
+    Permite personalizar el nivel de zoom en un rango de 0.0 (muy lejos) a 1.0 (muy cerca).
+    También permite rotar el contenido, lo que es útil para visualizar diferentes ángulos.
     """
 
-    def __init__(self):
+    def __init__(self, zoom_level=None):
         """
-        Initialize a container with fixed dimensions of 512x512 pixels.
+        Initialize a container with fixed dimensions (defined in config.PLANET_SIZE).
+
+        Args:
+            zoom_level: Optional custom zoom level (0.0 to 1.0)
+                        0.0 = far away (planeta pequeño)
+                        1.0 = very close (planeta grande, ocupa todo el contenedor)
+                        0.9 = default for planets without rings (grande con algo de padding)
+                        0.7 = default for planets with rings
+                        None = use default based on planet type
         """
-        # Tamaño fijo de 512x512 píxeles
-        self.width = 512
-        self.height = 512
+        # Tamaño fijo definido en la configuración
+        self.width = config.PLANET_SIZE
+        self.height = config.PLANET_SIZE
         self.rotation = 0.0
         self.content = None
+
+        # Ensure zoom_level is a float if provided
+        if zoom_level is not None:
+            try:
+                zoom_value = float(zoom_level)
+                # Ensure zoom level is within valid range
+                self.zoom_level = max(config.CONTAINER_DEFAULT_SETTINGS["zoom_min"],
+                                     min(config.CONTAINER_DEFAULT_SETTINGS["zoom_max"], zoom_value))
+                logger.info(f"Container initialized with zoom level: {self.zoom_level}", "container")
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error setting zoom level: {e}", "container")
+                self.zoom_level = None
+        else:
+            self.zoom_level = None
+            logger.info("Container initialized with default zoom level", "container")
 
     def set_content(self, content: Any) -> None:
         """
@@ -60,19 +86,49 @@ class Container:
         """
         self.rotation = (self.rotation + angle) % 360
 
+    def set_zoom(self, zoom_level: float) -> None:
+        """
+        Set the zoom level.
+
+        Args:
+            zoom_level: Zoom level (0.0 to 1.0)
+                        0.0 = far away (planeta pequeño)
+                        1.0 = very close (planeta grande, ocupa todo el contenedor)
+                        0.9 = default for planets without rings (grande con algo de padding)
+                        0.7 = default for planets with rings
+
+        Note:
+            El zoom no afecta la generación del planeta ni la relación entre sus componentes.
+            Solo determina cuánto de la imagen completa se muestra en el contenedor.
+            Un valor más bajo hace que el planeta se vea más pequeño (más lejos).
+            Un valor más alto hace que el planeta se vea más grande (más cerca).
+        """
+        try:
+            # Convert to float if not already
+            zoom_level = float(zoom_level)
+            # Ensure zoom level is within valid range
+            self.zoom_level = max(config.CONTAINER_DEFAULT_SETTINGS["zoom_min"],
+                                 min(config.CONTAINER_DEFAULT_SETTINGS["zoom_max"], zoom_level))
+            logger.info(f"Zoom level set to: {self.zoom_level}", "container")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Error setting zoom level: {e}", "container")
+            # Keep current zoom level
+
 
     def render(self) -> Image.Image:
         """
         Render the content with the current container settings.
 
-        Genera la imagen del planeta con una vista fija según el tipo:
-        - Planetas con anillos: Vista con factor 0.75 para mostrar parte de los anillos
-        - Planetas sin anillos: Vista completa del planeta
+        Genera la imagen del planeta con un nivel de zoom adaptado:
+        - Si se especifica un nivel de zoom personalizado (0.0 a 2.0), se usa ese valor
+        - Si no, se usa el zoom por defecto según el tipo de planeta:
+          - Planetas con anillos: Zoom de 0.5 para mostrar más de los anillos
+          - Planetas sin anillos: Zoom de 1.1 para mostrar el planeta con más detalle
 
         El proceso consiste en:
         1. Obtener la imagen del contenido
         2. Aplicar rotación si es necesario
-        3. Recortar un área cuadrada basada en el tipo de planeta
+        3. Calcular el factor de zoom y recortar un área cuadrada
         4. Redimensionar el recorte a 512x512 píxeles
 
         La imagen final siempre será de 512x512 píxeles.
@@ -113,24 +169,53 @@ class Container:
         center_x = content_width // 2
         center_y = content_height // 2
 
-        # Determinar el tipo de contenido y aplicar la vista fija adecuada
-        if has_rings:
-            # Para planetas con anillos, usamos un factor fijo de 0.75
-            # Este valor fue determinado experimentalmente para mostrar una buena
-            # porción de los anillos mientras se mantiene el planeta claramente visible
-            fixed_zoom = 0.75
+        # IMPORTANTE: El zoom se aplica después de generar todos los componentes del planeta
+        # para asegurar que las proporciones entre ellos (anillos, atmósfera, etc.) se mantengan constantes.
+        # El zoom solo determina cuánto de la imagen completa se muestra, no afecta la generación.
 
-            # Para planetas con anillos, queremos un recorte que muestre una buena parte de los anillos
-            # pero que también permita ver el planeta con suficiente detalle.
-            #
-            # Un factor de 0.75 significa que queremos ver el 75% del tamaño total de la imagen.
-            # Este valor proporciona un buen equilibrio entre mostrar los anillos y ver el planeta.
-            crop_size = int(min(content_width, content_height) * fixed_zoom)
+        # Nota: Ya no usamos los factores de recorte de la configuración
+        # Ahora calculamos el tamaño del recorte basado en el tamaño del planeta y el factor de escala
+
+        # Determinar el nivel de zoom a aplicar
+        if self.zoom_level is not None:
+            # Si hay un nivel de zoom personalizado, lo usamos
+            zoom_level = self.zoom_level
+            logger.info(f"Applying custom zoom level: {zoom_level}", "container")
         else:
-            # Para planetas sin anillos, mostramos la vista completa del planeta
-            # Usamos un recorte cuadrado para mantener la proporción y evitar distorsiones
-            # al redimensionar a 512x512
-            crop_size = min(content_width, content_height)
+            # Si no hay zoom personalizado, usamos los valores por defecto según el tipo de planeta
+            if has_rings:
+                # Para planetas con anillos, usamos un zoom menor para mostrar más de los anillos
+                zoom_level = config.CONTAINER_DEFAULT_SETTINGS["default_zoom_with_rings"]
+                logger.debug(f"Using default zoom for planet with rings: {zoom_level}", "container")
+            else:
+                # Para planetas sin anillos, usamos un zoom mayor para mostrar el planeta con más detalle
+                zoom_level = config.CONTAINER_DEFAULT_SETTINGS["default_zoom_without_rings"]
+                logger.debug(f"Using default zoom for planet without rings: {zoom_level}", "container")
+
+        # ENFOQUE COMPLETAMENTE NUEVO PARA EL ZOOM
+
+        # Determinamos el tamaño del planeta (aproximadamente)
+        # Asumimos que el planeta ocupa aproximadamente el 80% del tamaño mínimo de la imagen
+        planet_size = int(min(content_width, content_height) * 0.8)
+
+        # Definimos los límites de tamaño de recorte
+        # - Para zoom = 0.0 (muy lejos): recorte muy grande (3 veces el tamaño del planeta)
+        # - Para zoom = 1.0 (muy cerca): recorte exactamente del tamaño del planeta
+        min_crop_size = planet_size  # Zoom máximo (muy cerca) - exactamente el tamaño del planeta
+        max_crop_size = min(int(planet_size * 3.0), min(content_width, content_height))  # Zoom mínimo (muy lejos)
+
+        # Interpolación lineal entre max_crop_size y min_crop_size basada en zoom_level
+        # - zoom_level = 0.0 -> crop_size = max_crop_size (planeta pequeño/lejos)
+        # - zoom_level = 1.0 -> crop_size = min_crop_size (planeta grande/cerca)
+        crop_range = max_crop_size - min_crop_size
+        crop_size = max_crop_size - int(zoom_level * crop_range)
+
+        # Aseguramos que el tamaño del recorte esté dentro de los límites
+        crop_size = max(min_crop_size, min(crop_size, max_crop_size))
+
+        # Log para depuración
+        logger.info(f"Zoom: {zoom_level}, Planet size: {planet_size}, Crop size: {crop_size}, "
+                   f"Min crop: {min_crop_size}, Max crop: {max_crop_size}", "container")
 
         # Calcular las coordenadas de recorte, centradas en el planeta
         crop_left = center_x - crop_size // 2

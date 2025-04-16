@@ -9,7 +9,13 @@ import random
 import time
 from typing import Any
 
+import config
 from cosmos_generator.utils.logger import logger
+from cosmos_generator.utils.directory_utils import (
+    ensure_output_directories,
+    get_planet_result_directory,
+    ensure_directory_exists
+)
 
 # Try to import the required modules
 try:
@@ -43,8 +49,6 @@ def register_subcommand(subparsers: Any) -> None:
                        help="Output file path (default: output/planets/result/[type]/[seed].png, donde se crean las carpetas automáticamente)")
 
     # Optional arguments
-    parser.add_argument("--size", type=int, default=512,
-                       help="Image size in pixels")
     parser.add_argument("--seed", type=int, default=None,
                        help="Seed for reproducible generation")
 
@@ -65,6 +69,8 @@ def register_subcommand(subparsers: Any) -> None:
     # Container
     parser.add_argument("--rotation", type=float, default=0.0,
                        help="Rotation in degrees")
+    parser.add_argument("--zoom", type=float, default=None,
+                       help="Zoom level (0.0-1.0, where 0.0=far away/small, 1.0=very close/large)")
 
     # List available planet types
     parser.add_argument("--list-types", action="store_true",
@@ -115,7 +121,7 @@ def main(args: argparse.Namespace) -> int:
     # Prepare parameters
     params = {
         "seed": seed,
-        "size": args.size,
+        "size": config.PLANET_SIZE,  # Fixed size, not configurable by users
         "light_intensity": args.light_intensity,
         "light_angle": args.light_angle,
     }
@@ -151,23 +157,37 @@ def main(args: argparse.Namespace) -> int:
         print(f"Error generating planet: {e}")
         return 1
 
+    # Ensure all output directories exist
+    ensure_output_directories()
+
     # Determine output path
     output_path = args.output
     if output_path is None:
-        # Create default output directory structure
-        output_dir = os.path.join("output", "planets", "result", planet_type.lower())
-        os.makedirs(output_dir, exist_ok=True)
+        # Use default output path: output/planets/result/[planet_type]/[seed].png
+        output_dir = get_planet_result_directory(planet_type.lower())
         output_path = os.path.join(output_dir, f"{seed}.png")
         logger.debug(f"Using default output path: {output_path}", "cli")
     else:
         # Ensure the directory exists for the specified output path
         output_dir = os.path.dirname(output_path)
         if output_dir:
-            os.makedirs(output_dir, exist_ok=True)
+            ensure_directory_exists(output_dir)
         logger.debug(f"Using custom output path: {output_path}", "cli")
 
     # Always use container for consistent display
-    container = Container()
+    zoom_level = args.zoom
+    logger.info(f"Using zoom level: {zoom_level}", "cli")
+
+    # Ensure zoom_level is a float if provided
+    if zoom_level is not None:
+        try:
+            zoom_level = float(zoom_level)
+            logger.info(f"Converted zoom level to float: {zoom_level}", "cli")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Error converting zoom level to float: {e}", "cli")
+            zoom_level = None
+
+    container = Container(zoom_level=zoom_level)
     container.set_content(planet)
 
     if args.rotation != 0.0:

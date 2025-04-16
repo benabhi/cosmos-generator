@@ -233,3 +233,578 @@
     apply_atmosphere: 17.24ms - Padding: 2.0%, blur: 1px
     apply_rings: 511.37ms - Complexity: 1, Rings: 6, Factor: 3.0
     apply_features: 528.95ms - Applied: atmosphere, rings
+2025-04-15 20:43:29 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:43:29 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:43:29 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.56ms (rendering will start next)
+2025-04-15 20:43:29 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:43:29 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:43:29 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:44:30 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 60254.93ms - Type: Desert, Size: 512x512
+2025-04-15 20:44:30 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:44:30 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:44:31 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1226.30ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:44:31 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:44:31 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:44:31 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:44:31 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:45:31 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 60217.44ms - Type: Desert, Size: 512x512
+2025-04-15 20:45:31 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:45:31 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:45:32 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1242.23ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:45:32 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:45:32 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:45:32 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': True, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:45:32 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.06ms (rendering will start next)
+2025-04-15 20:45:32 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:45:32 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: True
+    has_clouds: False
+    rings: False
+    atmosphere: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:45:32 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:46:33 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 60866.13ms - Type: Desert, Size: 512x512
+2025-04-15 20:46:33 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:46:33 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:46:35 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1238.90ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:46:35 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 20:46:35 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 17.52ms - Padding: 3.9%, blur: 1px
+2025-04-15 20:46:35 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 17.69ms - Applied: atmosphere
+2025-04-15 20:46:35 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:46:35 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: True
+    has_clouds: False
+    rings: False
+    atmosphere: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:46:35 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:47:35 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 60561.00ms - Type: Desert, Size: 512x512
+2025-04-15 20:47:35 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:47:35 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:47:36 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1237.11ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:47:36 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 20:47:36 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 17.04ms - Padding: 3.9%, blur: 1px
+2025-04-15 20:47:36 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 17.16ms - Applied: atmosphere
+2025-04-15 20:47:37 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:47:37 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': True, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:47:37 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.06ms (rendering will start next)
+2025-04-15 20:47:37 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:47:37 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: True
+    has_atmosphere: False
+    has_clouds: False
+    rings: True
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:47:37 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:48:38 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61180.32ms - Type: Desert, Size: 512x512
+2025-04-15 20:48:38 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:48:38 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:48:39 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1223.11ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:48:39 [DEBUG] cosmos_generator: [planet] Applying rings to Desert planet
+2025-04-15 20:48:40 [DEBUG] cosmos_generator: [generator] Step 'apply_rings' completed in 775.58ms - Complexity: 2, Rings: 10, Factor: 3.0
+2025-04-15 20:48:40 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 775.72ms - Applied: rings
+2025-04-15 20:48:40 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:48:40 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: True
+    has_atmosphere: False
+    has_clouds: False
+    rings: True
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:48:40 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:51:19 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:51:19 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:51:19 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.64ms (rendering will start next)
+2025-04-15 20:51:19 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:51:19 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:51:19 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:52:21 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62044.31ms - Type: Desert, Size: 512x512
+2025-04-15 20:52:21 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:52:21 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:52:23 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1323.24ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:52:23 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:52:23 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:52:23 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:52:23 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.10ms (rendering will start next)
+2025-04-15 20:52:23 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:52:23 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:52:23 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:53:25 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62115.36ms - Type: Desert, Size: 512x512
+2025-04-15 20:53:25 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:53:25 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:53:26 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1321.88ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:53:26 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:53:26 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:53:26 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:53:26 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.23ms (rendering will start next)
+2025-04-15 20:53:26 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:53:26 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:53:26 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:54:28 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61939.32ms - Type: Desert, Size: 512x512
+2025-04-15 20:54:28 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:54:28 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:54:29 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1296.64ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:54:29 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:54:29 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:54:29 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:54:29 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.16ms (rendering will start next)
+2025-04-15 20:54:29 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:54:29 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:54:29 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:55:31 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61827.21ms - Type: Desert, Size: 512x512
+2025-04-15 20:55:31 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:55:31 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:55:33 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1314.07ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:55:33 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:55:33 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:55:33 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:55:33 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.19ms (rendering will start next)
+2025-04-15 20:55:33 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:55:33 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:55:33 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:56:35 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61982.09ms - Type: Desert, Size: 512x512
+2025-04-15 20:56:35 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:56:35 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:56:36 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1302.79ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:56:36 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:56:36 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:56:36 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:56:36 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.09ms (rendering will start next)
+2025-04-15 20:56:36 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:56:36 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:56:36 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:57:38 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62218.42ms - Type: Desert, Size: 512x512
+2025-04-15 20:57:38 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 20:57:38 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 20:57:40 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1309.85ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 20:57:40 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 0.00ms - No features applied
+2025-04-15 20:57:40 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:57:40 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': True, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 20:57:40 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.26ms (rendering will start next)
+2025-04-15 20:57:40 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:57:40 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: True
+    has_atmosphere: False
+    has_clouds: False
+    rings: True
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 20:57:40 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 20:59:09 [INFO] cosmos_generator: [test] Generating Desert planet with clouds
+2025-04-15 20:59:09 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 20:59:09 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 0.5}
+2025-04-15 20:59:09 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.44ms (rendering will start next)
+2025-04-15 20:59:09 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 20:59:09 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 0.5
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 20:59:09 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:00:12 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62762.30ms - Type: Desert, Size: 512x512
+2025-04-15 21:00:12 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:00:12 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:00:13 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1283.93ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:00:13 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 0.50)
+2025-04-15 21:01:02 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 48401.93ms - Coverage: 0.50, Threshold: 0.28
+2025-04-15 21:01:02 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 48402.12ms - Applied: clouds
+2025-04-15 21:01:02 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:01:02 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 0.5}
+2025-04-15 21:01:02 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.09ms (rendering will start next)
+2025-04-15 21:01:02 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:01:02 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 0.5
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:01:02 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:02:05 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62963.80ms - Type: Desert, Size: 512x512
+2025-04-15 21:02:05 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:02:05 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:02:06 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1288.64ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:02:06 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 0.50)
+2025-04-15 21:02:55 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 48731.35ms - Coverage: 0.50, Threshold: 0.28
+2025-04-15 21:02:55 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 48731.55ms - Applied: clouds
+2025-04-15 21:02:55 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:02:55 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 0.5}
+2025-04-15 21:02:55 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.08ms (rendering will start next)
+2025-04-15 21:02:55 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:02:55 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 0.5
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:02:55 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:03:29 [INFO] cosmos_generator: [test] Generating Desert planet with clouds
+2025-04-15 21:03:29 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:03:29 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 1.0}
+2025-04-15 21:03:29 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.21ms (rendering will start next)
+2025-04-15 21:03:29 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:03:29 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:03:29 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:04:29 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 60848.84ms - Type: Desert, Size: 512x512
+2025-04-15 21:04:29 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:04:29 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:04:31 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1253.29ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:04:31 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:05:18 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 46952.55ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:05:18 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 46952.75ms - Applied: clouds
+2025-04-15 21:05:18 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:05:18 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 1.0}
+2025-04-15 21:05:18 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.25ms (rendering will start next)
+2025-04-15 21:05:18 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:05:18 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:05:18 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:06:19 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61353.31ms - Type: Desert, Size: 512x512
+2025-04-15 21:06:19 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:06:19 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:06:20 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1256.69ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:06:20 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:07:08 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 47399.32ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:07:08 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 47399.50ms - Applied: clouds
+2025-04-15 21:07:08 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:07:08 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 1.0}
+2025-04-15 21:07:08 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.04ms (rendering will start next)
+2025-04-15 21:07:08 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:07:08 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:07:08 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:08:09 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61478.36ms - Type: Desert, Size: 512x512
+2025-04-15 21:08:09 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:08:09 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:08:10 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1243.25ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:08:10 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:08:58 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 47774.04ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:08:58 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 47774.27ms - Applied: clouds
+2025-04-15 21:08:58 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:08:58 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 1.0}
+2025-04-15 21:08:58 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.06ms (rendering will start next)
+2025-04-15 21:08:58 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:08:58 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:08:58 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:10:00 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61403.34ms - Type: Desert, Size: 512x512
+2025-04-15 21:10:00 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:10:00 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:10:01 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1239.80ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:10:01 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:10:49 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 48006.29ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:10:49 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 48006.48ms - Applied: clouds
+2025-04-15 21:10:49 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:10:49 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': False, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}, 'clouds': True, 'cloud_coverage': 1.0}
+2025-04-15 21:10:49 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.08ms (rendering will start next)
+2025-04-15 21:10:49 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:10:49 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: False
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+    clouds: True
+2025-04-15 21:10:49 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:11:50 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 60931.49ms - Type: Desert, Size: 512x512
+2025-04-15 21:11:50 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:11:50 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:11:51 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1223.42ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:11:51 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:12:39 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 47637.94ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:12:39 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 47638.13ms - Applied: clouds
+2025-04-15 21:12:39 [INFO] cosmos_generator: [test] Generating Desert planet with atmosphere
+2025-04-15 21:12:39 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:12:39 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': True, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 21:12:39 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.02ms (rendering will start next)
+2025-04-15 21:12:39 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:12:39 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: True
+    has_clouds: False
+    rings: False
+    atmosphere: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 21:12:39 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:15:50 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:15:50 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': True, 'clouds': True, 'cloud_coverage': 1.0, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 21:15:50 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.49ms (rendering will start next)
+2025-04-15 21:15:50 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:15:50 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: True
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: True
+    clouds: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 21:15:50 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:16:53 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62877.11ms - Type: Desert, Size: 512x512
+2025-04-15 21:16:53 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:16:53 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:16:55 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1315.70ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:16:55 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 21:16:55 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 18.39ms - Padding: 3.9%, blur: 1px
+2025-04-15 21:16:55 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:17:42 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 47704.19ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:17:42 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 47722.94ms - Applied: atmosphere, clouds
+2025-04-15 21:17:42 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:17:42 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': False, 'atmosphere': True, 'clouds': True, 'cloud_coverage': 1.0, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 21:17:42 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.22ms (rendering will start next)
+2025-04-15 21:17:42 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:17:42 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: True
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: True
+    clouds: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 21:17:42 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:18:45 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62249.26ms - Type: Desert, Size: 512x512
+2025-04-15 21:18:45 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:18:45 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:18:46 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1320.45ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:18:46 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 21:18:46 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 17.49ms - Padding: 3.9%, blur: 1px
+2025-04-15 21:18:46 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:19:34 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 48231.46ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:19:34 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 48249.41ms - Applied: atmosphere, clouds
+2025-04-15 21:19:34 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:19:34 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': True, 'atmosphere': True, 'clouds': True, 'cloud_coverage': 1.0, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 21:19:34 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.11ms (rendering will start next)
+2025-04-15 21:19:34 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:19:34 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: True
+    has_atmosphere: True
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: True
+    atmosphere: True
+    clouds: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 21:19:34 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:20:36 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 62148.85ms - Type: Desert, Size: 512x512
+2025-04-15 21:20:36 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:20:36 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:20:38 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1318.23ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:20:38 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 21:20:38 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 17.01ms - Padding: 2.0%, blur: 1px
+2025-04-15 21:20:38 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:21:26 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 48283.77ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:21:26 [DEBUG] cosmos_generator: [planet] Applying rings to Desert planet
+2025-04-15 21:21:27 [DEBUG] cosmos_generator: [generator] Step 'apply_rings' completed in 828.32ms - Complexity: 3, Rings: 10, Factor: 3.0
+2025-04-15 21:21:27 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 49129.63ms - Applied: atmosphere, clouds, rings
+2025-04-15 21:21:27 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:21:27 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 12345, 'rings': True, 'atmosphere': True, 'clouds': True, 'cloud_coverage': 1.0, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 21:21:27 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.08ms (rendering will start next)
+2025-04-15 21:21:27 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
+2025-04-15 21:21:27 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: True
+    has_atmosphere: True
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: True
+    atmosphere: True
+    clouds: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 21:21:27 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-15 21:22:28 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 61475.22ms - Type: Desert, Size: 512x512
+2025-04-15 21:22:28 [DEBUG] cosmos_generator: [planet] Saved base texture to output/planets/debug/textures/terrain/12345.png
+2025-04-15 21:22:28 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-15 21:22:30 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1276.40ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-15 21:22:30 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
+2025-04-15 21:22:30 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 16.68ms - Padding: 2.0%, blur: 1px
+2025-04-15 21:22:30 [DEBUG] cosmos_generator: [planet] Applying clouds to Desert planet (coverage: 1.00)
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [generator] Step 'apply_clouds' completed in 47968.98ms - Coverage: 1.00, Threshold: 0.10
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [planet] Applying rings to Desert planet
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [generator] Step 'apply_rings' completed in 803.44ms - Complexity: 3, Rings: 10, Factor: 3.0
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 48789.62ms - Applied: atmosphere, clouds, rings
+2025-04-15 21:23:18 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [generator] Parameters: {'size': 512, 'seed': 54321, 'rings': False, 'atmosphere': True, 'clouds': True, 'cloud_coverage': 1.0, 'lighting': {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}}
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 2.18ms (rendering will start next)
+2025-04-15 21:23:18 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 54321
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: True
+    has_clouds: True
+    cloud_coverage: 1.0
+    rings: False
+    atmosphere: True
+    clouds: True
+    lighting: {'intensity': 1.0, 'angle': 45, 'falloff': 0.7}
+2025-04-15 21:23:18 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)

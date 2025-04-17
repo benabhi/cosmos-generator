@@ -1,2 +1,5 @@
 venv/
+output/*.log
+output/**/*.log
 output/*.png
+output/**/*.png

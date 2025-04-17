@@ -165,6 +165,28 @@ class Container:
         # Obtener el tamaño de la imagen del contenido
         content_width, content_height = content_image.size
 
+        # Log para depuración - tamaño de la imagen original
+        logger.info(f"Original image size: {content_width}x{content_height}", "container")
+
+        # Para planetas sin anillos, necesitamos crear un canvas más grande para permitir zoom out
+        if not has_rings:
+            # Creamos un canvas 3 veces más grande que la imagen original
+            canvas_size = max(content_width, content_height) * 3
+            large_canvas = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+
+            # Calculamos la posición para centrar la imagen original en el canvas grande
+            paste_x = (canvas_size - content_width) // 2
+            paste_y = (canvas_size - content_height) // 2
+
+            # Pegamos la imagen original en el centro del canvas grande
+            large_canvas.paste(content_image, (paste_x, paste_y),
+                              content_image if content_image.mode == "RGBA" else None)
+
+            # Reemplazamos la imagen original con el canvas grande
+            content_image = large_canvas
+            content_width, content_height = content_image.size
+            logger.info(f"Created larger canvas: {content_width}x{content_height}", "container")
+
         # Calcular el centro de la imagen
         center_x = content_width // 2
         center_y = content_height // 2

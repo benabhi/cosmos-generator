@@ -245,8 +245,16 @@ class Container:
         # - Para zoom = 0.9 (cerca): recorte ligeramente mayor que el tamaño del planeta (1.1x)
         # - Para zoom = 1.0 (muy cerca): recorte exactamente del tamaño del planeta
 
-        # Para zoom = 1.0, el recorte es exactamente del tamaño del planeta
-        min_crop_size = planet_size
+        # Para zoom = 1.0, el recorte es ligeramente menor que el tamaño de la imagen original
+        # para asegurarnos de que el planeta esté completamente visible
+        if self.zoom_level == 1.0 and not has_rings:
+            # Para zoom = 1.0, usamos un tamaño ligeramente menor que la imagen original
+            # para asegurarnos de que el planeta esté completamente visible
+            min_crop_size = int(planet_size * 0.98)  # 98% del tamaño de la imagen original
+            logger.info(f"Using slightly smaller crop size for zoom 1.0: {min_crop_size}", "container")
+        else:
+            # Para otros niveles de zoom, usamos el tamaño del planeta
+            min_crop_size = planet_size
 
         # Para zoom = 0.0, el recorte es del tamaño máximo disponible
         max_crop_size = min(content_width, content_height)

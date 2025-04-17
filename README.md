@@ -103,7 +103,7 @@ python -m cosmos_generator planet logs                # Show all logs
 python -m cosmos_generator planet logs --tail 20       # Show the last 20 lines
 python -m cosmos_generator planet logs --lines 50      # Show 50 lines
 python -m cosmos_generator planet logs --level INFO    # Filter by level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-python -m cosmos_generator planet logs --summary       # Show the last generation summary
+# The summary is automatically included in the log file after each generation
 python -m cosmos_generator planet logs --path          # Show the log file path
 ```
 
@@ -133,7 +133,6 @@ Options for the `planet logs` subcommand:
 - `--lines N`: Show N lines of the log (default: all)
 - `--tail N`: Show the last N lines of the log
 - `--level LEVEL`: Filter logs by minimum level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-- `--summary`: Show the last generation summary
 - `--path`: Show the log file path
 - `--help`: Show help
 
@@ -181,7 +180,7 @@ output/
 
 Cosmos Generator includes a detailed logging system that records information about the planet generation process. The logs are saved in the `output/planets/debug/planets.log` file and can be viewed with the `planet logs` subcommand.
 
-The logging system records:
+Each planet generation is clearly marked in the log file with visual separators, making it easy to identify where a generation starts and ends. The logging system records:
 
 - General information about planet generation (type, seed, parameters)
 - Execution times for each step of the process with specific details:
@@ -190,32 +189,54 @@ The logging system records:
   - Atmosphere: fill percentage, blur radius
   - Clouds: coverage, generation threshold
   - Rings: complexity, number of rings, size factor
+- A detailed summary at the end of each generation showing:
+  - Duration of each step
+  - Percentage of total time spent on each step
+  - Total generation time
 - Errors and exceptions that may occur during the process
 - Paths of generated files
+
+The summary is automatically included in the log file after each generation.
 
 Example log output:
 
 ```
-2025-04-15 19:10:19 [INFO] cosmos_generator: [cli] Generating Desert planet with seed 12345
-2025-04-15 19:10:19 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
-2025-04-15 19:10:19 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 1.53ms (rendering will start next)
-2025-04-15 19:10:19 [INFO] cosmos_generator: [cli] Exporting planet to output/planets/result/desert/12345.png
-2025-04-15 19:10:19 [INFO] cosmos_generator: [generator] Starting generation of Desert planet with seed 12345
-2025-04-15 19:10:19 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
-2025-04-15 19:11:22 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 63014.32ms - Type: Desert, Size: 512x512
-2025-04-15 19:10:19 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 315°, intensity: 0.8)
-2025-04-15 19:11:23 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1294.48ms - Angle: 315°, Intensity: 0.8, Falloff: 1.8
-2025-04-15 19:11:23 [DEBUG] cosmos_generator: [planet] Applying atmosphere to Desert planet
-2025-04-15 19:11:24 [DEBUG] cosmos_generator: [generator] Step 'apply_atmosphere' completed in 18.23ms - Padding: 2.0%, blur: 1px
-2025-04-15 19:11:24 [DEBUG] cosmos_generator: [generator] Step 'apply_features' completed in 18.40ms - Applied: atmosphere
-2025-04-15 19:11:24 [INFO] cosmos_generator: [cli] Planet generation completed in 64396.38ms
-2025-04-15 19:11:24 [INFO] cosmos_generator: [generator] Successfully generated Desert planet with seed 12345 in 64394.41ms
-2025-04-15 19:11:24 [INFO] cosmos_generator: [generator] Saved to output/planets/result/desert/12345.png
-2025-04-15 19:11:24 [DEBUG] cosmos_generator: [generator] Generation steps:
-    generate_texture: 63014.32ms - Type: Desert, Size: 512x512
-    apply_lighting: 1294.48ms - Angle: 315°, Intensity: 0.8, Falloff: 1.8
-    apply_atmosphere: 18.23ms - Padding: 2.0%, blur: 1px
-    apply_features: 18.40ms - Applied: atmosphere
+2025-04-17 15:59:25 [INFO] cosmos_generator: [cli] Generating Desert planet with seed 12345
+2025-04-17 15:59:25 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-17 15:59:25 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 1.97ms (rendering will start next)
+2025-04-17 15:59:25 [INFO] cosmos_generator: [generator]
+================================================================================
+=== STARTING GENERATION: DESERT PLANET (SEED: 12345) - 2025-04-17 15:59:25 ===
+================================================================================
+2025-04-17 15:59:25 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+2025-04-17 15:59:25 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-17 16:00:21 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 55298.61ms - Type: Desert, Size: 512x512
+2025-04-17 16:00:21 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-17 16:00:22 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1109.86ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-17 16:00:22 [INFO] cosmos_generator: [cli] Planet generation completed in 56477.01ms
+2025-04-17 16:00:22 [INFO] cosmos_generator: [generator]
+================================================================================
+=== GENERATION COMPLETED: DESERT PLANET (SEED: 12345) - 2025-04-17 16:00:22 ===
+=== Duration: 56474.67ms ===
+================================================================================
+2025-04-17 16:00:22 [INFO] cosmos_generator: [generator] Successfully generated Desert planet with seed 12345 in 56474.67ms
+2025-04-17 16:00:22 [INFO] cosmos_generator: [generator] Saved to output/planets/result/desert/12345.png
+2025-04-17 16:00:22 [DEBUG] cosmos_generator: [generator]
+--------------------------------------------------------------------------------
+=== GENERATION STEPS SUMMARY ===
+--------------------------------------------------------------------------------
+    generate_texture: 55298.61ms (98.0%) - Type: Desert, Size: 512x512
+    apply_lighting: 1109.86ms (2.0%) - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+    apply_features: 0.00ms (0.0%) - No features applied
+--------------------------------------------------------------------------------
+    Total steps duration: 56408.46ms
+--------------------------------------------------------------------------------
 ```
 
 ## Requirements

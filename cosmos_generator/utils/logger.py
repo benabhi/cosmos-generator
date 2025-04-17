@@ -186,8 +186,13 @@ class CosmosLogger:
         # Format parameters for logging
         params_str = "\n".join([f"    {k}: {v}" for k, v in params.items()])
 
+        # Create a visual separator for the start of generation
+        separator = "="*80
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        header = f"\n{separator}\n=== STARTING GENERATION: {planet_type.upper()} PLANET (SEED: {seed}) - {timestamp} ===\n{separator}"
+
         # Log generation start - only to file, not to console
-        self.info(f"Starting generation of {planet_type} planet with seed {seed}", "generator", console=False)
+        self.info(header, "generator", console=False)
         self.debug(f"Generation parameters:\n{params_str}", "generator")
 
     def log_step(self, step_name: str, duration_ms: float, details: Optional[str] = None) -> None:
@@ -247,23 +252,43 @@ class CosmosLogger:
         planet_type = self.generation_context["planet_type"]
         seed = self.generation_context["seed"]
 
+        # Create a visual separator for the end of generation
+        separator = "="*80
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         if success:
             # Log to file only, not to console (to avoid redundancy)
+            footer = f"\n{separator}\n=== GENERATION COMPLETED: {planet_type.upper()} PLANET (SEED: {seed}) - {timestamp} ===\n=== Duration: {duration:.2f}ms ===\n{separator}"
+            self.info(footer, "generator", console=False)
             self.info(f"Successfully generated {planet_type} planet with seed {seed} in {duration:.2f}ms", "generator", console=False)
             if output_path:
                 self.info(f"Saved to {output_path}", "generator", console=False)
         else:
+            footer = f"\n{separator}\n=== GENERATION FAILED: {planet_type.upper()} PLANET (SEED: {seed}) - {timestamp} ===\n=== Duration: {duration:.2f}ms ===\n{separator}"
+            self.error(footer, "generator")
             self.error(f"Failed to generate {planet_type} planet with seed {seed} after {duration:.2f}ms", "generator")
             if error:
                 self.error(f"Error: {error}", "generator")
 
         # Log step summary
         if self.generation_context["steps"]:
+            # Calculate total steps duration
+            total_steps_duration = sum(step['duration_ms'] for step in self.generation_context["steps"])
+
+            # Create a more detailed and visual summary
+            summary_header = "\n" + "-"*80 + "\n=== GENERATION STEPS SUMMARY ===\n" + "-"*80
+
+            # Format each step with percentage of total time
             steps_str = "\n".join([
-                f"    {step['name']}: {step['duration_ms']:.2f}ms{' - ' + step['details'] if step['details'] else ''}"
+                f"    {step['name']}: {step['duration_ms']:.2f}ms ({(step['duration_ms']/total_steps_duration)*100:.1f}%){' - ' + step['details'] if step['details'] else ''}"
                 for step in self.generation_context["steps"]
             ])
-            self.debug(f"Generation steps summary:\n{steps_str}", "generator")
+
+            # Add total duration
+            summary_footer = "-"*80 + f"\n    Total steps duration: {total_steps_duration:.2f}ms\n" + "-"*80
+
+            # Log the complete summary
+            self.debug(f"{summary_header}\n{steps_str}\n{summary_footer}", "generator")
 
         # Clear context
         self.generation_context = {}

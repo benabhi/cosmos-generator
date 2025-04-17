@@ -27,8 +27,7 @@ def register_subcommand(subparsers: Any) -> None:
                        help="Number of lines to show (default: all)")
     parser.add_argument("--tail", type=int, default=None,
                        help="Show the last N lines")
-    parser.add_argument("--summary", action="store_true",
-                       help="Show the last generation summary")
+    # Removed --summary argument as the summary is now automatically included in the log
     parser.add_argument("--path", action="store_true",
                        help="Show the log file path")
     parser.add_argument("--level", type=str, choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -50,29 +49,7 @@ def main(args: argparse.Namespace) -> int:
         print(f"Log file: {logger.log_file}")
         return 0
 
-    # If summary flag is set, show the last generation summary
-    if args.summary:
-        log_lines = logger.get_log_file_content(None)  # Get all lines
-        summary_lines = []
-
-        # Find the last summary block
-        for i, line in enumerate(reversed(log_lines)):
-            if "Generation steps summary:" in line or "Generation steps:" in line:
-                summary_lines.insert(0, line.rstrip())
-
-                # Add all indented lines that follow in the original order
-                j = len(log_lines) - i
-                while j < len(log_lines) and (log_lines[j].startswith("    ") or log_lines[j].strip() == ""):
-                    summary_lines.append(log_lines[j].rstrip())
-                    j += 1
-                break
-
-        if summary_lines:
-            for line in summary_lines:
-                print(line)
-        else:
-            print("No generation summary found.")
-        return 0
+    # Summary is now automatically included in the log file after each generation
 
     # Determine number of lines to show
     lines = None

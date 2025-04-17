@@ -68,7 +68,7 @@ DEFAULT_PLANET_PARAMS = {
 CONTAINER_DEFAULT_SETTINGS = {
     "width": PLANET_SIZE,
     "height": PLANET_SIZE,
-    "default_zoom_with_rings": 0.7,  # 0.0=lejos/pequeño, 1.0=cerca/grande
+    "default_zoom_with_rings": 0.25,  # 0.0=lejos/pequeño, 1.0=cerca/grande
     "default_zoom_without_rings": 0.95,  # 0.0=lejos/pequeño, 1.0=cerca/grande
     "zoom_min": 0.0,  # Valor mínimo de zoom (más lejos/pequeño)
     "zoom_max": 1.0   # Valor máximo de zoom (más cerca/grande)

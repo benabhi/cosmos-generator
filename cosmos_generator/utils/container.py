@@ -168,8 +168,9 @@ class Container:
         # Log para depuración - tamaño de la imagen original
         logger.info(f"Original image size: {content_width}x{content_height}", "container")
 
-        # Para planetas sin anillos, necesitamos crear un canvas más grande para permitir zoom out
-        # EXCEPTO cuando el zoom es 1.0, donde queremos que el planeta ocupe todo el canvas
+        # Solo para planetas sin anillos, necesitamos crear un canvas más grande para permitir zoom out
+        # Para planetas con anillos, la imagen original ya tiene suficiente espacio alrededor
+        # EXCEPTO cuando el zoom es 1.0 para planetas sin anillos, donde queremos que el planeta ocupe todo el canvas
         if not has_rings and self.zoom_level != 1.0:
             # Usamos un canvas 4 veces más grande que la imagen original
             # Esto nos dará suficiente espacio para todos los niveles de zoom
@@ -226,9 +227,8 @@ class Container:
         # ENFOQUE COMPLETAMENTE NUEVO PARA EL ZOOM
 
         # Determinamos el tamaño del planeta (aproximadamente)
-        # Para planetas sin anillos, el planeta ocupa casi toda la imagen original
-        # Para zoom = 1.0, queremos que el planeta ocupe exactamente el 100% del contenedor
         if not has_rings:
+            # Para planetas sin anillos
             if self.zoom_level == 1.0:
                 # Para zoom = 1.0, usamos el tamaño exacto de la imagen original
                 planet_size = min(content_width, content_height)
@@ -237,27 +237,52 @@ class Container:
                 # Para otros niveles de zoom, asumimos que el planeta ocupa aproximadamente el 95% de la imagen original
                 planet_size = int(min(532, 532) * 0.95)  # Usamos el tamaño original conocido (532x532)
         else:
-            # Para planetas con anillos, asumimos que el planeta ocupa aproximadamente el 30%
-            planet_size = int(min(content_width, content_height) * 0.3)
+            # Para planetas con anillos
+            # El planeta real (sin anillos) ocupa aproximadamente el 30% del tamaño de la imagen
+            # Los anillos ocupan el resto (aproximadamente hasta el 90% del tamaño de la imagen)
+            planet_only_size = int(min(content_width, content_height) * 0.3)  # Solo el planeta
+            planet_with_rings_size = int(min(content_width, content_height) * 0.9)  # Planeta con anillos
+
+            logger.info(f"Planet only size: {planet_only_size}, Planet with rings: {planet_with_rings_size}", "container")
+
+            # Usamos el tamaño del planeta sin anillos como referencia
+            planet_size = planet_only_size
 
         # Definimos los límites de tamaño de recorte
         # - Para zoom = 0.0 (muy lejos): recorte muy grande (3 veces el tamaño del planeta)
         # - Para zoom = 0.9 (cerca): recorte ligeramente mayor que el tamaño del planeta (1.1x)
         # - Para zoom = 1.0 (muy cerca): recorte exactamente del tamaño del planeta
 
-        # Para zoom = 1.0, el recorte es ligeramente menor que el tamaño de la imagen original
-        # para asegurarnos de que el planeta esté completamente visible
-        if self.zoom_level == 1.0 and not has_rings:
-            # Para zoom = 1.0, usamos un tamaño ligeramente menor que la imagen original
-            # para asegurarnos de que el planeta esté completamente visible
-            min_crop_size = int(planet_size * 0.98)  # 98% del tamaño de la imagen original
-            logger.info(f"Using slightly smaller crop size for zoom 1.0: {min_crop_size}", "container")
-        else:
-            # Para otros niveles de zoom, usamos el tamaño del planeta
-            min_crop_size = planet_size
+        # Definimos los límites de tamaño de recorte según el tipo de planeta
+        if not has_rings:
+            # Para planetas sin anillos
+            if self.zoom_level == 1.0:
+                # Para zoom = 1.0, usamos un tamaño ligeramente menor que la imagen original
+                # para asegurarnos de que el planeta esté completamente visible
+                min_crop_size = int(planet_size * 0.98)  # 98% del tamaño de la imagen original
+                logger.info(f"Using slightly smaller crop size for zoom 1.0: {min_crop_size}", "container")
+            else:
+                # Para otros niveles de zoom, usamos el tamaño del planeta
+                min_crop_size = planet_size
 
-        # Para zoom = 0.0, el recorte es del tamaño máximo disponible
-        max_crop_size = min(content_width, content_height)
+            # Para zoom = 0.0, el recorte es del tamaño máximo disponible
+            max_crop_size = min(content_width, content_height)
+        else:
+            # Para planetas con anillos
+            # Para zoom = 1.0, queremos mostrar solo el planeta (sin anillos)
+            if self.zoom_level == 1.0:
+                # Usamos un tamaño ligeramente mayor que el planeta para evitar recortar los bordes
+                min_crop_size = int(planet_only_size * 1.2)  # 20% más grande que el planeta
+                logger.info(f"Zoom 1.0 for planet with rings: showing only the planet with padding (crop size: {min_crop_size})", "container")
+            else:
+                # Para zoom = 0.0, queremos mostrar el planeta completo con anillos
+                # Para valores intermedios, interpolamos entre el tamaño del planeta con anillos y sin anillos
+                min_crop_size = planet_only_size
+
+            # Para zoom = 0.0, el recorte muestra todo el planeta con anillos
+            max_crop_size = planet_with_rings_size
+
+            logger.info(f"Crop size limits for planet with rings: min={min_crop_size}, max={max_crop_size}", "container")
 
         # Calculamos el tamaño del recorte basado en el nivel de zoom
         if self.zoom_level is not None:

@@ -6,14 +6,14 @@ A Python library for procedurally generating detailed images of celestial bodies
 
 - Generate 12 different planet types with unique visual characteristics
 - Fixed resolution of 512x512 pixels for consistent display (not configurable by users)
-- Container class for displaying planets with proper proportions
+- Container class for displaying planets with proper proportions and zoom control
 - PNG output format with transparency
 - Random seed or specified seed for reproducibility
 - Lighting/shading model with directional light source
 - Optional planetary features:
   - Rings: Elliptical ring systems with proper depth perception
-  - Atmosphere: Configurable atmospheric glow
-  - Clouds: Layered cloud systems for applicable planet types
+  - Atmosphere: Simple atmospheric glow effect (boolean parameter)
+  - Clouds: Layered cloud systems for applicable planet types with configurable coverage (0.0-1.0)
   - Surface details: Craters, mountains, etc.
 
 ## Installation
@@ -33,7 +33,7 @@ from cosmos_generator.utils import Container
 # Create generator
 generator = PlanetGenerator()
 
-# Generate desert planet with rings and atmosphere
+# Generate desert planet with rings, atmosphere and clouds
 planet = generator.create("Desert", {
     "seed": 12345,
     "rings": True,
@@ -42,55 +42,61 @@ planet = generator.create("Desert", {
         "angle": 45,
         "falloff": 0.7
     },
-    "atmosphere": True
+    "atmosphere": True,
+    "clouds": True,
+    "cloud_coverage": 1.0  # 0.0 to 1.0, where 1.0 is maximum coverage
 })
 
 # Basic save method
 planet.save("desert_planet_12345.png")
 
-# Use container for fixed size display and rotation
-container = Container()
+# Use container for fixed size display, rotation and zoom control
+container = Container(zoom_level=0.7)  # Optional zoom level (0.0=far/small, 1.0=close/large)
 container.set_content(planet)
 container.rotate(45)  # Optional rotation
 container.export("desert_planet_container.png")
+
+# Default zoom levels are:
+# - 0.95 for planets without rings
+# - 0.25 for planets with rings
 ```
 
 ### Command Line Interface
 
-Cosmos Generator utiliza una estructura de subcomandos para organizar sus funcionalidades:
+Cosmos Generator uses a subcommand structure to organize its functionalities:
 
 ```bash
-# Mostrar ayuda general
+# Show general help
 python -m cosmos_generator --help
 
-# Mostrar versión
+# Show version
 python -m cosmos_generator --version
 
-# Mostrar ayuda específica para el subcomando planet
+# Show specific help for the planet subcommand
 python -m cosmos_generator planet --help
 ```
 
-#### Generación de Planetas
+#### Planet Generation
 
 ```bash
-# Con ruta de salida personalizada
+# With custom output path
 python -m cosmos_generator planet generate --type desert --seed 987 --output planet.png --rings --atmosphere --light-angle 30
 
-# Con ruta de salida por defecto (output/planets/result/desert/987.png)
+# With default output path (output/planets/result/desert/987.png)
 python -m cosmos_generator planet generate --type desert --seed 987 --rings --atmosphere --light-angle 30
 
-# Generar planeta con nubes (cobertura de 0.7 o 70%)
+# Generate planet with clouds (coverage of 0.7 or 70%)
 python -m cosmos_generator planet generate --type ocean --clouds 0.7 --seed 12345
 
-# Listar tipos de planetas disponibles
+# List available planet types
 python -m cosmos_generator planet generate --list-types
 
-# Limpiar archivos generados de planetas
-python -m cosmos_generator planet clean         # Limpia todos los archivos
-python -m cosmos_generator planet clean --debug    # Limpia solo archivos de depuración
-python -m cosmos_generator planet clean --examples # Limpia solo archivos de ejemplos
-python -m cosmos_generator planet clean --results  # Limpia solo archivos de resultados
-python -m cosmos_generator planet clean --dry-run  # Muestra qué se eliminaría sin eliminar nada
+# Clean generated planet files
+python -m cosmos_generator planet clean         # Clean all files
+python -m cosmos_generator planet clean --debug    # Clean only debug files
+python -m cosmos_generator planet clean --examples # Clean only example files
+python -m cosmos_generator planet clean --results  # Clean only result files
+python -m cosmos_generator planet clean --dry-run  # Show what would be deleted without deleting anything
 
 # View planet generation logs
 python -m cosmos_generator planet logs                # Show all logs
@@ -101,27 +107,27 @@ python -m cosmos_generator planet logs --summary       # Show the last generatio
 python -m cosmos_generator planet logs --path          # Show the log file path
 ```
 
-Opciones del subcomando `planet generate`:
-- `--type TYPE`: Tipo de planeta (desert, furnace, etc.) - insensible a mayúsculas/minúsculas
-- `--seed SEED`: Semilla para generación reproducible (default: aleatorio)
-- `--output FILE`: Ruta del archivo de salida (default: output/planets/result/[type]/[seed].png)
-- `--rings`: Añadir anillos
-- `--atmosphere`: Añadir atmósfera
-- `--clouds VALUE`: Añadir nubes con cobertura específica (0.0-1.0, donde 1.0 es cobertura total)
-- `--light-intensity VALUE`: Intensidad de la luz (0.0-2.0)
-- `--light-angle DEG`: Ángulo de la fuente de luz (0-359)
-- `--rotation DEG`: Rotación en grados
-- `--zoom VALUE`: Nivel de zoom (0.0-1.0, donde 0.0=muy lejos/pequeño, 1.0=muy cerca/grande)
-- `--list-types`: Listar tipos de planetas disponibles
-- `--help`: Mostrar ayuda
+Options for the `planet generate` subcommand:
+- `--type TYPE`: Planet type (desert, furnace, etc.) - case insensitive
+- `--seed SEED`: Seed for reproducible generation (default: random)
+- `--output FILE`: Output file path (default: output/planets/result/[type]/[seed].png)
+- `--rings`: Add rings
+- `--atmosphere`: Add atmosphere
+- `--clouds VALUE`: Add clouds with specific coverage (0.0-1.0, where 1.0 is full coverage)
+- `--light-intensity VALUE`: Light intensity (0.0-2.0)
+- `--light-angle DEG`: Light source angle (0-359)
+- `--rotation DEG`: Rotation in degrees
+- `--zoom VALUE`: Zoom level (0.0-1.0, where 0.0=far/small, 1.0=close/large). Default values: 0.95 for planets without rings, 0.25 for planets with rings.
+- `--list-types`: List available planet types
+- `--help`: Show help
 
-Opciones del subcomando `planet clean`:
-- `--debug`: Eliminar solo archivos de depuración (texturas, etc.)
-- `--examples`: Eliminar solo archivos de ejemplos
-- `--results`: Eliminar solo archivos de resultados finales
-- `--all`: Eliminar todos los archivos (por defecto si no se especifica ninguna opción)
-- `--dry-run`: Mostrar qué archivos se eliminarían sin eliminarlos realmente
-- `--help`: Mostrar ayuda
+Options for the `planet clean` subcommand:
+- `--debug`: Delete only debug files (textures, etc.)
+- `--examples`: Delete only example files
+- `--results`: Delete only final result files
+- `--all`: Delete all files (default if no option is specified)
+- `--dry-run`: Show which files would be deleted without actually deleting them
+- `--help`: Show help
 
 Options for the `planet logs` subcommand:
 - `--lines N`: Show N lines of the log (default: all)
@@ -131,63 +137,63 @@ Options for the `planet logs` subcommand:
 - `--path`: Show the log file path
 - `--help`: Show help
 
-## Estructura de Carpetas de Output
+## Output Folder Structure
 
-Cosmos Generator organiza los archivos generados en la siguiente estructura de carpetas:
+Cosmos Generator organizes the generated files in the following folder structure:
 
 ```
 output/
-└── planets/                # Carpeta principal para planetas
-    ├── debug/              # Archivos de depuración
-    │   ├── planets.log     # Archivo de log con información detallada de generación
-    │   └── textures/       # Texturas generadas durante el proceso
-    │       ├── terrain/    # Texturas base de terreno
+└── planets/                # Main folder for planets
+    ├── debug/              # Debug files
+    │   ├── planets.log     # Log file with detailed generation information
+    │   └── textures/       # Textures generated during the process
+    │       ├── terrain/    # Base terrain textures
     │       │   └── [seed].png
-    │       └── clouds/     # Texturas de nubes
+    │       └── clouds/     # Cloud textures
     │           └── [seed]/
-    │               ├── texture.png  # Textura de nubes
-    │               └── mask.png     # Máscara de nubes
-    ├── examples/           # Ejemplos generados por los scripts de ejemplo
+    │               ├── texture.png  # Cloud texture
+    │               └── mask.png     # Cloud mask
+    ├── examples/           # Examples generated by example scripts
     │   ├── test_clouds/
     │   ├── test_ocean/
     │   ├── test_atmosphere/
     │   └── ...
-    └── result/             # Resultados finales organizados por tipo
-        ├── desert/         # Planetas tipo desierto
+    └── result/             # Final results organized by type
+        ├── desert/         # Desert type planets
         │   └── [seed].png
-        ├── ocean/          # Planetas tipo océano
+        ├── ocean/          # Ocean type planets
         │   └── [seed].png
-        └── .../            # Otros tipos de planetas
+        └── .../            # Other planet types
 ```
 
-### Descripción de las Carpetas
+### Folder Description
 
-- **debug**: Contiene archivos intermedios generados durante el proceso de creación, útiles para depuración y análisis.
-  - **planets.log**: Archivo de log que contiene información detallada sobre el proceso de generación de planetas, incluyendo tiempos de ejecución, parámetros utilizados y errores encontrados. Este archivo se elimina cuando se usa el comando `clean` con la opción `--debug` o `--all`.
-  - **textures/terrain**: Texturas base de terreno antes de aplicar iluminación y efectos.
-  - **textures/clouds**: Texturas y máscaras de nubes utilizadas en planetas con nubes.
+- **debug**: Contains intermediate files generated during the creation process, useful for debugging and analysis.
+  - **planets.log**: Log file containing detailed information about the planet generation process, including execution times, parameters used, and errors encountered. This file is deleted when using the `clean` command with the `--debug` or `--all` option.
+  - **textures/terrain**: Base terrain textures before applying lighting and effects.
+  - **textures/clouds**: Cloud textures and masks used in planets with clouds.
 
-- **examples**: Contiene imágenes generadas por los scripts de ejemplo en la carpeta `examples/planets/`.
+- **examples**: Contains images generated by the example scripts in the `examples/planets/` folder.
 
-- **result**: Contiene los planetas finales generados, organizados por tipo. Esta es la ubicación por defecto donde se guardan los planetas cuando se usa el CLI sin especificar una ruta de salida.
+- **result**: Contains the final generated planets, organized by type. This is the default location where planets are saved when using the CLI without specifying an output path.
 
-## Sistema de Logging
+## Logging System
 
-Cosmos Generator incluye un sistema de logging detallado que registra información sobre el proceso de generación de planetas. Los logs se guardan en el archivo `output/planets/debug/planets.log` y pueden ser visualizados con el subcomando `planet logs`.
+Cosmos Generator includes a detailed logging system that records information about the planet generation process. The logs are saved in the `output/planets/debug/planets.log` file and can be viewed with the `planet logs` subcommand.
 
-El sistema de logging registra:
+The logging system records:
 
-- Información general sobre la generación de planetas (tipo, semilla, parámetros)
-- Tiempos de ejecución para cada paso del proceso con detalles específicos:
-  - Generación de textura: tipo de planeta, tamaño
-  - Iluminación: ángulo, intensidad, factor de caída
-  - Atmósfera: porcentaje de relleno, radio de desenfoque
-  - Nubes: cobertura, umbral de generación
-  - Anillos: complejidad, número de anillos, factor de tamaño
-- Errores y excepciones que puedan ocurrir durante el proceso
-- Rutas de archivos generados
+- General information about planet generation (type, seed, parameters)
+- Execution times for each step of the process with specific details:
+  - Texture generation: planet type, size
+  - Lighting: angle, intensity, falloff factor
+  - Atmosphere: fill percentage, blur radius
+  - Clouds: coverage, generation threshold
+  - Rings: complexity, number of rings, size factor
+- Errors and exceptions that may occur during the process
+- Paths of generated files
 
-Ejemplo de salida del log:
+Example log output:
 
 ```
 2025-04-15 19:10:19 [INFO] cosmos_generator: [cli] Generating Desert planet with seed 12345

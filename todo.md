@@ -10,4 +10,5 @@
 [ ] Quitar el --summary de los logs y que siempre muestre el sumario luego de cada generacion
 [ ] Hacer mas visible en los logs cuando termina y arranca una nueva generacion.
 [ ] Crear una web interactiva
+[ ] Verificar que acuse error si se pasan parametros que no existen.
 

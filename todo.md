@@ -5,4 +5,9 @@
 [x] Hacer un comando que limpie el output
 [x] Quitar un poco de realismo a las nubes
 [x] Documentar la carpeta debug en el README
-[ ] Crear un archivo de log
+[x] Crear un archivo de log
+[ ] Hacer paremetrizables el halo y la atmosphera?
+[ ] Quitar el --summary de los logs y que siempre muestre el sumario luego de cada generacion
+[ ] Hacer mas visible en los logs cuando termina y arranca una nueva generacion.
+[ ] Crear una web interactiva
+

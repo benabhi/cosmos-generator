@@ -191,6 +191,7 @@ def main(args: argparse.Namespace) -> int:
     container.set_content(planet)
 
     if args.rotation != 0.0:
+        logger.info(f"Setting rotation to {args.rotation} degrees", "cli")
         container.set_rotation(args.rotation)
 
     try:

@@ -76,6 +76,7 @@ class Container:
             angle: Rotation angle in degrees
         """
         self.rotation = angle % 360
+        logger.info(f"Rotation set to: {self.rotation} degrees", "container")
 
     def rotate(self, angle: float) -> None:
         """
@@ -85,6 +86,7 @@ class Container:
             angle: Rotation angle in degrees
         """
         self.rotation = (self.rotation + angle) % 360
+        logger.info(f"Rotated by {angle} degrees, new rotation: {self.rotation} degrees", "container")
 
     def set_zoom(self, zoom_level: float) -> None:
         """
@@ -160,6 +162,7 @@ class Container:
 
         # Aplicar rotación si es necesario
         if self.rotation != 0.0:
+            logger.info(f"Applying rotation of {self.rotation} degrees during rendering", "container")
             content_image = rotate_image(content_image, self.rotation)
 
         # Obtener el tamaño de la imagen del contenido

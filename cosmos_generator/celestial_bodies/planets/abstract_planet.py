@@ -307,7 +307,15 @@ class AbstractPlanet(AbstractCelestialBody):
                 )
             else:
                 halo_color = (r, g, b, 255)  # Full opacity for the halo
-                halo_width = 2  # Normal width for planets without rings
+                halo_width = 3  # Increased width for planets without rings (was 2)
+
+                # Add a second, outer halo for planets without rings to make it more visible
+                outer_halo_radius = planet_radius + 2
+                halo_draw.ellipse(
+                    (center - outer_halo_radius, center - outer_halo_radius,
+                     center + outer_halo_radius, center + outer_halo_radius),
+                    outline=halo_color, width=1
+                )
 
             # Draw the halo as a thin ring
             halo_draw.ellipse(
@@ -318,7 +326,8 @@ class AbstractPlanet(AbstractCelestialBody):
 
             # Apply a very small blur to soften the halo slightly
             # For planets with rings, use less blur to keep the halo more defined
-            blur_amount = 0.5 if self.has_rings else 1
+            # For planets without rings, use even less blur to make the halo more visible
+            blur_amount = 0.5 if self.has_rings else 0.3  # Reduced blur for planets without rings
             halo = halo.filter(ImageFilter.GaussianBlur(blur_amount))
 
             # Composite the halo onto the result

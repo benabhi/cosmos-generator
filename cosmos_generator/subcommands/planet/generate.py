@@ -59,6 +59,8 @@ def register_subcommand(subparsers: Any) -> None:
                        help="Add atmosphere")
     parser.add_argument("--clouds", type=float, default=None,
                        help="Cloud coverage (0.0-1.0)")
+    parser.add_argument("--variation", type=str, default=None,
+                       help="Texture variation (depends on planet type)")
 
     # Lighting
     parser.add_argument("--light-intensity", type=float, default=1.0,
@@ -72,9 +74,11 @@ def register_subcommand(subparsers: Any) -> None:
     parser.add_argument("--zoom", type=float, default=None,
                        help="Zoom level (0.0-1.0, where 0.0=far away/small, 1.0=very close/large)")
 
-    # List available planet types
+    # List available planet types and variations
     parser.add_argument("--list-types", action="store_true",
                        help="List available planet types")
+    parser.add_argument("--list-variations", action="store_true",
+                       help="List available variations for each planet type")
 
 
 def main(args: argparse.Namespace) -> int:
@@ -95,6 +99,19 @@ def main(args: argparse.Namespace) -> int:
         print("Available planet types:")
         for planet_type in generator.get_celestial_types():
             print(f"  - {planet_type}")
+        return 0
+
+    # List available variations if requested
+    if args.list_variations:
+        print("Available variations for each planet type:")
+        for planet_type, variations in config.PLANET_VARIATIONS.items():
+            default_variation = config.DEFAULT_PLANET_VARIATIONS.get(planet_type, "")
+            print(f"  {planet_type.title()}:")
+            for variation in variations:
+                if variation == default_variation:
+                    print(f"    - {variation} (default)")
+                else:
+                    print(f"    - {variation}")
         return 0
 
     # Convert planet type to title case for case-insensitive matching
@@ -137,12 +154,25 @@ def main(args: argparse.Namespace) -> int:
         params["clouds"] = True
         params["cloud_coverage"] = max(0.0, min(1.0, args.clouds))
 
-    # For Ocean planets, randomly choose between archipelago and water_world styles
-    if planet_type.lower() == "ocean":
-        ocean_styles = ["archipelago", "water_world"]
-        chosen_style = random.choice(ocean_styles)
-        params["ocean_style"] = chosen_style
-        print(f"Randomly selected Ocean style: {chosen_style}")
+    # Handle variation parameter
+    planet_type_lower = planet_type.lower()
+    if args.variation is not None:
+        # Check if the variation is valid for this planet type
+        available_variations = config.PLANET_VARIATIONS.get(planet_type_lower, [])
+
+        if args.variation in available_variations:
+            params["variation"] = args.variation
+            print(f"Using {args.variation} variation for {planet_type} planet")
+        else:
+            print(f"Warning: '{args.variation}' is not a valid variation for {planet_type} planets.")
+            print(f"Available variations: {', '.join(available_variations)}")
+            print(f"Using default variation: {config.DEFAULT_PLANET_VARIATIONS[planet_type_lower]}")
+    else:
+        # Use default variation from config
+        default_variation = config.DEFAULT_PLANET_VARIATIONS.get(planet_type_lower)
+        if default_variation:
+            params["variation"] = default_variation
+            print(f"Using default variation: {default_variation}")
 
     # Create the planet instance
     start_time = time.time()

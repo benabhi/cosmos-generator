@@ -64,6 +64,32 @@ DEFAULT_PLANET_PARAMS = {
     "cloud_coverage": 0.5
 }
 
+# Default variations for each planet type
+DEFAULT_PLANET_VARIATIONS = {
+    "desert": "arid",  # Default variation for Desert planets
+    "ocean": "water_world",  # Default variation for Ocean planets
+    "furnace": "standard",  # Default variation for Furnace planets
+    "gas": "standard",  # Default variation for Gas planets
+    "ice": "standard",  # Default variation for Ice planets
+    "lava": "standard",  # Default variation for Lava planets
+    "rocky": "standard",  # Default variation for Rocky planets
+    "terran": "standard",  # Default variation for Terran planets
+    "toxic": "standard"  # Default variation for Toxic planets
+}
+
+# Available variations for each planet type
+PLANET_VARIATIONS = {
+    "desert": ["arid"],  # Available variations for Desert planets
+    "ocean": ["water_world", "archipelago"],  # Available variations for Ocean planets
+    "furnace": ["standard"],  # Available variations for Furnace planets
+    "gas": ["standard"],  # Available variations for Gas planets
+    "ice": ["standard"],  # Available variations for Ice planets
+    "lava": ["standard"],  # Available variations for Lava planets
+    "rocky": ["standard"],  # Available variations for Rocky planets
+    "terran": ["standard"],  # Available variations for Terran planets
+    "toxic": ["standard"]  # Available variations for Toxic planets
+}
+
 # Container default settings
 CONTAINER_DEFAULT_SETTINGS = {
     "width": PLANET_SIZE,

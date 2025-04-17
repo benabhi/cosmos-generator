@@ -24,15 +24,31 @@ class OceanPlanet(AbstractPlanet):
             seed: Random seed for reproducible generation
             size: Size of the planet image in pixels
             **kwargs: Additional parameters for customization
-                - ocean_style: "archipelago" (default) or "water_world"
+                - variation: Texture variation ("water_world" or "archipelago")
                 - wave_scale: Scale of wave patterns (default: 1.0)
                 - depth_scale: Scale of depth variations (default: 1.0)
                 - island_coverage: Coverage of islands, 0.0-1.0 (default: 0.15)
         """
         super().__init__(seed=seed, size=size, **kwargs)
 
+        # Import here to avoid circular imports
+        import config
+
         # Ocean-specific parameters
-        self.ocean_style = kwargs.get("ocean_style", "archipelago")  # "archipelago" or "water_world"
+        # For backward compatibility, check both 'variation' and 'ocean_style'
+        variation = kwargs.get("variation", None)
+        ocean_style = kwargs.get("ocean_style", None)
+
+        if variation is not None:
+            self.variation = variation
+        elif ocean_style is not None:
+            self.variation = ocean_style
+        else:
+            self.variation = config.DEFAULT_PLANET_VARIATIONS["ocean"]
+
+        # Keep ocean_style for backward compatibility
+        self.ocean_style = self.variation
+
         self.wave_scale = kwargs.get("wave_scale", 1.0)
         self.depth_scale = kwargs.get("depth_scale", 1.0)
         self.island_coverage = kwargs.get("island_coverage", 0.15)  # 0.0-1.0, higher means more islands

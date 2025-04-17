@@ -36,6 +36,7 @@ generator = PlanetGenerator()
 # Generate desert planet with rings, atmosphere and clouds
 planet = generator.create("Desert", {
     "seed": 12345,
+    "variation": "arid",  # Optional, uses default if not specified
     "rings": True,
     "lighting": {
         "intensity": 1.0,
@@ -45,6 +46,13 @@ planet = generator.create("Desert", {
     "atmosphere": True,
     "clouds": True,
     "cloud_coverage": 1.0  # 0.0 to 1.0, where 1.0 is maximum coverage
+})
+
+# Generate ocean planet with archipelago variation
+ocean_planet = generator.create("Ocean", {
+    "seed": 54321,
+    "variation": "archipelago",  # "water_world" is the default
+    "atmosphere": True
 })
 
 # Basic save method
@@ -88,6 +96,13 @@ python -m cosmos_generator planet generate --type desert --seed 987 --rings --at
 # Generate planet with clouds (coverage of 0.7 or 70%)
 python -m cosmos_generator planet generate --type ocean --clouds 0.7 --seed 12345
 
+# Generate planet with specific variation
+python -m cosmos_generator planet generate --type ocean --variation archipelago
+python -m cosmos_generator planet generate --type desert --variation arid
+
+# List available variations for each planet type
+python -m cosmos_generator planet generate --list-variations
+
 # List available planet types
 python -m cosmos_generator planet generate --list-types
 
@@ -111,6 +126,7 @@ Options for the `planet generate` subcommand:
 - `--type TYPE`: Planet type (desert, furnace, etc.) - case insensitive
 - `--seed SEED`: Seed for reproducible generation (default: random)
 - `--output FILE`: Output file path (default: output/planets/result/[type]/[seed].png)
+- `--variation NAME`: Texture variation (depends on planet type, see below)
 - `--rings`: Add rings
 - `--atmosphere`: Add atmosphere
 - `--clouds VALUE`: Add clouds with specific coverage (0.0-1.0, where 1.0 is full coverage)
@@ -119,6 +135,7 @@ Options for the `planet generate` subcommand:
 - `--rotation DEG`: Rotation in degrees
 - `--zoom VALUE`: Zoom level (0.0-1.0, where 0.0=far/small, 1.0=close/large). Default values: 0.95 for planets without rings, 0.25 for planets with rings.
 - `--list-types`: List available planet types
+- `--list-variations`: List available variations for each planet type
 - `--help`: Show help
 
 Options for the `planet clean` subcommand:
@@ -135,6 +152,33 @@ Options for the `planet logs` subcommand:
 - `--level LEVEL`: Filter logs by minimum level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 - `--path`: Show the log file path
 - `--help`: Show help
+
+## Planet Variations
+
+Cosmos Generator supports different texture variations for each planet type. You can specify a variation using the `--variation` parameter. If not specified, a default variation will be used.
+
+Currently available variations:
+
+- **Desert**:
+  - `arid` (default): Classic desert planet with dunes and canyons
+
+- **Ocean**:
+  - `water_world` (default): Planet entirely covered by water with no land masses
+  - `archipelago`: Ocean planet with scattered islands and archipelagos
+
+You can list all available variations with:
+```bash
+python -m cosmos_generator planet generate --list-variations
+```
+
+Example usage:
+```bash
+# Generate an Ocean planet with archipelago variation
+python -m cosmos_generator planet generate --type ocean --variation archipelago
+
+# Generate a Desert planet with default variation (arid)
+python -m cosmos_generator planet generate --type desert
+```
 
 ## Output Folder Structure
 

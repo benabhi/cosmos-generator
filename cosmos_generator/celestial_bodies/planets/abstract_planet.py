@@ -405,6 +405,7 @@ class AbstractPlanet(AbstractCelestialBody):
     def _create_light_based_opacity_mask(self, cloud_mask: Image.Image, light_direction: tuple) -> Image.Image:
         """
         Create an opacity adjustment mask based on light direction to make clouds more visible in illuminated areas.
+        This implementation creates a completely new mask to avoid any artifacts.
 
         Args:
             cloud_mask: Original cloud mask
@@ -413,48 +414,66 @@ class AbstractPlanet(AbstractCelestialBody):
         Returns:
             Adjusted cloud mask with increased opacity in illuminated areas
         """
-        # Convert to numpy array for faster processing
-        mask_array = np.array(cloud_mask)
-        size = mask_array.shape[0]
+        # Get the size of the mask
+        size = cloud_mask.width
         center = size // 2
 
-        # Create a new array for the adjusted mask
-        adjusted_mask = mask_array.copy()
-
-        # Calculate the illuminated side of the planet
-        # The side opposite to the light direction is the illuminated side
+        # Extract light direction components
         light_x, light_y = light_direction[0], light_direction[1]
 
-        # Create a gradient based on the light direction
+        # Create a completely new illumination gradient
+        # This is a simple hemisphere lighting model
+        gradient = Image.new('L', (size, size), 0)
+        gradient_draw = ImageDraw.Draw(gradient)
+
+        # Draw a radial gradient from the light direction
+        # The center of the gradient is offset in the direction opposite to the light
+        # This creates a smooth illumination effect with the brightest part opposite to the light source
+        light_center_x = int(center - light_x * center * 0.7)  # Offset center in direction opposite to light
+        light_center_y = int(center - light_y * center * 0.7)
+
+        # Draw concentric circles with decreasing brightness from the light center
+        max_radius = int(size * 0.8)  # Slightly larger than the planet radius
+        for r in range(max_radius, 0, -1):
+            # Calculate brightness based on distance from light center
+            # Closer to light center = brighter
+            brightness = int(255 * (1.0 - r / max_radius))
+            gradient_draw.ellipse(
+                (light_center_x - r, light_center_y - r, light_center_x + r, light_center_y + r),
+                fill=brightness
+            )
+
+        # Apply a circular mask to the gradient to match the planet shape
+        circle_mask = image_utils.create_circle_mask(size)
+        gradient = ImageChops.multiply(gradient, circle_mask)
+
+        # Apply a blur to smooth the gradient
+        gradient = gradient.filter(ImageFilter.GaussianBlur(size // 20))
+
+        # We'll create the final adjusted mask by combining the original mask with the gradient
+
+        # Convert to numpy arrays for faster processing
+        mask_array = np.array(cloud_mask)
+        gradient_array = np.array(gradient)
+        adjusted_array = np.zeros_like(mask_array)
+
+        # Apply the gradient to the mask
         for y in range(size):
             for x in range(size):
                 if mask_array[y, x] > 0:  # Only process cloud pixels
-                    # Calculate position relative to center
-                    rel_x = (x - center) / center
-                    rel_y = (y - center) / center
+                    # Get the illumination factor from the gradient (0-255)
+                    illumination = gradient_array[y, x] / 255.0
 
-                    # Calculate dot product with light direction (2D projection)
-                    # This gives a value between -1 and 1, where:
-                    # -1 = fully illuminated side, 1 = fully shadowed side
-                    dot_product = rel_x * light_x + rel_y * light_y
+                    # Apply a curve to enhance the effect
+                    # Brighter areas get more boost
+                    opacity_boost = 1.0 + illumination * 0.5  # Up to 50% boost in fully lit areas
 
-                    # Convert to a 0-1 range where 1 is fully illuminated
-                    illumination = 1.0 - (dot_product + 1.0) / 2.0
-
-                    # Apply a curve to enhance the effect in illuminated areas
-                    if illumination > 0.5:  # More illuminated side
-                        # Boost opacity more in illuminated areas
-                        opacity_boost = 1.0 + (illumination - 0.5) * 0.6  # Up to 30% boost
-                    else:  # More shadowed side
-                        # Slight boost in shadowed areas
-                        opacity_boost = 1.0 + (illumination * 0.2)  # Up to 10% boost
-
-                    # Apply the opacity boost
+                    # Apply the boost to the original opacity
                     new_opacity = min(255, int(mask_array[y, x] * opacity_boost))
-                    adjusted_mask[y, x] = new_opacity
+                    adjusted_array[y, x] = new_opacity
 
         # Convert back to PIL Image
-        return Image.fromarray(adjusted_mask)
+        return Image.fromarray(adjusted_array)
 
     def _apply_clouds(self, base_image: Image.Image) -> Image.Image:
         """
@@ -541,8 +560,8 @@ class AbstractPlanet(AbstractCelestialBody):
 
             # Adjust threshold for cloud coverage with a gentler curve
             # Lower threshold = more clouds
-            # Use a more linear relationship between coverage and threshold
-            cloud_threshold = 0.5 - (self.cloud_coverage * 0.4)  # Adjusted for smoother transition
+            # Use a more aggressive threshold to increase cloud visibility
+            cloud_threshold = 0.45 - (self.cloud_coverage * 0.45)  # More aggressive adjustment for higher visibility
 
             # Fill the cloud mask with a balanced approach for cloud-like appearance
             for y in range(self.size):
@@ -555,8 +574,8 @@ class AbstractPlanet(AbstractCelestialBody):
                         if value < cloud_threshold:  # Edge zone
                             # More gradual transition for softer edges
                             edge_factor = (value - (cloud_threshold - 0.15)) / 0.15  # 0 to 1 over wider range
-                            # Lower minimum opacity for softer edges
-                            alpha = int(60 * edge_factor)  # 0 to 60 opacity for edges (reduced from 0-80)
+                            # Increased minimum opacity for more visible edges
+                            alpha = int(80 * edge_factor)  # 0 to 80 opacity for edges (increased from 0-60)
                         else:  # Main cloud zone
                             # Calculate normalized distance from threshold
                             normalized = (value - cloud_threshold) / (1.0 - cloud_threshold)
@@ -564,11 +583,11 @@ class AbstractPlanet(AbstractCelestialBody):
                             # Simplified two-zone curve for smoother appearance
                             if normalized < 0.4:  # Outer and mid-cloud zone combined
                                 # More gradual transition throughout the cloud
-                                # Start at 60 (matching edge transition) and go up to 200
-                                alpha = int(60 + normalized * 350)  # 60-200 range for most of the cloud
+                                # Start at 80 (matching edge transition) and go up to 220
+                                alpha = int(80 + normalized * 350)  # 80-220 range for most of the cloud
                             else:  # Dense cloud center
-                                # Slightly reduced maximum opacity for softer appearance
-                                alpha = int(200 + (normalized - 0.4) * 137.5)  # 200-255 range for centers
+                                # Higher opacity for more visible cloud centers
+                                alpha = int(220 + (normalized - 0.4) * 87.5)  # 220-255 range for centers
 
                         # Apply a smaller random variation for smoother appearance
                         # Just enough to avoid perfectly flat areas
@@ -683,9 +702,9 @@ class AbstractPlanet(AbstractCelestialBody):
             # Log enhanced details including opacity adjustments and lighting parameters
             logger.log_step("apply_clouds", duration_ms,
                           f"Coverage: {self.cloud_coverage:.2f}, Threshold: {threshold:.2f}, " +
-                          f"Opacity: base=60-255, illuminated_boost={illuminated_boost:.2f}, shadowed_boost={shadowed_boost:.2f}, " +
+                          f"Opacity: base=80-255, illuminated_boost={illuminated_boost:.2f}, shadowed_boost={shadowed_boost:.2f}, " +
                           f"Lighting: ambient=0.85, diffuse=0.6, specular=0.05, blur=0.8, " +
-                          f"Style: soft stylized clouds with painterly appearance")
+                          f"Style: enhanced soft stylized clouds with improved visibility")
             return result
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000

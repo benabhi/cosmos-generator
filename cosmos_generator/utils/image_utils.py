@@ -289,7 +289,10 @@ def apply_spherical_distortion(image: Image.Image, strength: float = 0.2) -> Ima
     img_array = np.array(image)
     output_array = np.zeros_like(img_array)
 
-    # Apply the distortion
+    # Pre-calculate a distance map and distortion factors for optimization
+    distance_map = np.zeros((height, width))
+    distortion_map = np.zeros((height, width))
+
     for y in range(height):
         for x in range(width):
             # Calculate distance from center (normalized 0-1)
@@ -297,27 +300,63 @@ def apply_spherical_distortion(image: Image.Image, strength: float = 0.2) -> Ima
             dy = (y - center_y) / max_distance
             distance = math.sqrt(dx*dx + dy*dy)
 
+            # Store the distance
+            distance_map[y, x] = distance
+
+            # Calculate distortion factor with a smoother function
+            if distance <= 1.0:
+                # Use a smoothstep-like function for more natural falloff
+                # This creates smoother transitions at the edges
+                t = distance
+                t = t * t * (3 - 2 * t)  # Smoothstep function
+                distortion = 1.0 - strength * (1.0 - math.cos(t * math.pi / 2))
+                distortion_map[y, x] = distortion
+
+    # Apply the distortion with improved interpolation
+    for y in range(height):
+        for x in range(width):
+            distance = distance_map[y, x]
+
             # Skip pixels outside the circle
             if distance > 1.0:
                 continue
 
-            # Calculate the distortion factor
-            # This creates a subtle bulging effect toward the center
-            # The formula creates a non-linear distortion that's stronger near the edges
-            distortion = 1.0 - strength * (1.0 - math.cos(distance * math.pi / 2))
+            # Get the pre-calculated distortion
+            distortion = distortion_map[y, x]
+
+            # Calculate normalized vector from center
+            dx = (x - center_x) / max_distance
+            dy = (y - center_y) / max_distance
 
             # Calculate source coordinates
             source_x = center_x + (dx * distortion * max_distance)
             source_y = center_y + (dy * distortion * max_distance)
 
             # Ensure source coordinates are within bounds
-            if 0 <= source_x < width and 0 <= source_y < height:
-                # Get the nearest pixel (simple approach)
-                src_x_int = int(source_x)
-                src_y_int = int(source_y)
+            if 0 <= source_x < width - 1 and 0 <= source_y < height - 1:
+                # Use bilinear interpolation for smoother results
+                x0, y0 = int(source_x), int(source_y)
+                x1, y1 = x0 + 1, y0 + 1
 
-                # Copy the pixel
-                output_array[y, x] = img_array[src_y_int, src_x_int]
+                # Calculate interpolation weights
+                wx = source_x - x0
+                wy = source_y - y0
+
+                # Get the four surrounding pixels
+                p00 = img_array[y0, x0]
+                p01 = img_array[y0, x1]
+                p10 = img_array[y1, x0]
+                p11 = img_array[y1, x1]
+
+                # Interpolate in x direction
+                p0 = p00 * (1 - wx) + p01 * wx
+                p1 = p10 * (1 - wx) + p11 * wx
+
+                # Interpolate in y direction
+                pixel = p0 * (1 - wy) + p1 * wy
+
+                # Set the interpolated pixel
+                output_array[y, x] = pixel.astype(np.uint8)
 
     # Convert array back to image
     output = Image.fromarray(output_array)

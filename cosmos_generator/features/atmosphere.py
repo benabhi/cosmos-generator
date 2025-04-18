@@ -219,78 +219,158 @@ class Atmosphere:
         # Get the size of the base image
         canvas_size = base_image.width
 
-        # Create a larger canvas for the halo to avoid edge artifacts
-        halo_canvas_size = canvas_size + 10
-        halo_center = halo_canvas_size // 2
+        # Create a high-resolution canvas for better quality
+        # Working at 2x resolution for smoother edges
+        hi_res_size = canvas_size * 2
+        hi_res_result = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+        hi_res_draw = ImageDraw.Draw(hi_res_result)
 
-        # Create two images: one for the inner circle and one for the outer circle
-        inner_circle = Image.new("L", (halo_canvas_size, halo_canvas_size), 0)
-        outer_circle = Image.new("L", (halo_canvas_size, halo_canvas_size), 0)
+        # Calculate center of the high-res image
+        hi_res_center = hi_res_size // 2
 
-        # Create drawing objects
-        inner_draw = ImageDraw.Draw(inner_circle)
-        outer_draw = ImageDraw.Draw(outer_circle)
+        # Calculate the inner and outer radii of the halo
+        # Create a gap of 2-3 pixels between the planet edge and the halo
+        # Scale up for high resolution
+        gap = 2  # Gap between planet and halo
+        hi_res_inner_radius = (planet_radius + gap) * 2
+        hi_res_outer_radius = hi_res_inner_radius + (thickness * 2)
 
-        # Set up the halo parameters
-        # Make the inner radius slightly smaller to ensure it overlaps with the planet edge
-        # This helps prevent gaps between the halo and the planet due to the spherical distortion
-        inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
-        outer_radius = planet_radius + thickness  # Outer edge of halo
-
-        # Draw filled circles (not outlines) for clean edges
-        inner_draw.ellipse(
-            (halo_center - inner_radius, halo_center - inner_radius,
-             halo_center + inner_radius, halo_center + inner_radius),
-            fill=255
-        )
-
-        outer_draw.ellipse(
-            (halo_center - outer_radius, halo_center - outer_radius,
-             halo_center + outer_radius, halo_center + outer_radius),
-            fill=255
-        )
-
-        # Create the halo by subtracting the inner circle from the outer circle
-        # This creates a perfect ring with clean edges
-        halo_mask = ImageChops.subtract(outer_circle, inner_circle)
-
-        # Apply a very small blur for anti-aliasing only
-        # Just enough to smooth the edges without creating artifacts
-        blur_amount = 0.3  # Minimal blur for clean edges
-        halo_mask = halo_mask.filter(ImageFilter.GaussianBlur(blur_amount))
-
-        # Create the colored halo with the mask
-        halo = Image.new("RGBA", (halo_canvas_size, halo_canvas_size), (0, 0, 0, 0))
-        halo_array = np.array(halo)
-        mask_array = np.array(halo_mask)
-
-        # Extract color components
+        # Extract color components and ensure we have a vibrant, visible color
         r, g, b, a = color
 
-        # Adjust alpha based on halo_intensity
-        a = int(a * self.halo_intensity)
+        # Print the original color for debugging
+        print(f"Original atmosphere color: R:{r}, G:{g}, B:{b}, A:{a}")
 
-        # Apply the color with the mask
-        for y in range(halo_canvas_size):
-            for x in range(halo_canvas_size):
-                if mask_array[y, x] > 0:
-                    # Use the mask value as the alpha
-                    alpha = min(255, int(mask_array[y, x] * self.halo_intensity))
-                    halo_array[y, x] = [r, g, b, alpha]
+        # Force a minimum brightness to ensure visibility
+        min_brightness = 100
+        r = max(min_brightness, r)
+        g = max(min_brightness, g)
+        b = max(min_brightness, b)
 
-        # Convert back to PIL Image
-        halo = Image.fromarray(halo_array)
+        # Preserve the color's character but make it more vibrant
+        # Find the dominant color channel
+        max_channel = max(r, g, b)
+        min_channel = min(r, g, b)
 
-        # Crop the halo to match the canvas size
-        crop_offset = (halo_canvas_size - canvas_size) // 2
-        halo = halo.crop((crop_offset, crop_offset,
-                         crop_offset + canvas_size,
-                         crop_offset + canvas_size))
+        # Calculate color intensity and boost it
+        intensity_boost = 2.5
 
-        # Composite the halo onto the result
-        result = Image.alpha_composite(base_image, halo)
+        # Boost each channel while preserving color relationships
+        r = min(255, int(r * intensity_boost))
+        g = min(255, int(g * intensity_boost))
+        b = min(255, int(b * intensity_boost))
 
-        return result
+        # Print the enhanced color for debugging
+        print(f"Enhanced halo color: R:{r}, G:{g}, B:{b}")
+
+        # Create a two-layer halo for better definition
+        # First layer: Main halo with original color
+        main_halo_width = thickness * 2 * 0.7  # 70% of total thickness
+        main_halo_inner = hi_res_inner_radius
+        main_halo_outer = main_halo_inner + main_halo_width
+
+        # Second layer: Outer glow with slightly different color
+        glow_inner = main_halo_outer
+        glow_outer = hi_res_outer_radius
+
+        # Calculate alpha values based on intensity
+        base_alpha = int(255 * self.halo_intensity)
+
+        # Instead of drawing a filled ring and cutting out the center,
+        # we'll draw multiple concentric circles with high opacity to create a solid ring
+        # This approach gives us more control over the appearance
+
+        # Calculate the number of circles to draw for the main halo
+        main_halo_steps = max(10, int(main_halo_width / 2))
+
+        # Draw the main halo as multiple concentric circles
+        for i in range(main_halo_steps):
+            # Calculate the current radius
+            t = i / (main_halo_steps - 1)  # 0 to 1
+            current_radius = main_halo_inner + (main_halo_outer - main_halo_inner) * t
+
+            # Calculate alpha - higher in the middle of the ring
+            if t < 0.3 or t > 0.7:
+                # Edges of the ring - slightly lower alpha
+                alpha_factor = 0.8
+            else:
+                # Middle of the ring - full alpha
+                alpha_factor = 1.0
+
+            # Create a very opaque color for the main halo
+            alpha = int(base_alpha * alpha_factor)
+            ring_color = (r, g, b, alpha)
+
+            # Draw the circle with a thick outline
+            outline_width = 3  # Thicker outline for better visibility
+            hi_res_draw.ellipse(
+                (hi_res_center - current_radius - outline_width/2, hi_res_center - current_radius - outline_width/2,
+                 hi_res_center + current_radius + outline_width/2, hi_res_center + current_radius + outline_width/2),
+                outline=ring_color, width=outline_width
+            )
+
+        # Create a separate layer for the outer glow for better blur control
+        glow_layer = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+        glow_draw = ImageDraw.Draw(glow_layer)
+
+        # Draw the outer glow (gradient ring) with more steps for smoother gradient
+        steps = 30  # More steps for smoother gradient
+
+        # Create a much more vibrant color for the glow - more ethereal and visible
+        # Significantly enhance the color to make the second resplandor clearly visible
+        glow_r = min(255, r + 50)
+        glow_g = min(255, g + 50)
+        glow_b = min(255, b + 80)  # Add more blue for ethereal effect
+
+        # Print the glow color for debugging
+        print(f"Outer glow color: R:{glow_r}, G:{glow_g}, B:{glow_b}")
+
+        for i in range(steps):
+            t = i / (steps - 1)  # 0 to 1
+            current_radius = glow_inner + (glow_outer - glow_inner) * t
+
+            # Calculate alpha for this step with a smoother falloff
+            # Use a curve that creates a more visible outer glow
+            if t < 0.3:
+                # Inner part of the glow - stronger
+                alpha_factor = 0.8 - (t * 0.5)
+            else:
+                # Outer part of the glow - gradual falloff
+                alpha_factor = 0.65 * (1 - ((t - 0.3) / 0.7)) ** 1.2
+
+            # Apply the blur amount parameter to control the glow intensity
+            # Significantly increase the alpha to make the second resplandor more visible
+            alpha = int(base_alpha * alpha_factor * self.blur_amount * 3.0)
+
+            # Draw a circle with the calculated alpha and increased width for more visibility
+            glow_color = (glow_r, glow_g, glow_b, alpha)
+            outline_width = 2 if t < 0.5 else 1  # Thicker for inner part
+            glow_draw.ellipse(
+                (hi_res_center - current_radius - outline_width/2, hi_res_center - current_radius - outline_width/2,
+                 hi_res_center + current_radius + outline_width/2, hi_res_center + current_radius + outline_width/2),
+                outline=glow_color, width=outline_width
+            )
+
+        # Apply a much stronger blur to the glow layer to create a visible second resplandor
+        # Significantly increase the blur amount to make it more diffuse and visible
+        blur_amount = max(5.0, thickness * self.blur_amount * 4.0)
+        print(f"Applying blur with strength: {blur_amount}")
+        glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(blur_amount))
+
+        # Composite the glow layer onto the result
+        hi_res_result = Image.alpha_composite(hi_res_result, glow_layer)
+
+        # Apply a slight blur to smooth the edges
+        blur_radius = max(1.0, thickness * 0.3)
+        hi_res_result = hi_res_result.filter(ImageFilter.GaussianBlur(blur_radius))
+
+        # Resize back to original resolution with high-quality resampling
+        result = hi_res_result.resize((canvas_size, canvas_size), Image.LANCZOS)
+
+        # Composite the halo with the base image
+        final_result = Image.alpha_composite(base_image.copy(), result)
+
+        return final_result
 
     # Legacy methods for backward compatibility
     def apply_atmosphere(self, planet_image: Image.Image, planet_type: str,

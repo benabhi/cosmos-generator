@@ -124,6 +124,25 @@ def cloud_texture(seed, filename):
     return send_from_directory(directory, filename)
 
 
+@main_bp.route('/api/logs')
+def api_logs():
+    """
+    Get logs as JSON.
+    """
+    # Get number of lines to display
+    lines = request.args.get('lines', 100, type=int)
+    log_type = request.args.get('type', 'planets')
+
+    # Get recent logs
+    recent_logs = get_recent_logs(lines, log_type)
+
+    return jsonify({
+        'logs': recent_logs,
+        'lines': lines,
+        'log_type': log_type
+    })
+
+
 @main_bp.route('/api/clean', methods=['POST'])
 def clean():
     """

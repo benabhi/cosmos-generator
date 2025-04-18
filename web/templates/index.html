@@ -6,14 +6,15 @@
 <div x-data="planetGenerator()">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Left panel: Generator controls -->
-        <div class="sci-fi-panel rounded-lg p-6">
+        <div class="sci-fi-panel rounded-lg p-6 h-[800px] overflow-y-auto">
             <h2 class="text-2xl font-sci-fi mb-6 text-space-highlight">PLANET GENERATOR</h2>
             
             <form @submit.prevent="generatePlanet">
                 <!-- Planet type -->
                 <div class="mb-4">
                     <label for="planet-type" class="block mb-2 text-sm font-medium">Planet Type</label>
-                    <select id="planet-type" x-model="params.type" @change="updateVariations" class="sci-fi-input w-full p-2 rounded-md">
+                    <select id="planet-type" x-model="params.type" @change="updateVariations(); randomizeSeed()"
+                        class="sci-fi-input w-full p-2 rounded-md">
                         {% for type in planet_types %}
                         <option value="{{ type|lower }}">{{ type }}</option>
                         {% endfor %}
@@ -36,7 +37,8 @@
                 <!-- Variation -->
                 <div class="mb-4" x-show="availableVariations.length > 0">
                     <label for="variation" class="block mb-2 text-sm font-medium">Variation</label>
-                    <select id="variation" x-model="params.variation" class="sci-fi-input w-full p-2 rounded-md">
+                    <select id="variation" x-model="params.variation" @change="randomizeSeed"
+                        class="sci-fi-input w-full p-2 rounded-md">
                         <template x-for="variation in availableVariations" :key="variation">
                             <option :value="variation" x-text="variation"></option>
                         </template>
@@ -143,6 +145,14 @@
                     </div>
                 </div>
                 
+                <!-- Rotation -->
+                <div class="mb-6">
+                    <label for="rotation" class="block mb-2 text-sm font-medium">
+                        Rotation: <span x-text="params.rotation"></span>°
+                    </label>
+                    <input type="range" id="rotation" x-model="params.rotation" min="0" max="360" step="15" class="sci-fi-slider w-full">
+                </div>
+                
                 <!-- Generate button -->
                 <button type="submit" class="sci-fi-button py-3 px-6 rounded-md w-full" :disabled="generating">
                     <template x-if="!generating">
@@ -156,7 +166,7 @@
         </div>
         
         <!-- Right panel: Preview only -->
-        <div class="sci-fi-panel rounded-lg p-6 flex flex-col h-full">
+        <div class="sci-fi-panel rounded-lg p-6 flex flex-col h-[800px]">
             <h2 class="text-2xl font-sci-fi mb-4 text-space-highlight">PREVIEW</h2>
             
             <!-- Texture previews -->
@@ -212,7 +222,7 @@
                     </div>
                 </template>
                 
-                <template x-if="generating && !previewUrl">
+                <template x-if="generating">
                     <div class="loading-ring"></div>
                 </template>
                 
@@ -257,7 +267,8 @@
                 has_clouds: false,
                 clouds: 0.5,
                 light_angle: 45,
-                light_intensity: 1.0
+                light_intensity: 1.0,
+                rotation: 0
             },
             
             // Available variations for the selected planet type
@@ -296,12 +307,14 @@
             
             // Generate a planet
             generatePlanet() {
+                // Reset state
                 this.generating = true;
                 this.generationError = null;
                 this.generationLogs = [];
                 this.terrainTextureUrl = null;
                 this.cloudTextureUrl = null;
                 this.cloudMaskUrl = null;
+                this.previewUrl = null; // Clear previous preview to show spinner
                 
                 // Prepare parameters
                 const generationParams = { ...this.params };
@@ -368,9 +381,7 @@
                     
                     // Check status
                     if (data.status === 'completed') {
-                        this.previewUrl = data.result.url;
-                        
-                        // Set texture URLs
+                        // Set texture URLs first to ensure they're loaded
                         const seed = this.params.seed;
                         const planetType = this.params.type;
                         
@@ -383,7 +394,51 @@
                             this.cloudMaskUrl = `/static/planets/debug/textures/clouds/${seed}/mask.png`;
                         }
                         
-                        this.generating = false;
+                        // Preload images before showing them
+                        const preloadImages = () => {
+                            return new Promise((resolve) => {
+                                // Create a counter for loaded images
+                                let loadedCount = 0;
+                                const totalImages = this._hasClouds ? 3 : 1;
+                                
+                                // Function to increment counter when an image loads
+                                const imageLoaded = () => {
+                                    loadedCount++;
+                                    if (loadedCount >= totalImages) {
+                                        resolve();
+                                    }
+                                };
+                                
+                                // Preload terrain texture
+                                const terrainImg = new Image();
+                                terrainImg.onload = imageLoaded;
+                                terrainImg.onerror = imageLoaded; // Continue even if image fails to load
+                                terrainImg.src = this.terrainTextureUrl;
+                                
+                                // Preload cloud textures if needed
+                                if (this._hasClouds) {
+                                    // Add a small delay to ensure cloud textures are available
+                                    setTimeout(() => {
+                                        const cloudImg = new Image();
+                                        cloudImg.onload = imageLoaded;
+                                        cloudImg.onerror = imageLoaded;
+                                        cloudImg.src = this.cloudTextureUrl;
+                                        
+                                        const maskImg = new Image();
+                                        maskImg.onload = imageLoaded;
+                                        maskImg.onerror = imageLoaded;
+                                        maskImg.src = this.cloudMaskUrl;
+                                    }, 500); // 500ms delay
+                                }
+                            });
+                        };
+                        
+                        // Preload images then show the planet
+                        preloadImages().then(() => {
+                            // Now set the preview URL after textures are loaded
+                            this.previewUrl = data.result.url;
+                            this.generating = false;
+                        });
                     } else if (data.status === 'failed') {
                         this.generationError = data.error || "Generation failed";
                         this.generating = false;

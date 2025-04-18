@@ -33,7 +33,8 @@ def create_app():
     ensure_directory_exists(config.WEB_CONFIG['log_dir'])
 
     # Set up logging - always log to file regardless of debug mode
-    web_log_file = os.path.join(config.OUTPUT_DIR, 'web.log')
+    web_log_file = config.WEB_CONFIG['log_file']
+    ensure_directory_exists(os.path.dirname(web_log_file))
     file_handler = RotatingFileHandler(
         web_log_file,
         maxBytes=10240,

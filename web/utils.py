@@ -343,9 +343,9 @@ def get_recent_logs(lines: int = 100, log_type: str = 'planets') -> List[str]:
     Returns:
         List of log lines
     """
-    if log_type == 'web':
+    if log_type == 'webserver':
         # Get web server logs
-        log_file = os.path.join(config.OUTPUT_DIR, 'web.log')
+        log_file = config.WEB_CONFIG['log_file']
         if os.path.exists(log_file):
             try:
                 with open(log_file, 'r') as f:
@@ -356,7 +356,15 @@ def get_recent_logs(lines: int = 100, log_type: str = 'planets') -> List[str]:
         return ["No web logs found"]
     else:
         # Get planet generation logs
-        return logger.get_log_file_content(lines)
+        planets_log_file = os.path.join(config.PLANETS_DEBUG_DIR, 'planets.log')
+        if os.path.exists(planets_log_file):
+            try:
+                with open(planets_log_file, 'r') as f:
+                    # Read the last 'lines' lines
+                    return list(f.readlines())[-lines:]
+            except Exception as e:
+                return [f"Error reading planet logs: {str(e)}"]
+        return ["No planet logs found"]
 
 
 def get_planet_preview(planet_type: str, seed: str) -> Optional[str]:

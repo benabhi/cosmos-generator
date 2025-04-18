@@ -42,3 +42,8 @@ jinja2.exceptions.TemplateSyntaxError: unexpected '}'
 2025-04-18 18:53:02,609 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
 2025-04-18 18:56:10,465 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
 2025-04-18 18:58:02,371 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
+2025-04-18 20:40:38,021 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:50]
+2025-04-18 20:40:52,029 INFO: 127.0.0.1 GET /logs? 200 OK 26552 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:40:54,292 INFO: 127.0.0.1 GET /api/logs?type=webserver&lines=100 200 OK 4080 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:40:55,816 INFO: 127.0.0.1 GET /api/logs?type=planets&lines=100 200 OK 4900 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:41:49,472 INFO: 127.0.0.1 GET /? 200 OK 35296 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]

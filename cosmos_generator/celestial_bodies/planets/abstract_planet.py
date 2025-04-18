@@ -475,27 +475,31 @@ class AbstractPlanet(AbstractCelestialBody):
             # Get the size of the planet image (may include atmosphere)
             size = base_image.width
 
-            # BALANCED CLOUD GENERATION - BETWEEN FLAT STYLE AND REALISTIC DETAIL
-            # Base cloud layer - cloud shapes with medium frequency and some complexity
+            # SOFT STYLIZED CLOUD GENERATION
+            # Base cloud layer - larger, softer cloud formations with less detail
             base_cloud_noise = self.noise_gen.generate_noise_map(
                 self.size, self.size,
                 lambda x, y: self.noise_gen.domain_warp(
                     x, y,
-                    lambda dx, dy: self.noise_gen.simplex_warp(dx, dy, 0.3, 0.3),
-                    lambda dx, dy: self.noise_gen.fractal_simplex(dx, dy, 4, 0.6, 2.0, 2.2)  # 4 octaves for more cloud-like shapes
+                    # Use a gentler warp with lower frequency for softer shapes
+                    lambda dx, dy: self.noise_gen.simplex_warp(dx, dy, 0.15, 0.2),
+                    # Fewer octaves (3 instead of 4) for less detail and smoother appearance
+                    lambda dx, dy: self.noise_gen.fractal_simplex(dx, dy, 3, 0.5, 2.0, 1.8)
                 )
             )
 
-            # Detail layer - moderate detail for cloud texture
+            # Detail layer - very subtle detail to avoid graininess
             detail_noise = self.noise_gen.generate_noise_map(
                 self.size, self.size,
-                lambda x, y: self.noise_gen.fractal_simplex(x, y, 3, 0.5, 2.0, 4.5)  # 3 octaves for some detail
+                # Use only 2 octaves for minimal detail
+                lambda x, y: self.noise_gen.fractal_simplex(x, y, 2, 0.4, 2.0, 1.5)
             )
 
-            # Edge definition layer - creates cloud-like boundaries
+            # Edge definition layer - softer edges for a more painterly look
             edge_noise = self.noise_gen.generate_noise_map(
                 self.size, self.size,
-                lambda x, y: self.noise_gen.ridged_simplex(x, y, 3, 0.7, 2.0, 3.0)  # 3 octaves for more natural edges
+                # Use a gentler ridge function with fewer octaves
+                lambda x, y: self.noise_gen.ridged_simplex(x, y, 2, 0.6, 2.0, 2.0)
             )
 
             # Combine the noise layers to create balanced cloud formations
@@ -504,25 +508,25 @@ class AbstractPlanet(AbstractCelestialBody):
 
             for y in range(self.size):
                 for x in range(self.size):
-                    # Base shape (50%) - cloud formations
+                    # Base shape (70%) - dominant soft cloud formations
                     base = base_cloud_noise[y, x]
-                    # Add detail (30%) - more texture for cloud-like appearance
+                    # Add minimal detail (15%) - just enough texture to avoid flatness
                     detail = detail_noise[y, x]
-                    # Add edge definition (20%) - defined but natural boundaries
+                    # Add soft edge definition (15%) - gentle cloud boundaries
                     edge = edge_noise[y, x]
 
-                    # Combine with balanced weights
-                    # More weight on detail for cloud-like texture
-                    combined = base * 0.5 + detail * 0.3 + edge * 0.2
+                    # Combine with weights favoring the base layer for softer appearance
+                    combined = base * 0.7 + detail * 0.15 + edge * 0.15
 
-                    # Apply a moderate curve to create defined but natural edges
-                    if combined > 0.4 and combined < 0.6:
-                        # Create a moderate transition in the middle range
-                        factor = (combined - 0.4) / 0.2  # 0 to 1 in the 0.4-0.6 range
-                        combined = 0.4 + factor * 0.25  # Moderate transition for natural-looking edges
+                    # Apply a gentler curve for softer transitions
+                    if combined > 0.35 and combined < 0.65:
+                        # Wider, more gradual transition zone
+                        factor = (combined - 0.35) / 0.3  # 0 to 1 in the 0.35-0.65 range
+                        # Smaller adjustment for more subtle edges
+                        combined = 0.35 + factor * 0.3  # Gentler transition
 
-                    # Add subtle variation to avoid too uniform appearance
-                    variation = (self.rng.random() - 0.5) * 0.05  # Small random variation (-0.025 to 0.025)
+                    # Add very minimal variation to maintain smoothness
+                    variation = (self.rng.random() - 0.5) * 0.02  # Smaller random variation (-0.01 to 0.01)
                     combined = max(0.0, min(1.0, combined + variation))  # Keep within 0-1 range
 
                     # Store the result
@@ -535,9 +539,10 @@ class AbstractPlanet(AbstractCelestialBody):
             cloud_mask = Image.new("L", (self.size, self.size), 0)
             cloud_data = cloud_mask.load()
 
-            # Adjust threshold to increase cloud coverage
+            # Adjust threshold for cloud coverage with a gentler curve
             # Lower threshold = more clouds
-            cloud_threshold = 0.45 - (self.cloud_coverage * 0.35)  # More aggressive adjustment
+            # Use a more linear relationship between coverage and threshold
+            cloud_threshold = 0.5 - (self.cloud_coverage * 0.4)  # Adjusted for smoother transition
 
             # Fill the cloud mask with a balanced approach for cloud-like appearance
             for y in range(self.size):
@@ -545,31 +550,29 @@ class AbstractPlanet(AbstractCelestialBody):
                     # Get the noise value at this pixel
                     value = cloud_noise[y, x]
 
-                    # Use a moderate transition zone for natural-looking cloud edges
-                    if value > cloud_threshold - 0.08:  # Moderate transition (0.08)
+                    # Use a wider, more gradual transition zone for softer cloud edges
+                    if value > cloud_threshold - 0.15:  # Wider transition zone (0.15 instead of 0.08)
                         if value < cloud_threshold:  # Edge zone
-                            # Gradual transition for natural-looking edges
-                            edge_factor = (value - (cloud_threshold - 0.08)) / 0.08  # 0 to 1
-                            # Increased minimum opacity (80) for more visible edges
-                            alpha = int(80 * edge_factor)  # 0 to 80 opacity for edges (increased from 0-50)
+                            # More gradual transition for softer edges
+                            edge_factor = (value - (cloud_threshold - 0.15)) / 0.15  # 0 to 1 over wider range
+                            # Lower minimum opacity for softer edges
+                            alpha = int(60 * edge_factor)  # 0 to 60 opacity for edges (reduced from 0-80)
                         else:  # Main cloud zone
                             # Calculate normalized distance from threshold
                             normalized = (value - cloud_threshold) / (1.0 - cloud_threshold)
 
-                            # Three-zone curve for more cloud-like appearance with increased opacity
-                            if normalized < 0.2:  # Outer cloud zone
-                                # Gradual transition from edge to mid-cloud with increased base opacity
-                                alpha = int(80 + normalized * 500)  # 80-180 range for outer zone (increased from 50-150)
-                            elif normalized < 0.6:  # Mid-cloud zone
-                                # Higher opacity for most of the cloud
-                                alpha = int(180 + (normalized - 0.2) * 250)  # 180-280 range for mid zone (increased from 150-250)
+                            # Simplified two-zone curve for smoother appearance
+                            if normalized < 0.4:  # Outer and mid-cloud zone combined
+                                # More gradual transition throughout the cloud
+                                # Start at 60 (matching edge transition) and go up to 200
+                                alpha = int(60 + normalized * 350)  # 60-200 range for most of the cloud
                             else:  # Dense cloud center
-                                # Maximum opacity for cloud centers
-                                alpha = 255  # Full opacity for centers (increased from 250)
+                                # Slightly reduced maximum opacity for softer appearance
+                                alpha = int(200 + (normalized - 0.4) * 137.5)  # 200-255 range for centers
 
-                        # Apply the calculated alpha with a small random variation
-                        # This creates a slightly textured appearance even in solid areas
-                        variation = int((self.rng.random() - 0.5) * 15)  # Small random variation (-7 to +7)
+                        # Apply a smaller random variation for smoother appearance
+                        # Just enough to avoid perfectly flat areas
+                        variation = int((self.rng.random() - 0.5) * 8)  # Reduced variation (-4 to +4)
                         alpha = max(0, min(255, alpha + variation))  # Keep within 0-255 range
                         cloud_data[x, y] = alpha
 
@@ -577,9 +580,9 @@ class AbstractPlanet(AbstractCelestialBody):
             circle_mask = image_utils.create_circle_mask(self.size)
             cloud_mask = ImageChops.multiply(cloud_mask, circle_mask)
 
-            # Create slightly off-white clouds for more natural appearance
-            # Pure white can look too harsh - a very slight cream tint looks more natural
-            cloud_color = (255, 252, 248, 255)  # Slightly off-white with maximum opacity
+            # Create softer off-white clouds for a more stylized appearance
+            # Pure white can look too harsh - a gentle cream tint looks more natural and stylized
+            cloud_color = (255, 250, 245, 255)  # Warmer off-white with maximum opacity
 
             # Create the cloud layer
             clouds = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
@@ -638,20 +641,20 @@ class AbstractPlanet(AbstractCelestialBody):
             # Save the adjusted mask for debugging
             opacity_adjustment_mask.save(os.path.join(seed_clouds_dir, "adjusted_mask.png"))
 
-            # Balanced lighting for cloud-like appearance with adjusted parameters
-            # Increased ambient and reduced specular for better visibility in illuminated areas
+            # Softer lighting for a more stylized cloud appearance
+            # Higher ambient and lower diffuse for a gentler lighting effect
             lit_clouds = lighting_utils.apply_directional_light(
                 clouds_adjusted,
-                lighting_utils.calculate_normal_map(cloud_noise, 2.0),  # Moderate height (2.0) for some depth
+                lighting_utils.calculate_normal_map(cloud_noise, 1.5),  # Reduced height (1.5) for gentler depth
                 light_direction=light_direction_vector,
-                ambient=0.8,  # Increased ambient light (0.8) from 0.7
-                diffuse=0.7,  # Maintained diffuse (0.7) for moderate shadows
-                specular=0.1   # Reduced specular (0.1) from 0.15 to prevent washing out in highlights
+                ambient=0.85,  # Higher ambient light (0.85) for softer overall illumination
+                diffuse=0.6,   # Reduced diffuse (0.6) for gentler shadows
+                specular=0.05  # Minimal specular (0.05) for subtle highlights
             )
 
-            # Apply a very subtle blur to soften the edges slightly
-            # This creates a slightly more natural cloud-like appearance without losing definition
-            lit_clouds = lit_clouds.filter(ImageFilter.GaussianBlur(0.5))  # Very subtle blur (0.5)
+            # Apply a slightly stronger blur for a softer, more stylized appearance
+            # This creates a more painterly cloud-like appearance
+            lit_clouds = lit_clouds.filter(ImageFilter.GaussianBlur(0.8))  # Increased blur (0.8)
 
             # Apply post-processing to enhance contrast in illuminated areas
             lit_clouds = self._enhance_cloud_contrast(lit_clouds, light_direction_vector)
@@ -680,8 +683,9 @@ class AbstractPlanet(AbstractCelestialBody):
             # Log enhanced details including opacity adjustments and lighting parameters
             logger.log_step("apply_clouds", duration_ms,
                           f"Coverage: {self.cloud_coverage:.2f}, Threshold: {threshold:.2f}, " +
-                          f"Opacity: base=80-255, illuminated_boost={illuminated_boost:.2f}, shadowed_boost={shadowed_boost:.2f}, " +
-                          f"Lighting: ambient=0.8, diffuse=0.7, specular=0.1, contrast_enhancement=30%")
+                          f"Opacity: base=60-255, illuminated_boost={illuminated_boost:.2f}, shadowed_boost={shadowed_boost:.2f}, " +
+                          f"Lighting: ambient=0.85, diffuse=0.6, specular=0.05, blur=0.8, " +
+                          f"Style: soft stylized clouds with painterly appearance")
             return result
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000

@@ -108,8 +108,12 @@ class AbstractPlanet(AbstractCelestialBody):
             try:
                 logger.debug(f"Generating texture for {self.PLANET_TYPE} planet (size: {self.size}x{self.size})", "planet")
                 texture = self.generate_texture()
+
+                # Apply spherical distortion to the terrain texture
+                texture = image_utils.apply_spherical_distortion(texture, strength=0.15)
+
                 duration_ms = (time.time() - start_time) * 1000
-                logger.log_step("generate_texture", duration_ms, f"Type: {self.PLANET_TYPE}, Size: {self.size}x{self.size}")
+                logger.log_step("generate_texture", duration_ms, f"Type: {self.PLANET_TYPE}, Size: {self.size}x{self.size}, Spherical distortion: 15%")
             except Exception as e:
                 duration_ms = (time.time() - start_time) * 1000
                 logger.log_step("generate_texture", duration_ms, f"Error: {str(e)}")
@@ -675,6 +679,9 @@ class AbstractPlanet(AbstractCelestialBody):
             # This creates a more painterly cloud-like appearance
             lit_clouds = lit_clouds.filter(ImageFilter.GaussianBlur(0.8))  # Increased blur (0.8)
 
+            # Apply spherical distortion to the clouds for a more realistic curved appearance
+            lit_clouds = image_utils.apply_spherical_distortion(lit_clouds, strength=0.15)
+
             # Apply post-processing to enhance contrast in illuminated areas
             lit_clouds = self._enhance_cloud_contrast(lit_clouds, light_direction_vector)
 
@@ -704,7 +711,7 @@ class AbstractPlanet(AbstractCelestialBody):
                           f"Coverage: {self.cloud_coverage:.2f}, Threshold: {threshold:.2f}, " +
                           f"Opacity: base=80-255, illuminated_boost={illuminated_boost:.2f}, shadowed_boost={shadowed_boost:.2f}, " +
                           f"Lighting: ambient=0.85, diffuse=0.6, specular=0.05, blur=0.8, " +
-                          f"Style: enhanced soft stylized clouds with improved visibility")
+                          f"Style: enhanced soft stylized clouds with improved visibility, Spherical distortion: 15%")
             return result
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000

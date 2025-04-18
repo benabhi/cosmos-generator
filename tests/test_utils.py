@@ -229,8 +229,8 @@ class TestLogger:
             "steps": []
         }
 
-        # Log a step
-        logger.log_step("test_step", 100.0, "Test message")
+        # Log a step with a unique name for testing
+        logger.log_step("logger_test_step", 100.0, "Test message for logger functionality")
 
         # Create a log file manually if it doesn't exist
         if not os.path.exists(config.PLANETS_LOG_FILE):

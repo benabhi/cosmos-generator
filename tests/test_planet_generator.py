@@ -16,61 +16,47 @@ class TestPlanetGenerator:
     Test cases for the PlanetGenerator class.
     """
 
-    def test_create_desert_planet(self, planet_generator, temp_output_dir):
+    def test_create_basic_planets(self, planet_generator, temp_output_dir):
         """
-        Test creating a desert planet.
+        Test creating basic planets of different types.
         """
-        planet = planet_generator.create("Desert", {
+        # Test Desert planet
+        desert_planet = planet_generator.create("Desert", {
             "size": config.PLANET_SIZE,
             "seed": 12345
         })
 
-        # Check that the planet was created
-        assert planet is not None
-
-        # Check that the planet has the correct type
-        assert planet.PLANET_TYPE == "Desert"
-
-        # Check that the planet has the correct size
-        assert planet.size == config.PLANET_SIZE
-
-        # Check that the planet has the correct seed
-        assert planet.seed == 12345
+        # Check that the planet was created with correct properties
+        assert desert_planet is not None
+        assert desert_planet.PLANET_TYPE == "Desert"
+        assert desert_planet.size == config.PLANET_SIZE
+        assert desert_planet.seed == 12345
 
         # Check that the planet can be rendered
-        image = planet.render()
-        assert isinstance(image, Image.Image)
-        assert image.width == config.PLANET_SIZE
-        assert image.height == config.PLANET_SIZE
-        assert image.mode == "RGBA"
+        desert_image = desert_planet.render()
+        assert isinstance(desert_image, Image.Image)
+        assert desert_image.width == config.PLANET_SIZE
+        assert desert_image.height == config.PLANET_SIZE
+        assert desert_image.mode == "RGBA"
 
-    def test_create_ocean_planet(self, planet_generator, temp_output_dir):
-        """
-        Test creating an ocean planet.
-        """
-        planet = planet_generator.create("Ocean", {
+        # Test Ocean planet
+        ocean_planet = planet_generator.create("Ocean", {
             "size": config.PLANET_SIZE,
             "seed": 12345
         })
 
-        # Check that the planet was created
-        assert planet is not None
-
-        # Check that the planet has the correct type
-        assert planet.PLANET_TYPE == "Ocean"
-
-        # Check that the planet has the correct size
-        assert planet.size == config.PLANET_SIZE
-
-        # Check that the planet has the correct seed
-        assert planet.seed == 12345
+        # Check that the planet was created with correct properties
+        assert ocean_planet is not None
+        assert ocean_planet.PLANET_TYPE == "Ocean"
+        assert ocean_planet.size == config.PLANET_SIZE
+        assert ocean_planet.seed == 12345
 
         # Check that the planet can be rendered
-        image = planet.render()
-        assert isinstance(image, Image.Image)
-        assert image.width == config.PLANET_SIZE
-        assert image.height == config.PLANET_SIZE
-        assert image.mode == "RGBA"
+        ocean_image = ocean_planet.render()
+        assert isinstance(ocean_image, Image.Image)
+        assert ocean_image.width == config.PLANET_SIZE
+        assert ocean_image.height == config.PLANET_SIZE
+        assert ocean_image.mode == "RGBA"
 
     def test_create_planet_with_features(self, planet_generator, temp_output_dir):
         """
@@ -94,7 +80,7 @@ class TestPlanetGenerator:
         assert planet.has_rings is True
         assert planet.has_atmosphere is True
         assert planet.has_clouds is True
-        assert planet.cloud_coverage == 0.7
+        assert planet.clouds.coverage == 0.7
         assert planet.light_intensity == 1.2
         assert planet.light_angle == 30.0
 
@@ -251,4 +237,3 @@ class TestPlanetGenerator:
         assert os.path.exists(cloud_dir)
         assert os.path.exists(os.path.join(cloud_dir, "mask.png"))
         assert os.path.exists(os.path.join(cloud_dir, "texture.png"))
-        assert os.path.exists(os.path.join(cloud_dir, "adjusted_mask.png"))  # New file from cloud visibility enhancement

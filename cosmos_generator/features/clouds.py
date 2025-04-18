@@ -99,7 +99,8 @@ class Clouds:
             logger.log_step("generate_cloud_texture", duration_ms,
                           f"Coverage: {self.coverage:.2f}, Density: {self.density:.2f}, " +
                           f"Detail: {self.detail_level:.2f}, Wind: {self.wind_effect:.2f}, " +
-                          f"Lighting: ambient={self.ambient_light:.2f}, diffuse={self.diffuse_light:.2f}")
+                          f"Lighting: ambient={self.ambient_light:.2f}, diffuse={self.diffuse_light:.2f}, " +
+                          f"Spherical distortion: 15%")
 
             return self.cloud_texture
         except Exception as e:
@@ -624,6 +625,7 @@ class Clouds:
         This creates a more realistic curved appearance on the planet.
         """
         # Apply spherical distortion to the clouds for a more realistic curved appearance
+        logger.debug(f"Applying spherical distortion to cloud texture (strength: 0.15)", "clouds")
         self.cloud_texture = image_utils.apply_spherical_distortion(self.cloud_texture, strength=0.15)
 
     def _save_debug_textures(self) -> None:

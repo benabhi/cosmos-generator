@@ -94,10 +94,13 @@ class Atmosphere:
 
             # Calculate atmosphere padding based on whether the planet has rings
             # Use smaller padding for planets with rings to avoid interfering with them
+            # Increase the padding to ensure there's enough space for the second halo (blur lumínico)
             if has_rings:
-                atmosphere_padding = int(size * 0.01 * (0.5 + self.glow_intensity))
+                # For planets with rings, use a moderate padding increase
+                atmosphere_padding = int(size * 0.015 * (0.5 + self.glow_intensity))
             else:
-                atmosphere_padding = int(size * 0.02 * (0.5 + self.glow_intensity))
+                # For planets without rings, use a larger padding
+                atmosphere_padding = int(size * 0.03 * (0.5 + self.glow_intensity))
 
             # Create the atmosphere glow
             result = self._create_atmosphere_glow(
@@ -221,12 +224,20 @@ class Atmosphere:
 
         # Create a high-resolution canvas for better quality
         # Working at 2x resolution for smoother edges
+        # Increase the size multiplier to ensure there's enough space for the diffuse glow
         hi_res_size = canvas_size * 2
-        hi_res_result = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+
+        # Create a canvas with extra padding to ensure the diffuse glow has room to spread
+        # This prevents the glow from being cut off at the edges
+        extra_padding = int(thickness * 4 * self.blur_amount)  # Scale padding with blur and thickness
+        hi_res_padded_size = hi_res_size + extra_padding * 2
+
+        # Create the result image with the padded size
+        hi_res_result = Image.new("RGBA", (hi_res_padded_size, hi_res_padded_size), (0, 0, 0, 0))
         hi_res_draw = ImageDraw.Draw(hi_res_result)
 
-        # Calculate center of the high-res image
-        hi_res_center = hi_res_size // 2
+        # Calculate center of the high-res image with padding
+        hi_res_center = hi_res_padded_size // 2
 
         # Calculate the inner and outer radii of the halo
         # Create a gap of 2-3 pixels between the planet edge and the halo
@@ -368,10 +379,11 @@ class Atmosphere:
         # Create TWO separate layers for the outer glow:
         # 1. A sharp glow layer for the visible halo
         # 2. A diffuse glow layer for the second resplandor (blur effect)
-        sharp_glow_layer = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+        # Use the same size as the main canvas (hi_res_padded_size) for all layers
+        sharp_glow_layer = Image.new("RGBA", (hi_res_padded_size, hi_res_padded_size), (0, 0, 0, 0))
         sharp_glow_draw = ImageDraw.Draw(sharp_glow_layer)
 
-        diffuse_glow_layer = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+        diffuse_glow_layer = Image.new("RGBA", (hi_res_padded_size, hi_res_padded_size), (0, 0, 0, 0))
         diffuse_glow_draw = ImageDraw.Draw(diffuse_glow_layer)
 
         # Draw the outer glow (gradient ring) with more steps for smoother gradient
@@ -528,8 +540,17 @@ class Atmosphere:
         final_blur = max(0.5, thickness * 0.1)
         hi_res_result = hi_res_result.filter(ImageFilter.GaussianBlur(final_blur))
 
+        # Calculate the crop area to get back to the original hi-res size
+        crop_left = (hi_res_padded_size - hi_res_size) // 2
+        crop_top = (hi_res_padded_size - hi_res_size) // 2
+        crop_right = crop_left + hi_res_size
+        crop_bottom = crop_top + hi_res_size
+
+        # Crop the image to remove the extra padding
+        hi_res_cropped = hi_res_result.crop((crop_left, crop_top, crop_right, crop_bottom))
+
         # Resize back to original resolution with high-quality resampling
-        result = hi_res_result.resize((canvas_size, canvas_size), Image.LANCZOS)
+        result = hi_res_cropped.resize((canvas_size, canvas_size), Image.LANCZOS)
 
         # Composite the halo with the base image
         final_result = Image.alpha_composite(base_image.copy(), result)

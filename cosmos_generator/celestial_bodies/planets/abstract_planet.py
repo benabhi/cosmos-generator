@@ -166,6 +166,8 @@ class AbstractPlanet(AbstractCelestialBody):
                 logger.log_step("apply_lighting", duration_ms, f"Error: {str(e)}")
                 raise
 
+            # Removed edge antialiasing as it was causing issues with rings
+
             # Apply features
             result = self.apply_features(lit_texture)
 

@@ -254,6 +254,204 @@ def rotate_image(image: Image.Image, angle: float,
     return image.rotate(angle, expand=expand, resample=Image.BICUBIC)
 
 
+def apply_edge_antialiasing(image: Image.Image, edge_width: int = 2) -> Image.Image:
+    """
+    Apply antialiasing to the edge of a circular planet texture.
+
+    This function smooths the edge of a circular planet texture to reduce pixelation
+    and jagged edges, creating a more natural-looking planet silhouette.
+
+    Args:
+        image: Input image (should be a circular planet texture)
+        edge_width: Width of the edge smoothing effect in pixels (1-5 recommended)
+
+    Returns:
+        Image with antialiased edges
+    """
+    # Ensure the image has an alpha channel
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
+
+    # Get image dimensions
+    width, height = image.size
+
+    # Create a completely new image with a perfect circle
+    # This is the most reliable way to ensure a perfect circular edge
+
+    # Calculate the center of the image
+    center_x, center_y = width // 2, height // 2
+
+    # Extract the RGB channels from the original image
+    r, g, b, alpha = image.split()
+
+    # Create a new alpha channel with a perfect circle
+    # First, create a new blank alpha channel
+    new_alpha = Image.new('L', (width, height), 0)
+    alpha_draw = ImageDraw.Draw(new_alpha)
+
+    # Determine the radius of the planet
+    # We'll sample multiple points around the circle to get a more accurate radius
+    alpha_data = np.array(alpha)
+
+    # Sample points at 0, 90, 180, and 270 degrees
+    sample_points = [
+        (center_x + 1, center_y),  # Right (0°)
+        (center_x, center_y - 1),  # Top (90°)
+        (center_x - 1, center_y),  # Left (180°)
+        (center_x, center_y + 1)   # Bottom (270°)
+    ]
+
+    # Find the radius by moving outward from each sample point
+    radii = []
+    for start_x, start_y in sample_points:
+        # Determine direction to move
+        dx = start_x - center_x
+        dy = start_y - center_y
+
+        # Normalize direction
+        length = max(1, (dx**2 + dy**2)**0.5)
+        dx, dy = dx / length, dy / length
+
+        # Move outward until we find the edge
+        x, y = start_x, start_y
+        steps = 0
+        max_steps = max(width, height)
+
+        while 0 <= int(x) < width and 0 <= int(y) < height and steps < max_steps:
+            if alpha_data[int(y), int(x)] < 128:  # Found the edge
+                # Calculate distance from center
+                distance = ((int(x) - center_x)**2 + (int(y) - center_y)**2)**0.5
+                radii.append(distance)
+                break
+
+            # Move outward
+            x += dx
+            y += dy
+            steps += 1
+
+    # Use the average radius if we found any edges
+    if radii:
+        radius = sum(radii) / len(radii)
+    else:
+        # Fallback: use 45% of the image width
+        radius = int(width * 0.45)
+
+    # Draw a filled circle for the planet body
+    alpha_draw.ellipse(
+        (center_x - radius, center_y - radius, center_x + radius, center_y + radius),
+        fill=255
+    )
+
+    # Apply a slight gaussian blur to the alpha channel for antialiasing
+    # This creates a smooth edge transition
+    new_alpha = new_alpha.filter(ImageFilter.GaussianBlur(0.7))
+
+    # Create a mask for the transition area (the edge of the circle)
+    # First, create a slightly smaller circle
+    inner_mask = Image.new('L', (width, height), 0)
+    inner_draw = ImageDraw.Draw(inner_mask)
+    inner_draw.ellipse(
+        (center_x - (radius - edge_width), center_y - (radius - edge_width),
+         center_x + (radius - edge_width), center_y + (radius - edge_width)),
+        fill=255
+    )
+
+    # The edge mask is the difference between the alpha and inner mask
+    edge_mask = ImageChops.difference(new_alpha, inner_mask)
+
+    # Apply a gaussian blur to the edge mask for smooth transitions
+    edge_mask = edge_mask.filter(ImageFilter.GaussianBlur(edge_width / 2))
+
+    # Create a blurred version of the image for the edges
+    blurred = image.filter(ImageFilter.GaussianBlur(edge_width / 2))
+
+    # Convert to numpy arrays for faster processing
+    img_array = np.array(image)
+    blurred_array = np.array(blurred)
+    edge_array = np.array(edge_mask)
+
+    # Reshape the edge array to match the image dimensions
+    edge_weights = edge_array.reshape(edge_array.shape[0], edge_array.shape[1], 1) / 255.0
+
+    # Blend the original and blurred images based on the edge weights
+    result_array = img_array * (1 - edge_weights) + blurred_array * edge_weights
+
+    # Convert back to PIL image
+    result = Image.fromarray(result_array.astype(np.uint8))
+
+    # Combine the RGB channels with the new alpha channel
+    r, g, b, _ = result.split()  # We don't use the result's alpha channel
+    result = Image.merge('RGBA', (r, g, b, new_alpha))
+
+    return result
+
+
+def apply_subtle_edge_smoothing(image: Image.Image) -> Image.Image:
+    """
+    Apply a very subtle smoothing only to the extreme edges of the planet.
+    This function only affects a few pixels at the very edge to make the planet
+    appear more round without changing its overall appearance or affecting rings.
+
+    Args:
+        image: Input image (should be a circular planet texture)
+
+    Returns:
+        Image with slightly smoothed edges
+    """
+    # Ensure the image has an alpha channel
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
+
+    # Get the alpha channel
+    r, g, b, alpha = image.split()
+
+    # Apply a very slight blur only to the alpha channel
+    # This is much more subtle than replacing the alpha channel entirely
+    smoothed_alpha = alpha.filter(ImageFilter.GaussianBlur(0.5))
+
+    # Create a mask that only affects the very edge pixels
+    # First, erode the alpha channel slightly to find the edge
+    kernel_size = 3
+    eroded = alpha.filter(ImageFilter.MinFilter(kernel_size))
+
+    # The edge is the difference between the original and eroded alpha
+    edge = ImageChops.difference(alpha, eroded)
+
+    # Further refine the edge to only include the outermost pixels
+    # Convert to numpy for more precise control
+    edge_array = np.array(edge)
+    alpha_array = np.array(alpha)
+
+    # Create a mask that only includes pixels where:
+    # 1. They are part of the detected edge
+    # 2. The alpha value is between 1 and 254 (partial transparency)
+    edge_mask = np.logical_and(
+        edge_array > 0,
+        np.logical_and(alpha_array > 0, alpha_array < 255)
+    )
+
+    # Convert back to PIL image
+    edge_mask_img = Image.fromarray(edge_mask.astype(np.uint8) * 255)
+
+    # Blur the edge mask slightly to create a smooth transition
+    edge_mask_img = edge_mask_img.filter(ImageFilter.GaussianBlur(0.7))
+
+    # Use the edge mask to blend between the original and smoothed alpha
+    # Convert to numpy arrays for faster processing
+    mask_array = np.array(edge_mask_img) / 255.0
+    orig_alpha_array = np.array(alpha)
+    smooth_alpha_array = np.array(smoothed_alpha)
+
+    # Blend only at the edges
+    final_alpha_array = orig_alpha_array * (1 - mask_array) + smooth_alpha_array * mask_array
+    final_alpha = Image.fromarray(final_alpha_array.astype(np.uint8))
+
+    # Combine the RGB channels with the subtly smoothed alpha
+    result = Image.merge('RGBA', (r, g, b, final_alpha))
+
+    return result
+
+
 def apply_spherical_distortion(image: Image.Image, strength: float = 0.2) -> Image.Image:
     """
     Apply a spherical distortion effect to simulate the curvature of a planet.
@@ -360,5 +558,38 @@ def apply_spherical_distortion(image: Image.Image, strength: float = 0.2) -> Ima
 
     # Convert array back to image
     output = Image.fromarray(output_array)
+
+    # Apply a very subtle smoothing to the edges to improve roundness
+    # This only affects the alpha channel at the very edge
+    if image.mode == 'RGBA':
+        # Extract channels
+        r, g, b, alpha = output.split()
+
+        # Apply a very slight blur to the alpha channel
+        # This is extremely subtle and won't affect rings
+        smoothed_alpha = alpha.filter(ImageFilter.GaussianBlur(0.5))
+
+        # Create a mask that only affects the very edge
+        # We'll use a simple threshold to find partially transparent pixels
+        alpha_array = np.array(alpha)
+        edge_mask = np.logical_and(alpha_array > 0, alpha_array < 255)
+
+        # Convert to PIL image
+        edge_mask_img = Image.fromarray(edge_mask.astype(np.uint8) * 255)
+
+        # Blur the mask slightly to create a smooth transition
+        edge_mask_img = edge_mask_img.filter(ImageFilter.GaussianBlur(0.5))
+
+        # Use the mask to blend between original and smoothed alpha
+        mask_array = np.array(edge_mask_img) / 255.0
+        orig_alpha_array = np.array(alpha)
+        smooth_alpha_array = np.array(smoothed_alpha)
+
+        # Only blend at the very edges
+        final_alpha_array = orig_alpha_array * (1 - mask_array) + smooth_alpha_array * mask_array
+        final_alpha = Image.fromarray(final_alpha_array.astype(np.uint8))
+
+        # Combine the RGB channels with the subtly smoothed alpha
+        output = Image.merge('RGBA', (r, g, b, final_alpha))
 
     return output

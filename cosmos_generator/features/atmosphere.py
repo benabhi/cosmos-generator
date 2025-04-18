@@ -4,11 +4,9 @@ Atmosphere feature for planets.
 This module provides the Atmosphere class, which handles the creation and application
 of atmospheric effects to planets, including glow and halo effects.
 """
-from typing import Tuple, Optional
+from typing import Optional
 import time
-import math
-import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageChops, ImageEnhance
+from PIL import Image, ImageDraw, ImageFilter
 
 from cosmos_generator.core.color_palette import ColorPalette, RGBA
 from cosmos_generator.utils.logger import logger
@@ -93,11 +91,12 @@ class Atmosphere:
             size = planet_image.width
 
             # Calculate atmosphere padding based on whether the planet has rings
-            # Use smaller padding for planets with rings to avoid interfering with them
-            # Increase the padding to ensure there's enough space for the second halo (blur lumínico)
+            # For both types of planets, use a consistent padding to ensure the atmosphere isn't cut off
+            # This ensures there's enough space for the second halo (blur lumínico)
             if has_rings:
-                # For planets with rings, use a moderate padding increase
-                atmosphere_padding = int(size * 0.015 * (0.5 + self.glow_intensity))
+                # For planets with rings, use a slightly larger padding to prevent cutting at the edges
+                # Increased from 0.015 to 0.025 to fix the issue with atmosphere being cut off
+                atmosphere_padding = int(size * 0.025 * (0.5 + self.glow_intensity))
             else:
                 # For planets without rings, use a larger padding
                 atmosphere_padding = int(size * 0.03 * (0.5 + self.glow_intensity))
@@ -249,8 +248,8 @@ class Atmosphere:
         # Extract color components and ensure we have a vibrant, visible color
         r, g, b, a = color
 
-        # Print the original color for debugging
-        print(f"Original atmosphere color: R:{r}, G:{g}, B:{b}, A:{a}")
+        # Log the original color for debugging
+        logger.debug(f"Atmosphere color: R:{r}, G:{g}, B:{b}, A:{a}", "atmosphere")
 
         # Store the original color for reference
         original_r, original_g, original_b = r, g, b
@@ -268,8 +267,7 @@ class Atmosphere:
             b = min(255, int(b * boost_factor))
 
         # Preserve the color's character but make it more vibrant
-        # Find the dominant color channel
-        max_channel = max(r, g, b)
+        # Find the minimum channel value to determine color saturation
         min_channel = min(r, g, b)
 
         # Use a simpler approach to preserve the original color while making it more vibrant
@@ -306,8 +304,8 @@ class Atmosphere:
             g = min(255, int(g * intensity_boost))
             b = min(255, int(b * intensity_boost))
 
-        # Print the enhanced color for debugging
-        print(f"Enhanced halo color: R:{r}, G:{g}, B:{b}")
+        # Log the enhanced color for debugging
+        logger.debug(f"Enhanced halo color: R:{r}, G:{g}, B:{b}", "atmosphere")
 
         # IMPORTANT: If all color channels are equal (gray), restore the original color
         # This fixes the issue where the halo appears gray instead of colored
@@ -328,7 +326,7 @@ class Atmosphere:
                 g = min(255, int(avg_intensity * g_ratio * 1.2))
                 b = min(255, int(avg_intensity * b_ratio * 1.2))
 
-                print(f"Restored color: R:{r}, G:{g}, B:{b}")
+                logger.debug(f"Restored halo color: R:{r}, G:{g}, B:{b}", "atmosphere")
 
         # Create a two-layer halo for better definition
         # First layer: Main halo with original color
@@ -417,9 +415,9 @@ class Atmosphere:
             diffuse_glow_g = min(255, g + 70)
             diffuse_glow_b = min(255, b + 90)
 
-        # Print the glow colors for debugging
-        print(f"Sharp glow color: R:{sharp_glow_r}, G:{sharp_glow_g}, B:{sharp_glow_b}")
-        print(f"Diffuse glow color: R:{diffuse_glow_r}, G:{diffuse_glow_g}, B:{diffuse_glow_b}")
+        # Log the glow colors for debugging
+        logger.debug(f"Sharp glow color: R:{sharp_glow_r}, G:{sharp_glow_g}, B:{sharp_glow_b}", "atmosphere")
+        logger.debug(f"Diffuse glow color: R:{diffuse_glow_r}, G:{diffuse_glow_g}, B:{diffuse_glow_b}", "atmosphere")
 
         # Draw both glow layers with different characteristics
         for i in range(steps):
@@ -510,14 +508,14 @@ class Atmosphere:
 
         # For the sharp glow (visible halo line), apply minimal blur to keep it defined
         sharp_blur = max(1.0, thickness * 0.3)
-        print(f"Applying sharp glow blur with strength: {sharp_blur}")
+        logger.debug(f"Applying sharp glow blur: {sharp_blur:.1f}px", "atmosphere")
         sharp_glow_layer = sharp_glow_layer.filter(ImageFilter.GaussianBlur(sharp_blur))
 
         # For the diffuse glow (second resplandor), apply a much stronger blur
         # Use a large blur radius to create a very diffuse, ethereal glow effect
         # The blur amount is critical - we want it to be very diffuse but still slightly visible
         diffuse_blur = max(12.0, thickness * self.blur_amount * 5.0)
-        print(f"Applying diffuse glow blur with strength: {diffuse_blur}")
+        logger.debug(f"Applying diffuse glow blur: {diffuse_blur:.1f}px", "atmosphere")
 
         # Apply the blur in three stages for a more diffuse, ethereal effect
         # First stage: Apply a moderate blur to soften the initial shape
@@ -560,7 +558,7 @@ class Atmosphere:
     # Legacy methods for backward compatibility
     def apply_atmosphere(self, planet_image: Image.Image, planet_type: str,
                         intensity: float = 0.5, color: Optional[RGBA] = None,
-                        light_angle: float = 45.0) -> Image.Image:
+                        light_angle: float = 45.0) -> Image.Image:  # light_angle is kept for backward compatibility but not used
         """
         Legacy method for backward compatibility.
 

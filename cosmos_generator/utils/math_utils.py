@@ -110,6 +110,23 @@ def normalize(v: Tuple[float, float]) -> Tuple[float, float]:
     return (v[0] / length, v[1] / length)
 
 
+def normalize_value(value: float, min_val: float, max_val: float) -> float:
+    """
+    Normalize a value to the range [0.0, 1.0].
+
+    Args:
+        value: Value to normalize
+        min_val: Minimum value of the range
+        max_val: Maximum value of the range
+
+    Returns:
+        Normalized value in the range [0.0, 1.0]
+    """
+    if max_val - min_val < 1e-10:
+        return 0.0
+    return (value - min_val) / (max_val - min_val)
+
+
 def normalize_3d(v: Tuple[float, float, float]) -> Tuple[float, float, float]:
     """
     Normalize a 3D vector to unit length.
@@ -187,15 +204,15 @@ def rotate_point(point: Tuple[float, float], center: Tuple[float, float], angle_
     angle_rad = math.radians(angle_deg)
     cos_angle = math.cos(angle_rad)
     sin_angle = math.sin(angle_rad)
-    
+
     # Translate point to origin
     translated_x = point[0] - center[0]
     translated_y = point[1] - center[1]
-    
+
     # Rotate
     rotated_x = translated_x * cos_angle - translated_y * sin_angle
     rotated_y = translated_x * sin_angle + translated_y * cos_angle
-    
+
     # Translate back
     return (rotated_x + center[0], rotated_y + center[1])
 
@@ -265,13 +282,13 @@ def cartesian_to_spherical(x: float, y: float, z: float) -> Tuple[float, float, 
     radius = math.sqrt(x*x + y*y + z*z)
     if radius < 1e-10:
         return (0.0, 0.0, 0.0)
-    
+
     theta = math.acos(z / radius)
     phi = math.atan2(y, x)
     return (radius, theta, phi)
 
 
-def ellipse_point(center: Tuple[float, float], a: float, b: float, 
+def ellipse_point(center: Tuple[float, float], a: float, b: float,
                  angle: float, rotation: float = 0.0) -> Tuple[float, float]:
     """
     Calculate a point on an ellipse.
@@ -289,12 +306,12 @@ def ellipse_point(center: Tuple[float, float], a: float, b: float,
     # Calculate point on unrotated ellipse
     x = a * math.cos(angle)
     y = b * math.sin(angle)
-    
+
     # Rotate the point
     cos_rot = math.cos(rotation)
     sin_rot = math.sin(rotation)
     x_rot = x * cos_rot - y * sin_rot
     y_rot = x * sin_rot + y * cos_rot
-    
+
     # Translate to center
     return (center[0] + x_rot, center[1] + y_rot)

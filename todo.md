@@ -12,3 +12,5 @@
 [ ] Crear una web interactiva
 [ ] Verificar que acuse error si se pasan parametros que no existen.
 
+
+cloc --exclude-dir=venv,output .

@@ -19,7 +19,11 @@ A Python library for procedurally generating detailed images of celestial bodies
 ## Installation
 
 ```bash
+# Install the package
 pip install cosmos-generator
+
+# For development (including testing dependencies)
+pip install -r requirements-dev.txt
 ```
 
 ## Usage
@@ -82,6 +86,9 @@ python -m cosmos_generator --version
 
 # Show specific help for the planet subcommand
 python -m cosmos_generator planet --help
+
+# Run tests
+python -m cosmos_generator test
 ```
 
 #### Planet Generation
@@ -283,12 +290,55 @@ Example log output:
 --------------------------------------------------------------------------------
 ```
 
+## Testing
+
+Cosmos Generator includes a comprehensive test suite to ensure all functionality works as expected. To run the tests, you'll need to install the testing dependencies first:
+
+```bash
+# Install testing dependencies
+pip install pytest pytest-cov
+
+# Or install all development dependencies
+pip install -r requirements-dev.txt
+```
+
+Then you can run the tests using the `test` subcommand:
+
+```bash
+# Run all tests
+python -m cosmos_generator test
+
+# Run tests with verbose output
+python -m cosmos_generator test --verbose
+
+# Run tests with coverage report
+python -m cosmos_generator test --coverage
+
+# Run specific tests
+python -m cosmos_generator test --test-path tests/test_planet_generator.py
+
+# Run tests matching a pattern
+python -m cosmos_generator test --pattern "test_planet_*.py"
+```
+
+The test suite includes tests for:
+
+- **Planet Generation**: Tests for creating different types of planets with various features
+- **Planet Features**: Tests for atmosphere, clouds, rings, and other planet features
+- **Container**: Tests for the Container class that handles display, zoom, and rotation
+- **Utilities**: Tests for utility functions like image manipulation, math operations, and directory management
+- **CLI**: Tests for the command-line interface and its subcommands
+
+Running tests with the `--coverage` option generates a coverage report showing which parts of the code are covered by tests.
+
 ## Requirements
 
 - Python 3.7+
 - Pillow (PIL fork) for image manipulation
 - NumPy for mathematical operations
 - OpenSimplex for noise generation
+- pytest (for running tests)
+- pytest-cov (for test coverage reports)
 
 ## License
 

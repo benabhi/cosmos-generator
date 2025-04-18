@@ -115,9 +115,13 @@ class AbstractPlanet(AbstractCelestialBody):
                 logger.log_step("generate_texture", duration_ms, f"Error: {str(e)}")
                 raise
 
+            # Import here to avoid circular imports
+            import config
+            from cosmos_generator.utils.directory_utils import ensure_directory_exists
+
             # Save the base texture for debugging
-            debug_dir = os.path.join("output", "planets", "debug", "textures", "terrain")
-            os.makedirs(debug_dir, exist_ok=True)
+            debug_dir = config.PLANETS_TERRAIN_TEXTURES_DIR
+            ensure_directory_exists(debug_dir)
             texture_path = os.path.join(debug_dir, f"{self.seed}.png")
             texture.save(texture_path)
             logger.debug(f"Saved base texture to {texture_path}", "planet")
@@ -588,9 +592,13 @@ class AbstractPlanet(AbstractCelestialBody):
             # Store the original cloud mask for reference and debugging if needed
             # We'll use this later if we need to compare the original and adjusted masks
 
+            # Import here to avoid circular imports
+            import config
+            from cosmos_generator.utils.directory_utils import ensure_directory_exists
+
             # Create a seed-specific directory for cloud textures
-            seed_clouds_dir = os.path.join("output", "planets", "debug", "textures", "clouds", str(self.seed))
-            os.makedirs(seed_clouds_dir, exist_ok=True)
+            seed_clouds_dir = os.path.join(config.PLANETS_CLOUDS_TEXTURES_DIR, str(self.seed))
+            ensure_directory_exists(seed_clouds_dir)
 
             # Save the original cloud mask
             cloud_mask.save(os.path.join(seed_clouds_dir, "mask.png"))

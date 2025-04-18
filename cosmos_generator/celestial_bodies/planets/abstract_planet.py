@@ -295,48 +295,73 @@ class AbstractPlanet(AbstractCelestialBody):
             result.paste(base_image, planet_pos, base_image)
 
             # Add a thin bright halo right at the edge of the planet for extra visibility
-            halo = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-            halo_draw = ImageDraw.Draw(halo)
+            # We'll use a different approach to create a cleaner, more consistent halo
 
-            # Draw a thin ring at the exact edge of the planet
-            halo_radius = planet_radius + 1  # Just 1 pixel larger than the planet
+            # Create a larger canvas for the halo to avoid edge artifacts
+            halo_canvas_size = canvas_size + 10  # Add padding to avoid edge artifacts
+            halo_center = halo_canvas_size // 2
 
-            # If the planet will have rings, make the halo more visible
+            # Create two images: one for the inner circle and one for the outer circle
+            inner_circle = Image.new("L", (halo_canvas_size, halo_canvas_size), 0)
+            outer_circle = Image.new("L", (halo_canvas_size, halo_canvas_size), 0)
+
+            # Create drawing objects
+            inner_draw = ImageDraw.Draw(inner_circle)
+            outer_draw = ImageDraw.Draw(outer_circle)
+
+            # Set up the halo parameters based on whether the planet has rings
+            # Make the inner radius slightly smaller to ensure it overlaps with the planet edge
+            # This helps prevent gaps between the halo and the planet due to the spherical distortion
             if self.has_rings:
-                halo_color = (r, g, b, 255)  # Full opacity for the halo
-                halo_width = 3  # Slightly thicker halo for planets with rings
-
-                # Add a second, outer halo for extra visibility with rings
-                outer_halo_radius = planet_radius + 3
-                halo_draw.ellipse(
-                    (center - outer_halo_radius, center - outer_halo_radius,
-                     center + outer_halo_radius, center + outer_halo_radius),
-                    outline=halo_color, width=1
-                )
+                inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
+                outer_radius = planet_radius + 3  # Outer edge of halo (3px thick)
             else:
-                halo_color = (r, g, b, 255)  # Full opacity for the halo
-                halo_width = 3  # Increased width for planets without rings (was 2)
+                inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
+                outer_radius = planet_radius + 3  # Outer edge of halo (3px thick)
 
-                # Add a second, outer halo for planets without rings to make it more visible
-                outer_halo_radius = planet_radius + 2
-                halo_draw.ellipse(
-                    (center - outer_halo_radius, center - outer_halo_radius,
-                     center + outer_halo_radius, center + outer_halo_radius),
-                    outline=halo_color, width=1
-                )
-
-            # Draw the halo as a thin ring
-            halo_draw.ellipse(
-                (center - halo_radius, center - halo_radius,
-                 center + halo_radius, center + halo_radius),
-                outline=halo_color, width=halo_width
+            # Draw filled circles (not outlines) for clean edges
+            inner_draw.ellipse(
+                (halo_center - inner_radius, halo_center - inner_radius,
+                 halo_center + inner_radius, halo_center + inner_radius),
+                fill=255
             )
 
-            # Apply a very small blur to soften the halo slightly
-            # For planets with rings, use less blur to keep the halo more defined
-            # For planets without rings, use even less blur to make the halo more visible
-            blur_amount = 0.5 if self.has_rings else 0.3  # Reduced blur for planets without rings
-            halo = halo.filter(ImageFilter.GaussianBlur(blur_amount))
+            outer_draw.ellipse(
+                (halo_center - outer_radius, halo_center - outer_radius,
+                 halo_center + outer_radius, halo_center + outer_radius),
+                fill=255
+            )
+
+            # Create the halo by subtracting the inner circle from the outer circle
+            # This creates a perfect ring with clean edges
+            halo_mask = ImageChops.subtract(outer_circle, inner_circle)
+
+            # Apply a very small blur for anti-aliasing only
+            # Just enough to smooth the edges without creating artifacts
+            blur_amount = 0.3  # Minimal blur for clean edges
+            halo_mask = halo_mask.filter(ImageFilter.GaussianBlur(blur_amount))
+
+            # Create the colored halo with the mask
+            halo = Image.new("RGBA", (halo_canvas_size, halo_canvas_size), (0, 0, 0, 0))
+            halo_array = np.array(halo)
+            mask_array = np.array(halo_mask)
+
+            # Apply the color with the mask
+            for y in range(halo_canvas_size):
+                for x in range(halo_canvas_size):
+                    if mask_array[y, x] > 0:
+                        # Use the mask value as the alpha
+                        alpha = mask_array[y, x]
+                        halo_array[y, x] = [r, g, b, alpha]
+
+            # Convert back to PIL Image
+            halo = Image.fromarray(halo_array)
+
+            # Crop the halo to match the canvas size
+            crop_offset = (halo_canvas_size - canvas_size) // 2
+            halo = halo.crop((crop_offset, crop_offset,
+                             crop_offset + canvas_size,
+                             crop_offset + canvas_size))
 
             # Composite the halo onto the result
             result = Image.alpha_composite(result, halo)

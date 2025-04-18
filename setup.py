@@ -7,7 +7,7 @@ setup(
     install_requires=[
         "Pillow",
         "numpy",
-        "opensimplex",
+        "pyfastnoiselite",
     ],
     entry_points={
         "console_scripts": [

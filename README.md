@@ -336,7 +336,7 @@ Running tests with the `--coverage` option generates a coverage report showing w
 - Python 3.7+
 - Pillow (PIL fork) for image manipulation
 - NumPy for mathematical operations
-- OpenSimplex for noise generation
+- PyFastNoiseLite for high-performance noise generation
 - pytest (for running tests)
 - pytest-cov (for test coverage reports)
 

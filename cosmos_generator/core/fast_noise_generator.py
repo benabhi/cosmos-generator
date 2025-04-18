@@ -1,5 +1,12 @@
 """
 Noise generation using PyFastNoiseLite for improved performance.
+
+This module provides a high-performance implementation of various noise algorithms
+using the PyFastNoiseLite library. It replaces the previous custom noise implementation
+with optimized C++ implementations for better performance while maintaining the same interface.
+
+The FastNoiseGenerator class implements the same interface as the previous NoiseGenerator,
+allowing for a seamless transition to the faster implementation.
 """
 from typing import Tuple, List, Optional, Callable
 import random
@@ -10,7 +17,14 @@ from pyfastnoiselite.pyfastnoiselite import FastNoiseLite, NoiseType, FractalTyp
 class FastNoiseGenerator:
     """
     Implements noise algorithms using PyFastNoiseLite for improved performance.
-    Provides the same interface as NoiseGenerator but uses FastNoiseLite internally.
+
+    This class provides a high-performance implementation of various noise algorithms
+    using the PyFastNoiseLite library. It maintains the same interface as the previous
+    NoiseGenerator class but uses optimized C++ implementations internally for better performance.
+
+    The class supports various noise types including Simplex noise, fractal noise,
+    ridged noise, and cellular (Worley) noise, as well as domain warping techniques
+    for creating more organic patterns.
     """
 
     def __init__(self, seed: Optional[int] = None):
@@ -54,10 +68,13 @@ class FastNoiseGenerator:
         """
         Generate 2D Simplex noise at the given coordinates.
 
+        This method uses the OpenSimplex2 algorithm from PyFastNoiseLite to generate
+        high-quality, smooth noise values.
+
         Args:
             x: X coordinate
             y: Y coordinate
-            scale: Scale factor for the noise
+            scale: Scale factor for the noise (higher values = more detail)
 
         Returns:
             Noise value in range [-1, 1]
@@ -71,13 +88,17 @@ class FastNoiseGenerator:
         """
         Generate fractal Simplex noise by combining multiple octaves.
 
+        This method uses Fractal Brownian Motion (FBm) to combine multiple octaves of
+        Simplex noise, creating more complex and natural-looking patterns. Each octave
+        adds finer detail to the noise.
+
         Args:
             x: X coordinate
             y: Y coordinate
-            octaves: Number of octaves to combine
-            persistence: How much each octave contributes to the final result
-            lacunarity: How much detail is added at each octave
-            scale: Base scale factor for the noise
+            octaves: Number of octaves to combine (higher = more detail but slower)
+            persistence: How much each octave contributes to the final result (0.0-1.0)
+            lacunarity: How much detail is added at each octave (typically 2.0)
+            scale: Base scale factor for the noise (higher values = more detail)
 
         Returns:
             Noise value in range [-1, 1]
@@ -94,13 +115,17 @@ class FastNoiseGenerator:
         """
         Generate ridged fractal Simplex noise for terrain-like features.
 
+        This method uses a ridged multi-fractal algorithm that creates noise patterns
+        with sharp ridges and valleys, ideal for terrain generation. The algorithm
+        inverts and modifies the noise values to create ridge-like structures.
+
         Args:
             x: X coordinate
             y: Y coordinate
-            octaves: Number of octaves to combine
-            persistence: How much each octave contributes to the final result
-            lacunarity: How much detail is added at each octave
-            scale: Base scale factor for the noise
+            octaves: Number of octaves to combine (higher = more detail but slower)
+            persistence: How much each octave contributes to the final result (0.0-1.0)
+            lacunarity: How much detail is added at each octave (typically 2.0)
+            scale: Base scale factor for the noise (higher values = more detail)
 
         Returns:
             Noise value in range [0, 1]
@@ -119,11 +144,19 @@ class FastNoiseGenerator:
         """
         Generate Worley (cellular) noise at the given coordinates.
 
+        This method creates cellular noise patterns based on the distance to randomly
+        distributed feature points. It's excellent for creating textures that look like
+        cells, scales, or cobblestones. Different distance functions create different
+        visual effects.
+
         Args:
             x: X coordinate in range [0, 1]
             y: Y coordinate in range [0, 1]
-            cell_count: Number of cells in each dimension
-            distance_function: Type of distance function to use ("euclidean", "manhattan", "chebyshev")
+            cell_count: Number of cells in each dimension (higher = smaller cells)
+            distance_function: Type of distance function to use:
+                - "euclidean": Standard distance (circular cells)
+                - "manhattan": Sum of absolute differences (diamond-shaped cells)
+                - "chebyshev": Maximum of absolute differences (square cells)
 
         Returns:
             Noise value in range [0, 1]
@@ -149,6 +182,11 @@ class FastNoiseGenerator:
         """
         Apply domain warping to create more organic noise patterns.
 
+        Domain warping is a powerful technique that distorts the input coordinates before
+        applying the noise function. This creates more natural, organic patterns by breaking
+        up the regularity of the noise. It's especially useful for creating realistic
+        terrain, clouds, and other natural phenomena.
+
         Args:
             x: X coordinate
             y: Y coordinate
@@ -166,11 +204,15 @@ class FastNoiseGenerator:
         """
         Warp coordinates using Simplex noise.
 
+        This method uses Simplex noise to distort the input coordinates, creating a
+        smooth, flowing warping effect. It's commonly used with domain_warp() to create
+        natural-looking patterns like flowing water, clouds, or marble textures.
+
         Args:
             x: X coordinate
             y: Y coordinate
-            warp_scale: Scale of the warping noise
-            warp_strength: Strength of the warping effect
+            warp_scale: Scale of the warping noise (lower = smoother distortion)
+            warp_strength: Strength of the warping effect (higher = more distortion)
 
         Returns:
             Warped coordinates (x, y)
@@ -185,13 +227,17 @@ class FastNoiseGenerator:
         """
         Generate a 2D noise map using the specified noise function.
 
+        This method creates a 2D array of noise values by sampling the provided noise
+        function at regular intervals. The coordinates are normalized to the range [0, 1]
+        to ensure consistent scaling regardless of the map dimensions.
+
         Args:
-            width: Width of the noise map
-            height: Height of the noise map
-            noise_function: Function that generates noise values
+            width: Width of the noise map in pixels
+            height: Height of the noise map in pixels
+            noise_function: Function that generates noise values from (x, y) coordinates
 
         Returns:
-            2D numpy array of noise values
+            2D numpy array of noise values with shape (height, width)
         """
         noise_map = np.zeros((height, width), dtype=np.float32)
 
@@ -208,11 +254,16 @@ class FastNoiseGenerator:
         """
         Normalize a noise map to the range [0, 1].
 
+        This method linearly rescales all values in the noise map to fit within the
+        range [0, 1], where the minimum value becomes 0 and the maximum value becomes 1.
+        This is useful for ensuring consistent value ranges across different noise
+        generation methods or for preparing noise maps for visualization.
+
         Args:
-            noise_map: 2D numpy array of noise values
+            noise_map: 2D numpy array of noise values with any range
 
         Returns:
-            Normalized noise map
+            Normalized noise map with values in range [0, 1]
         """
         min_val = np.min(noise_map)
         max_val = np.max(noise_map)
@@ -226,12 +277,18 @@ class FastNoiseGenerator:
         """
         Combine multiple noise maps with optional weights.
 
+        This method blends multiple noise maps together, optionally weighting their
+        contributions. This is useful for creating complex textures by combining different
+        noise types or frequencies. The result is normalized to ensure values remain in
+        the range [0, 1].
+
         Args:
-            maps: List of noise maps to combine
+            maps: List of noise maps to combine (must all have the same shape)
             weights: Optional list of weights for each map (defaults to equal weights)
+                     The weights do not need to sum to 1, as the result is normalized.
 
         Returns:
-            Combined noise map
+            Combined and normalized noise map with values in range [0, 1]
         """
         if not maps:
             raise ValueError("No maps provided")

@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}Cosmos Generator - Planet Generator{% endblock %}
+
+{% block content %}
+<div x-data="planetGenerator()">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left panel: Generator controls -->
+        <div class="sci-fi-panel rounded-lg p-6">
+            <h2 class="text-2xl font-sci-fi mb-6 text-space-highlight">PLANET GENERATOR</h2>
+            
+            <form @submit.prevent="generatePlanet">
+                <!-- Planet type -->
+                <div class="mb-4">
+                    <label for="planet-type" class="block mb-2 text-sm font-medium">Planet Type</label>
+                    <select id="planet-type" x-model="params.type" @change="updateVariations" class="sci-fi-input w-full p-2 rounded-md">
+                        {% for type in planet_types %}
+                        <option value="{{ type|lower }}">{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Seed -->
+                <div class="mb-4">
+                    <label for="seed" class="block mb-2 text-sm font-medium">Seed</label>
+                    <div class="flex">
+                        <input type="text" id="seed" x-model="params.seed" class="sci-fi-input w-full p-2 rounded-md">
+                        <button type="button" @click="randomizeSeed" class="sci-fi-button ml-2 p-2 rounded-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Variation -->
+                <div class="mb-4" x-show="availableVariations.length > 0">
+                    <label for="variation" class="block mb-2 text-sm font-medium">Variation</label>
+                    <select id="variation" x-model="params.variation" class="sci-fi-input w-full p-2 rounded-md">
+                        <template x-for="variation in availableVariations" :key="variation">
+                            <option :value="variation" x-text="variation"></option>
+                        </template>
+                    </select>
+                </div>
+                
+                <!-- Zoom -->
+                <div class="mb-4">
+                    <label for="zoom" class="block mb-2 text-sm font-medium">
+                        Zoom: <span x-text="params.zoom"></span>
+                    </label>
+                    <input type="range" id="zoom" x-model="params.zoom" min="0" max="1" step="0.05" class="sci-fi-slider w-full">
+                </div>
+                
+                <!-- Rings -->
+                <div class="mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" x-model="params.rings" class="sci-fi-input h-4 w-4">
+                        <span class="ml-2">Rings</span>
+                    </label>
+                </div>
+                
+                <!-- Atmosphere -->
+                <div class="mb-4">
+                    <div class="flex items-center mb-2">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" x-model="params.atmosphere" class="sci-fi-input h-4 w-4">
+                            <span class="ml-2">Atmosphere</span>
+                        </label>
+                    </div>
+                    
+                    <div x-show="params.atmosphere" class="pl-6 space-y-3 mt-2">
+                        <!-- Atmosphere glow -->
+                        <div>
+                            <label for="atmosphere-glow" class="block mb-1 text-xs font-medium">
+                                Glow: <span x-text="params.atmosphere_glow"></span>
+                            </label>
+                            <input type="range" id="atmosphere-glow" x-model="params.atmosphere_glow" min="0" max="1" step="0.1" class="sci-fi-slider w-full">
+                        </div>
+                        
+                        <!-- Atmosphere halo -->
+                        <div>
+                            <label for="atmosphere-halo" class="block mb-1 text-xs font-medium">
+                                Halo: <span x-text="params.atmosphere_halo"></span>
+                            </label>
+                            <input type="range" id="atmosphere-halo" x-model="params.atmosphere_halo" min="0" max="1" step="0.1" class="sci-fi-slider w-full">
+                        </div>
+                        
+                        <!-- Atmosphere thickness -->
+                        <div>
+                            <label for="atmosphere-thickness" class="block mb-1 text-xs font-medium">
+                                Thickness: <span x-text="params.atmosphere_thickness"></span>
+                            </label>
+                            <input type="range" id="atmosphere-thickness" x-model="params.atmosphere_thickness" min="1" max="10" step="1" class="sci-fi-slider w-full">
+                        </div>
+                        
+                        <!-- Atmosphere blur -->
+                        <div>
+                            <label for="atmosphere-blur" class="block mb-1 text-xs font-medium">
+                                Blur: <span x-text="params.atmosphere_blur"></span>
+                            </label>
+                            <input type="range" id="atmosphere-blur" x-model="params.atmosphere_blur" min="0" max="1" step="0.1" class="sci-fi-slider w-full">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Clouds -->
+                <div class="mb-4">
+                    <div class="flex items-center mb-2">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" x-model="params.has_clouds" class="sci-fi-input h-4 w-4">
+                            <span class="ml-2">Clouds</span>
+                        </label>
+                    </div>
+                    
+                    <div x-show="params.has_clouds" class="pl-6 mt-2">
+                        <label for="clouds" class="block mb-1 text-xs font-medium">
+                            Coverage: <span x-text="params.clouds"></span>
+                        </label>
+                        <input type="range" id="clouds" x-model="params.clouds" min="0.1" max="1" step="0.1" class="sci-fi-slider w-full">
+                    </div>
+                </div>
+                
+                <!-- Lighting -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium mb-2">Lighting</h3>
+                    
+                    <div class="pl-2 space-y-3">
+                        <!-- Light angle -->
+                        <div>
+                            <label for="light-angle" class="block mb-1 text-xs font-medium">
+                                Angle: <span x-text="params.light_angle"></span>°
+                            </label>
+                            <input type="range" id="light-angle" x-model="params.light_angle" min="0" max="360" step="15" class="sci-fi-slider w-full">
+                        </div>
+                        
+                        <!-- Light intensity -->
+                        <div>
+                            <label for="light-intensity" class="block mb-1 text-xs font-medium">
+                                Intensity: <span x-text="params.light_intensity"></span>
+                            </label>
+                            <input type="range" id="light-intensity" x-model="params.light_intensity" min="0.1" max="2" step="0.1" class="sci-fi-slider w-full">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Generate button -->
+                <button type="submit" class="sci-fi-button py-3 px-6 rounded-md w-full" :disabled="generating">
+                    <template x-if="!generating">
+                        <span>GENERATE PLANET</span>
+                    </template>
+                    <template x-if="generating">
+                        <span>GENERATING...</span>
+                    </template>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Right panel: Preview only -->
+        <div class="sci-fi-panel rounded-lg p-6 flex flex-col h-full">
+            <h2 class="text-2xl font-sci-fi mb-4 text-space-highlight">PREVIEW</h2>
+            
+            <!-- Texture previews -->
+            <div class="flex justify-between mb-4" x-show="previewUrl">
+                <!-- Terrain texture -->
+                <div class="w-1/3 px-1">
+                    <div class="aspect-square bg-space-dark rounded-lg overflow-hidden sci-fi-border">
+                        <template x-if="terrainTextureUrl">
+                            <img :src="terrainTextureUrl" alt="Terrain texture" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!terrainTextureUrl">
+                            <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">Terrain</div>
+                        </template>
+                    </div>
+                    <div class="text-center text-xs mt-1 text-gray-400">Terrain</div>
+                </div>
+                
+                <!-- Cloud texture -->
+                <div class="w-1/3 px-1">
+                    <div class="aspect-square bg-space-dark rounded-lg overflow-hidden sci-fi-border">
+                        <template x-if="cloudTextureUrl">
+                            <img :src="cloudTextureUrl" alt="Cloud texture" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!cloudTextureUrl">
+                            <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">Clouds</div>
+                        </template>
+                    </div>
+                    <div class="text-center text-xs mt-1 text-gray-400">Clouds</div>
+                </div>
+                
+                <!-- Cloud mask -->
+                <div class="w-1/3 px-1">
+                    <div class="aspect-square bg-space-dark rounded-lg overflow-hidden sci-fi-border">
+                        <template x-if="cloudMaskUrl">
+                            <img :src="cloudMaskUrl" alt="Cloud mask" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!cloudMaskUrl">
+                            <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">Mask</div>
+                        </template>
+                    </div>
+                    <div class="text-center text-xs mt-1 text-gray-400">Cloud Mask</div>
+                </div>
+            </div>
+            
+            <!-- Planet preview -->
+            <div class="flex-grow bg-space-dark rounded-lg overflow-hidden flex items-center justify-center sci-fi-border">
+                <template x-if="!previewUrl && !generating">
+                    <div class="text-center p-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p class="text-gray-400">Generate a planet to see preview</p>
+                    </div>
+                </template>
+                
+                <template x-if="generating && !previewUrl">
+                    <div class="loading-ring"></div>
+                </template>
+                
+                <template x-if="previewUrl">
+                    <img :src="previewUrl" alt="Generated planet" class="w-full h-full object-contain">
+                </template>
+            </div>
+            
+            <div x-show="generationError" class="mt-4 p-3 bg-red-900/50 border border-red-500 rounded-md text-red-200">
+                <p x-text="generationError"></p>
+            </div>
+            
+            <div x-show="previewUrl" class="mt-4 text-center">
+                <a :href="previewUrl" download class="sci-fi-button py-2 px-4 rounded-md inline-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    DOWNLOAD
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function planetGenerator() {
+        return {
+            // Parameters
+            params: {
+                type: "{{ default_type }}",
+                seed: "",
+                variation: "",
+                zoom: 0.5,
+                rings: false,
+                atmosphere: false,
+                atmosphere_glow: 0.5,
+                atmosphere_halo: 0.8,
+                atmosphere_thickness: 3,
+                atmosphere_blur: 0.8,
+                has_clouds: false,
+                clouds: 0.5,
+                light_angle: 45,
+                light_intensity: 1.0
+            },
+            
+            // Available variations for the selected planet type
+            availableVariations: [],
+            
+            // Generation state
+            generating: false,
+            processId: null,
+            previewUrl: null,
+            terrainTextureUrl: null,
+            cloudTextureUrl: null,
+            cloudMaskUrl: null,
+            generationError: null,
+            generationLogs: [],
+            
+            // Initialize
+            init() {
+                this.randomizeSeed();
+                this.updateVariations();
+            },
+            
+            // Update available variations when planet type changes
+            updateVariations() {
+                const variations = {{ planet_variations|tojson }};
+                this.availableVariations = variations[this.params.type.toLowerCase()] || [];
+                
+                // Set default variation for this type
+                const defaultVariations = {{ default_variations|tojson }};
+                this.params.variation = defaultVariations[this.params.type.toLowerCase()] || "";
+            },
+            
+            // Generate a random seed
+            randomizeSeed() {
+                this.params.seed = Math.floor(Math.random() * 100000).toString();
+            },
+            
+            // Generate a planet
+            generatePlanet() {
+                this.generating = true;
+                this.generationError = null;
+                this.generationLogs = [];
+                this.terrainTextureUrl = null;
+                this.cloudTextureUrl = null;
+                this.cloudMaskUrl = null;
+                
+                // Prepare parameters
+                const generationParams = { ...this.params };
+                
+                // Ensure type is never empty
+                if (!generationParams.type || generationParams.type.trim() === '') {
+                    generationParams.type = 'desert';
+                }
+                
+                // Store if clouds are enabled for later use
+                const hasClouds = generationParams.has_clouds;
+                
+                // Remove has_clouds and use clouds parameter directly
+                if (generationParams.has_clouds) {
+                    generationParams.clouds = generationParams.clouds;
+                } else {
+                    delete generationParams.clouds;
+                }
+                delete generationParams.has_clouds;
+                
+                // Store cloud status for later use
+                this._hasClouds = hasClouds;
+                
+                // Log parameters for debugging
+                console.log('Generation parameters:', generationParams);
+                
+                // Start generation
+                fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(generationParams)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        this.generationError = data.error;
+                        this.generating = false;
+                        return;
+                    }
+                    
+                    this.processId = data.process_id;
+                    this.pollGenerationStatus();
+                })
+                .catch(error => {
+                    this.generationError = "Failed to start generation: " + error.message;
+                    this.generating = false;
+                });
+            },
+            
+            // Poll generation status
+            pollGenerationStatus() {
+                if (!this.processId) return;
+                
+                fetch(`/api/status/${this.processId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Log status for debugging
+                    console.log('Generation status:', data);
+                    
+                    // Update logs
+                    this.generationLogs = data.logs || [];
+                    
+                    // Check status
+                    if (data.status === 'completed') {
+                        this.previewUrl = data.result.url;
+                        
+                        // Set texture URLs
+                        const seed = this.params.seed;
+                        const planetType = this.params.type;
+                        
+                        // Terrain texture
+                        this.terrainTextureUrl = `/static/planets/debug/textures/terrain/${seed}.png`;
+                        
+                        // Cloud textures (if clouds are enabled)
+                        if (this._hasClouds) {
+                            this.cloudTextureUrl = `/static/planets/debug/textures/clouds/${seed}/texture.png`;
+                            this.cloudMaskUrl = `/static/planets/debug/textures/clouds/${seed}/mask.png`;
+                        }
+                        
+                        this.generating = false;
+                    } else if (data.status === 'failed') {
+                        this.generationError = data.error || "Generation failed";
+                        this.generating = false;
+                    } else {
+                        // Continue polling
+                        setTimeout(() => this.pollGenerationStatus(), 500);
+                    }
+                })
+                .catch(error => {
+                    this.generationError = "Failed to check generation status: " + error.message;
+                    this.generating = false;
+                });
+            }
+        };
+    }
+</script>
+{% endblock %}

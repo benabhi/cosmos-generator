@@ -108,6 +108,17 @@ LOGGING_CONFIG = {
     "date_format": "%Y-%m-%d %H:%M:%S"
 }
 
+# Web interface configuration
+WEB_CONFIG = {
+    "host": "0.0.0.0",  # Listen on all interfaces
+    "port": 4000,       # Default port
+    "debug": False,     # Debug mode (set to False in production)
+    "log_dir": "web/logs",  # Directory for web interface logs
+    "log_file": "web/logs/web.log",  # Log file for web interface
+    "secret_key": "cosmos-generator-secret-key",  # Secret key for session
+    "max_content_length": 16 * 1024 * 1024  # 16 MB max upload size
+}
+
 def get_planet_result_path(planet_type: str, seed: int) -> str:
     """
     Get the standard output path for a planet result.

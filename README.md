@@ -10,6 +10,7 @@ A Python library for procedurally generating detailed images of celestial bodies
 - PNG output format with transparency
 - Random seed or specified seed for reproducibility
 - Lighting/shading model with directional light source
+- Web interface for generating and exploring planets
 - Optional planetary features:
   - Rings: Elliptical ring systems with proper depth perception
   - Atmosphere: Configurable atmospheric glow and halo effects with adjustable parameters
@@ -93,6 +94,10 @@ python -m cosmos_generator planet --help
 
 # Run tests
 python -m cosmos_generator test
+
+# Launch web interface
+python -m cosmos_generator web
+python -m cosmos_generator web --host 127.0.0.1 --port 8080 --debug
 ```
 
 #### Planet Generation
@@ -342,12 +347,38 @@ The test suite includes tests for:
 
 Running tests with the `--coverage` option generates a coverage report showing which parts of the code are covered by tests.
 
+## Web Interface
+
+Cosmos Generator includes a web interface for generating and exploring planets. The web interface provides a user-friendly way to interact with the generator, with features such as:
+
+- Interactive planet generation form with all available parameters
+- Real-time generation with progress tracking
+- Gallery of generated planets with filtering options
+- Detailed logs viewer
+- Responsive design that works on desktop and mobile devices
+
+To launch the web interface, use the `web` subcommand:
+
+```bash
+# Launch with default settings (host: 0.0.0.0, port: 4000)
+python -m cosmos_generator web
+
+# Launch with custom host and port
+python -m cosmos_generator web --host 127.0.0.1 --port 8080
+
+# Launch in debug mode (for development)
+python -m cosmos_generator web --debug
+```
+
+Once launched, you can access the web interface by opening a web browser and navigating to the URL shown in the console (e.g., http://localhost:4000).
+
 ## Requirements
 
 - Python 3.7+
 - Pillow (PIL fork) for image manipulation
 - NumPy for mathematical operations
 - PyFastNoiseLite for high-performance noise generation
+- Flask (for the web interface)
 - pytest (for running tests)
 - pytest-cov (for test coverage reports)
 

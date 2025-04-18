@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cosmos Generator{% endblock %}</title>
+
+    <!-- Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js from CDN -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Custom Tailwind configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: {
+                            dark: '#0a0a1a',
+                            blue: '#1a1a4a',
+                            purple: '#2a1a4a',
+                            accent: '#7e3af2',
+                            highlight: '#00d4ff'
+                        }
+                    },
+                    fontFamily: {
+                        'sci-fi': ['Orbitron', 'sans-serif'],
+                        'mono': ['Space Mono', 'monospace']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(0, 212, 255, 0.5)' },
+                            '100%': { boxShadow: '0 0 20px rgba(0, 212, 255, 0.8)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom styles -->
+    <style>
+        body {
+            background-color: #0a0a1a;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(30, 30, 70, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(50, 30, 90, 0.4) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .sci-fi-border {
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        .sci-fi-panel {
+            background: rgba(10, 10, 30, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .sci-fi-button {
+            background: linear-gradient(135deg, rgba(30, 30, 70, 0.8), rgba(50, 30, 90, 0.8));
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .sci-fi-button:hover {
+            background: linear-gradient(135deg, rgba(40, 40, 90, 0.9), rgba(70, 40, 120, 0.9));
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .sci-fi-input {
+            background: rgba(20, 20, 40, 0.6);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .sci-fi-input:focus {
+            border-color: rgba(0, 212, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+            outline: none;
+        }
+
+        /* Glowing text effect */
+        .glow-text {
+            text-shadow: 0 0 5px rgba(0, 212, 255, 0.7);
+        }
+
+        /* Animated background for active nav items */
+        .nav-active {
+            background: linear-gradient(90deg,
+                    rgba(0, 212, 255, 0) 0%,
+                    rgba(0, 212, 255, 0.2) 50%,
+                    rgba(0, 212, 255, 0) 100%);
+            animation: nav-glow 3s infinite;
+        }
+
+        @keyframes nav-glow {
+
+            0%,
+            100% {
+                background-position: -200% 0;
+            }
+
+            50% {
+                background-position: 200% 0;
+            }
+        }
+
+        /* Planet card hover effect */
+        .planet-card {
+            transition: all 0.3s ease;
+        }
+
+        .planet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 10, 30, 0.8);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.8);
+        }
+
+        /* Loading animation */
+        .loading-ring {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+        }
+
+        .loading-ring:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #00d4ff;
+            border-color: #00d4ff transparent #00d4ff transparent;
+            animation: loading-ring 1.2s linear infinite;
+        }
+
+        @keyframes loading-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sci-fi-panel py-4 px-6 mb-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <h1 class="text-2xl md:text-3xl font-sci-fi font-bold text-space-highlight glow-text">
+                    COSMOS GENERATOR
+                </h1>
+            </div>
+
+            <nav class="hidden md:flex space-x-6">
+                <a href="{{ url_for('main.index') }}"
+                    class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors {% if request.path == url_for('main.index') %}nav-active{% endif %}">
+                    GENERATE
+                </a>
+                <a href="{{ url_for('main.planets') }}"
+                    class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors {% if request.path == url_for('main.planets') %}nav-active{% endif %}">
+                    EXPLORE
+                </a>
+                <a href="{{ url_for('main.logs') }}"
+                    class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors {% if request.path == url_for('main.logs') %}nav-active{% endif %}">
+                    LOGS
+                </a>
+                <button id="clean-button"
+                    class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors sci-fi-button">
+                    CLEAN
+                </button>
+            </nav>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden" x-data="{ open: false }">
+                <button @click="open = !open" class="sci-fi-button p-2 rounded-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+
+                <!-- Mobile menu -->
+                <div x-show="open" @click.away="open = false"
+                    class="absolute top-16 right-4 sci-fi-panel rounded-md py-2 z-50">
+                    <a href="{{ url_for('main.index') }}"
+                        class="block px-4 py-2 hover:text-space-highlight">GENERATE</a>
+                    <a href="{{ url_for('main.planets') }}"
+                        class="block px-4 py-2 hover:text-space-highlight">EXPLORE</a>
+                    <a href="{{ url_for('main.logs') }}" class="block px-4 py-2 hover:text-space-highlight">LOGS</a>
+                    <button id="mobile-clean-button"
+                        class="block w-full text-left px-4 py-2 hover:text-space-highlight">CLEAN</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-grow container mx-auto px-4 pb-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="sci-fi-panel py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm text-gray-400">
+                COSMOS GENERATOR &copy; 2025 | <span class="text-space-highlight">PROCEDURAL CELESTIAL BODIES</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Clean functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Function to handle clean action
+            function handleClean() {
+                if (!confirm('Are you sure you want to clean all generated files? This action cannot be undone.')) {
+                    return;
+                }
+
+                // Show loading state
+                const cleanButton = document.getElementById('clean-button');
+                const mobileCleanButton = document.getElementById('mobile-clean-button');
+                const originalText = cleanButton.innerText;
+
+                cleanButton.innerText = 'CLEANING...';
+                mobileCleanButton.innerText = 'CLEANING...';
+                cleanButton.disabled = true;
+                mobileCleanButton.disabled = true;
+
+                // Call the clean API
+                fetch('/api/clean', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('All files cleaned successfully!');
+                            // Reload the page to refresh any displayed content
+                            window.location.reload();
+                        } else {
+                            alert('Failed to clean files: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('An error occurred: ' + error.message);
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        cleanButton.innerText = originalText;
+                        mobileCleanButton.innerText = originalText;
+                        cleanButton.disabled = false;
+                        mobileCleanButton.disabled = false;
+                    });
+            }
+
+            // Attach event listeners to clean buttons
+            const cleanButton = document.getElementById('clean-button');
+            const mobileCleanButton = document.getElementById('mobile-clean-button');
+
+            if (cleanButton) {
+                cleanButton.addEventListener('click', handleClean);
+            }
+
+            if (mobileCleanButton) {
+                mobileCleanButton.addEventListener('click', handleClean);
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

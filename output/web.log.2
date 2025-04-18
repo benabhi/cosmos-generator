@@ -1,0 +1,90 @@
+2025-04-18 19:44:12,436 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:12,458 INFO: 127.0.0.1 GET /api/status/1745016252436? 200 OK 1002 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:13,054 INFO: 127.0.0.1 GET /api/status/1745016252436? 200 OK 1220 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:16,276 INFO: 127.0.0.1 GET /? 200 OK 29851 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:18,625 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:18,694 INFO: 127.0.0.1 GET /api/status/1745016258625? 200 OK 1002 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:19,340 INFO: 127.0.0.1 GET /api/status/1745016258625? 200 OK 1220 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:22,380 INFO: 127.0.0.1 GET /favicon.ico? 404 NOT FOUND 207 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:28,049 INFO: 127.0.0.1 GET /? 200 OK 29851 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:32,200 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:32,288 INFO: 127.0.0.1 GET /api/status/1745016272200? 200 OK 1002 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:32,910 INFO: 127.0.0.1 GET /api/status/1745016272200? 200 OK 1220 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:50,676 INFO: 127.0.0.1 GET /api/status/1745016272200? 200 OK 1220 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:44:50,781 INFO: 127.0.0.1 GET /favicon.ico? 404 NOT FOUND 207 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:45:43,862 INFO: 127.0.0.1 GET /logs? 200 OK 30509 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:45:51,013 INFO: 127.0.0.1 GET /api/logs?type=planets&lines=100 200 OK 9366 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:45:54,607 INFO: 127.0.0.1 GET /api/logs?type=planets&lines=1000 200 OK 55882 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:46:05,898 INFO: 127.0.0.1 GET /? 200 OK 29851 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:46:11,198 INFO: 127.0.0.1 GET /logs? 200 OK 30509 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:46:52,174 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
+2025-04-18 19:47:03,357 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:47:03,427 INFO: 127.0.0.1 GET /api/status/1745016423357? 200 OK 993 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:47:04,006 INFO: 127.0.0.1 GET /api/status/1745016423357? 200 OK 1157 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:47:07,087 ERROR: Exception on / [GET] [in /home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/web/routes.py", line 26, in index
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/ubuntu/Code/cosmos-generator/web/templates/index.html", line 313, in template
+    }
+jinja2.exceptions.TemplateSyntaxError: unexpected '}'
+2025-04-18 19:47:07,089 INFO: 127.0.0.1 GET /? 500 INTERNAL SERVER ERROR 265 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:48:51,851 INFO: 127.0.0.1 GET /? 200 OK 29142 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:49:17,569 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:49:36,347 INFO: 127.0.0.1 GET /api/status/1745016557569? 200 OK 1820 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:49:51,648 INFO: 127.0.0.1 GET /static/planets/desert/00012345_arid_1_1_0.png? 200 OK 65451 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:50:05,580 INFO: 127.0.0.1 GET /static/planets/debug/textures/terrain/12345.png? 200 OK 57944 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:50:20,035 INFO: 127.0.0.1 GET /static/planets/debug/textures/clouds/12345/texture.png? 200 OK 79088 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:50:36,022 INFO: 127.0.0.1 GET /static/planets/debug/textures/clouds/12345/mask.png? 200 OK 59724 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:50:58,907 INFO: 127.0.0.1 GET /? 200 OK 29142 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:15,357 INFO: 127.0.0.1 GET /logs? 200 OK 30439 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:31,934 INFO: 127.0.0.1 GET /? 200 OK 29142 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:32,890 INFO: 127.0.0.1 GET /planets? 200 OK 20955 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:33,137 INFO: 127.0.0.1 GET /static/planets/desert/00012345_arid_1_1_0.png? 304 NOT MODIFIED 65451 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:33,140 INFO: 127.0.0.1 GET /static/planets/desert/00012345_arid_1_0_1.png? 200 OK 158810 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:33,141 INFO: 127.0.0.1 GET /static/planets/desert/00011111_arid_1_1_0.png? 200 OK 59340 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:33,143 INFO: 127.0.0.1 GET /static/planets/ocean/00012345_water_world_1_1_0.png? 200 OK 57197 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:33,144 INFO: 127.0.0.1 GET /static/planets/desert/00098765_arid_1_1_0.png? 200 OK 65787 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:33,145 INFO: 127.0.0.1 GET /static/planets/ocean/00054321_water_world_1_1_0.png? 304 NOT MODIFIED 45265 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:34,024 INFO: 127.0.0.1 GET /? 200 OK 29142 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:36,201 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:36,224 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 969 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:36,818 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1213 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:37,373 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1213 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:37,930 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1213 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:38,536 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1213 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:39,093 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1213 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:39,653 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1213 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]
+2025-04-18 19:51:40,214 INFO: 127.0.0.1 GET /api/status/1745016696201? 200 OK 1748 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:54]

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Cosmos Generator - Explore Planets{% endblock %}
+
+{% block content %}
+<div x-data="planetsExplorer()">
+    <div class="sci-fi-panel rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-sci-fi mb-6 text-space-highlight">PLANET EXPLORER</h2>
+        
+        <!-- Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div>
+                <label for="type-filter" class="block mb-2 text-sm font-medium">Planet Type</label>
+                <select id="type-filter" x-model="filters.type" @change="applyFilters" class="sci-fi-input w-full p-2 rounded-md">
+                    <option value="">All Types</option>
+                    {% for type in planet_types %}
+                    <option value="{{ type|lower }}">{{ type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="seed-filter" class="block mb-2 text-sm font-medium">Seed</label>
+                <input type="text" id="seed-filter" x-model="filters.seed" @input="applyFilters"
+                    placeholder="Search by seed" class="sci-fi-input w-full p-2 rounded-md">
+            </div>
+            
+            <div class="flex flex-col justify-end">
+                <label class="block mb-2 text-sm font-medium">Features</label>
+                <div class="flex space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" x-model="filters.has_rings" @change="applyFilters"
+                            class="sci-fi-input h-4 w-4">
+                        <span class="ml-2">Rings</span>
+                    </label>
+
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" x-model="filters.has_atmosphere" @change="applyFilters"
+                            class="sci-fi-input h-4 w-4">
+                        <span class="ml-2">Atmosphere</span>
+                    </label>
+
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" x-model="filters.has_clouds" @change="applyFilters"
+                            class="sci-fi-input h-4 w-4">
+                        <span class="ml-2">Clouds</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-end">
+                <button @click="resetFilters" class="sci-fi-button py-2 px-4 rounded-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    RESET FILTERS
+                </button>
+            </div>
+        </div>
+        
+        <!-- Results count -->
+        <div class="text-sm text-gray-400 mb-4">
+            Showing <span x-text="filteredPlanets.length"></span> of <span x-text="planets.length"></span> planets
+        </div>
+        
+        <!-- Planet grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <template x-for="planet in filteredPlanets" :key="planet.path">
+                <div class="planet-card sci-fi-panel rounded-lg overflow-hidden">
+                    <div class="aspect-square bg-space-dark">
+                        <img :src="planet.url" :alt="'Planet ' + planet.seed" class="w-full h-full object-contain">
+                    </div>
+                    
+                    <div class="p-4">
+                        <h3 class="font-sci-fi text-lg mb-1 text-space-highlight" x-text="planet.type"></h3>
+                        <p class="text-sm mb-2">Seed: <span x-text="planet.seed"></span></p>
+                        
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <template x-if="planet.params && planet.params.variation">
+                                <span class="bg-space-purple text-xs py-1 px-2 rounded-full"
+                                    x-text="planet.params.variation"></span>
+                            </template>
+
+                            <template x-if="planet.params && planet.params.rings">
+                                <span class="bg-space-blue text-xs py-1 px-2 rounded-full">Rings</span>
+                            </template>
+
+                            <template x-if="planet.params && planet.params.atmosphere">
+                                <span class="bg-space-blue text-xs py-1 px-2 rounded-full">Atmosphere</span>
+                            </template>
+
+                            <template x-if="planet.params && planet.params.clouds">
+                                <span class="bg-space-blue text-xs py-1 px-2 rounded-full">Clouds</span>
+                            </template>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-between">
+                            <a :href="planet.url" target="_blank" class="sci-fi-button py-1 px-3 rounded-md text-xs">
+                                VIEW
+                            </a>
+                            
+                            <a :href="planet.url" download class="sci-fi-button py-1 px-3 rounded-md text-xs">
+                                DOWNLOAD
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Empty state -->
+            <template x-if="filteredPlanets.length === 0">
+                <div class="col-span-full text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <p class="text-gray-400">No planets found matching your filters</p>
+                    <button @click="resetFilters" class="sci-fi-button py-2 px-4 rounded-md mt-4">
+                        RESET FILTERS
+                    </button>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function planetsExplorer() {
+        return {
+            // All planets
+            planets: {{ planets|tojson }},
+            
+            // Filtered planets
+            filteredPlanets: [],
+            
+            // Filter criteria
+            filters: {
+                type: "{{ filters.type }}",
+                seed: "{{ filters.seed }}",
+                has_rings: {{ 'true' if filters.has_rings else 'false' }},
+                has_atmosphere: {{ 'true' if filters.has_atmosphere else 'false' }},
+                has_clouds: {{ 'true' if filters.has_clouds else 'false' }}
+            },
+            
+            // Initialize
+            init() {
+                this.applyFilters();
+            },
+            
+            // Apply filters to planets
+            applyFilters() {
+                this.filteredPlanets = this.planets.filter(planet => {
+                    // Filter by type
+                    if (this.filters.type && planet.type.toLowerCase() !== this.filters.type.toLowerCase()) {
+                        return false;
+                    }
+                    
+                    // Filter by seed
+                    if (this.filters.seed && !planet.seed.includes(this.filters.seed)) {
+                        return false;
+                    }
+                    
+                    // Filter by features
+                    if (this.filters.has_rings && (!planet.params || !planet.params.rings)) {
+                        return false;
+                    }
+                    
+                    if (this.filters.has_atmosphere && (!planet.params || !planet.params.atmosphere)) {
+                        return false;
+                    }
+                    
+                    if (this.filters.has_clouds && (!planet.params || !planet.params.clouds)) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // Update URL with filters
+                this.updateUrl();
+            },
+            
+            // Reset all filters
+            resetFilters() {
+                this.filters = {
+                    type: "",
+                    seed: "",
+                    has_rings: false,
+                    has_atmosphere: false,
+                    has_clouds: false
+                };
+                
+                this.applyFilters();
+            },
+            
+            // Update URL with current filters
+            updateUrl() {
+                const params = new URLSearchParams();
+                
+                if (this.filters.type) {
+                    params.set('type', this.filters.type);
+                }
+                
+                if (this.filters.seed) {
+                    params.set('seed', this.filters.seed);
+                }
+                
+                // Add feature filters
+                if (this.filters.has_rings) {
+                    params.set('has_rings', 'true');
+                }
+                
+                if (this.filters.has_atmosphere) {
+                    params.set('has_atmosphere', 'true');
+                }
+                
+                if (this.filters.has_clouds) {
+                    params.set('has_clouds', 'true');
+                }
+                
+                const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                window.history.replaceState({}, '', newUrl);
+            }
+        };
+    }
+</script>
+{% endblock %}

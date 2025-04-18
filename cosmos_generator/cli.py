@@ -90,6 +90,23 @@ class CosmosGeneratorCLI:
                         self.subcommands['planet'] = planet_module.main
             except Exception as e:
                 print(f"Error importing planet subcommand: {e}")
+
+            # Manually register the web subcommand
+            try:
+                # Import the module directly
+                spec = importlib.util.spec_from_file_location(
+                    "web",
+                    os.path.join(package_path, "web.py")
+                )
+                web_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(web_module)
+
+                if hasattr(web_module, 'register_subcommand'):
+                    web_module.register_subcommand(self.subparsers)
+                    if hasattr(web_module, 'main'):
+                        self.subcommands['web'] = web_module.main
+            except Exception as e:
+                print(f"Error importing web subcommand: {e}")
         except ImportError:
             # If the subcommands package doesn't exist yet, just continue
             pass

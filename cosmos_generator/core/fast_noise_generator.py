@@ -62,8 +62,6 @@ class FastNoiseGenerator:
         self.warp = FastNoiseLite(seed=safe_seed)
         self.warp.noise_type = NoiseType.NoiseType_OpenSimplex2
 
-
-
     def simplex_noise(self, x: float, y: float, scale: float = 1.0) -> float:
         """
         Generate 2D Simplex noise at the given coordinates.
@@ -136,8 +134,6 @@ class FastNoiseGenerator:
         self.ridged.fractal_lacunarity = lacunarity
         # FastNoiseLite's ridged multi returns values in [-1, 1], so we normalize to [0, 1]
         return (self.ridged.get_noise(x, y) + 1.0) * 0.5
-
-
 
     def worley_noise(self, x: float, y: float, cell_count: int = 10,
                      distance_function: str = "euclidean") -> float:

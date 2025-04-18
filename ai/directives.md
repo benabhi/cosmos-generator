@@ -10,3 +10,4 @@
 * Cada vez que se necesite generar codigo verificar si es necesario agregar un test para la nueva funcionalidad.
 * Verificar que los test cubran los casos en los que realmente son utiles.
 * Siempre que haya que crear texturas verificar si ya existen funciones de ruido que sean utiles, en caso contrario crearlas o adaptarlas evitando comprometer el funcionamiento del ruido en otras texturas.
+* Los comentarios, mombres de variables, clases, metodos o funciones deben estar en ingles.

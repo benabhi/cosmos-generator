@@ -265,10 +265,10 @@ class AbstractPlanet(AbstractCelestialBody):
 
             # Create a canvas for the atmosphere - much smaller padding for planets without rings
             if self.has_rings:
-                # Muy poca atmósfera para planetas con anillos para evitar el borde translúcido
-                atmosphere_padding = int(size * 0.01)  # Solo 1% de padding para planetas con anillos
+                # Very thin atmosphere for planets with rings to avoid translucent edge
+                atmosphere_padding = int(size * 0.01)  # Only 1% padding for planets with rings
             else:
-                atmosphere_padding = int(size * 0.02)  # 2% padding para planetas sin anillos
+                atmosphere_padding = int(size * 0.02)  # 2% padding for planets without rings
             canvas_size = size + atmosphere_padding * 2
             result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 
@@ -318,15 +318,11 @@ class AbstractPlanet(AbstractCelestialBody):
             inner_draw = ImageDraw.Draw(inner_circle)
             outer_draw = ImageDraw.Draw(outer_circle)
 
-            # Set up the halo parameters based on whether the planet has rings
+            # Set up the halo parameters
             # Make the inner radius slightly smaller to ensure it overlaps with the planet edge
             # This helps prevent gaps between the halo and the planet due to the spherical distortion
-            if self.has_rings:
-                inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
-                outer_radius = planet_radius + 3  # Outer edge of halo (3px thick)
-            else:
-                inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
-                outer_radius = planet_radius + 3  # Outer edge of halo (3px thick)
+            inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
+            outer_radius = planet_radius + 3  # Outer edge of halo (3px thick)
 
             # Draw filled circles (not outlines) for clean edges
             inner_draw.ellipse(

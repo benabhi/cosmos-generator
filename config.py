@@ -5,7 +5,6 @@ This module contains centralized configuration settings for the application,
 including output directory structure, default parameters, and other settings.
 """
 import os
-from typing import Dict, List, Any
 
 # Base output directory
 OUTPUT_DIR = "output"
@@ -94,10 +93,10 @@ PLANET_VARIATIONS = {
 CONTAINER_DEFAULT_SETTINGS = {
     "width": PLANET_SIZE,
     "height": PLANET_SIZE,
-    "default_zoom_with_rings": 0.25,  # 0.0=lejos/pequeño, 1.0=cerca/grande
-    "default_zoom_without_rings": 0.95,  # 0.0=lejos/pequeño, 1.0=cerca/grande
-    "zoom_min": 0.0,  # Valor mínimo de zoom (más lejos/pequeño)
-    "zoom_max": 1.0   # Valor máximo de zoom (más cerca/grande)
+    "default_zoom_with_rings": 0.25,  # 0.0=far/small, 1.0=close/large
+    "default_zoom_without_rings": 0.95,  # 0.0=far/small, 1.0=close/large
+    "zoom_min": 0.0,  # Minimum zoom value (farther/smaller)
+    "zoom_max": 1.0   # Maximum zoom value (closer/larger)
 }
 
 # Logging configuration

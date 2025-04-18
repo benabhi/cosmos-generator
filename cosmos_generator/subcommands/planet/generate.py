@@ -57,6 +57,14 @@ def register_subcommand(subparsers: Any) -> None:
                        help="Add rings")
     parser.add_argument("--atmosphere", action="store_true",
                        help="Add atmosphere")
+    parser.add_argument("--atmosphere-glow", type=float, default=0.5,
+                       help="Atmosphere glow intensity (0.0-1.0)")
+    parser.add_argument("--atmosphere-halo", type=float, default=0.7,
+                       help="Atmosphere halo intensity (0.0-1.0)")
+    parser.add_argument("--atmosphere-thickness", type=int, default=3,
+                       help="Atmosphere halo thickness in pixels (1-10)")
+    parser.add_argument("--atmosphere-blur", type=float, default=0.5,
+                       help="Atmosphere blur amount (0.0-1.0)")
     parser.add_argument("--clouds", type=float, default=None,
                        help="Cloud coverage (0.0-1.0)")
     parser.add_argument("--variation", type=str, default=None,
@@ -127,6 +135,11 @@ def main(args: argparse.Namespace) -> int:
 
     if args.atmosphere:
         params["atmosphere"] = True
+        # Add atmosphere parameters
+        params["atmosphere_glow"] = max(0.0, min(1.0, args.atmosphere_glow))
+        params["atmosphere_halo"] = max(0.0, min(1.0, args.atmosphere_halo))
+        params["atmosphere_thickness"] = max(1, min(10, args.atmosphere_thickness))
+        params["atmosphere_blur"] = max(0.0, min(1.0, args.atmosphere_blur))
 
     if args.clouds is not None:
         params["clouds"] = True

@@ -13,14 +13,14 @@ del planeta para que la atmósfera quepa en el tamaño original.
 from typing import Optional
 import os
 import time
-import numpy as np
-from PIL import Image, ImageDraw, ImageChops, ImageFilter
+from PIL import Image
 
 from cosmos_generator.utils.logger import logger
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
 from cosmos_generator.features.rings import Rings
 from cosmos_generator.features.clouds import Clouds
+from cosmos_generator.features.atmosphere import Atmosphere
 from cosmos_generator.utils import image_utils
 
 
@@ -82,6 +82,20 @@ class AbstractPlanet(AbstractCelestialBody):
         )
         # Set the light angle for the clouds to match the planet
         self.clouds.set_light_angle(self.light_angle)
+
+        # Initialize atmosphere system
+        atmosphere_glow = kwargs.get("atmosphere_glow", 0.5)
+        atmosphere_halo = kwargs.get("atmosphere_halo", 0.7)
+        atmosphere_thickness = kwargs.get("atmosphere_thickness", 3)
+        atmosphere_blur = kwargs.get("atmosphere_blur", 0.5)
+        self.atmosphere = Atmosphere(
+            seed=self.seed,
+            enabled=self.has_atmosphere,
+            glow_intensity=atmosphere_glow,
+            halo_intensity=atmosphere_halo,
+            halo_thickness=atmosphere_thickness,
+            blur_amount=atmosphere_blur
+        )
 
         # Create a rings generator with the same seed
         self.rings_generator = Rings(seed=self.seed)
@@ -207,7 +221,11 @@ class AbstractPlanet(AbstractCelestialBody):
             # 1. First apply atmosphere if enabled (before anything else)
             if self.has_atmosphere:
                 logger.debug(f"Applying atmosphere to {self.PLANET_TYPE} planet", "planet")
-                result = self._apply_atmosphere(result)
+                result = self.atmosphere.apply_to_planet(
+                    planet_image=result,
+                    planet_type=self.PLANET_TYPE,
+                    has_rings=self.has_rings
+                )
                 features_applied.append("atmosphere")
 
             # 2. Then apply clouds if enabled
@@ -236,152 +254,6 @@ class AbstractPlanet(AbstractCelestialBody):
             duration_ms = (time.time() - start_time) * 1000
             logger.log_step("apply_features", duration_ms, f"Error: {str(e)}")
             raise
-
-    def _apply_atmosphere(self, base_image: Image.Image) -> Image.Image:
-        """
-        Apply a simple atmospheric glow to the planet with a fine light line around the edge.
-
-        Args:
-            base_image: Base planet image
-
-        Returns:
-            Planet image with atmosphere
-        """
-        start_time = time.time()
-        try:
-            # Ensure the planet image has an alpha channel
-            if base_image.mode != "RGBA":
-                base_image = base_image.convert("RGBA")
-
-            # Get atmosphere color for this planet type
-            atmosphere_color = self.color_palette.get_atmosphere_color(self.PLANET_TYPE)
-
-            # Make atmosphere more visible by increasing opacity
-            r, g, b, a = atmosphere_color
-            atmosphere_color = (r, g, b, min(255, a * 2))  # Double the opacity, max 255
-
-            # Get the size of the planet image
-            size = base_image.width
-
-            # Create a canvas for the atmosphere - much smaller padding for planets without rings
-            if self.has_rings:
-                # Very thin atmosphere for planets with rings to avoid translucent edge
-                atmosphere_padding = int(size * 0.01)  # Only 1% padding for planets with rings
-            else:
-                atmosphere_padding = int(size * 0.02)  # 2% padding for planets without rings
-            canvas_size = size + atmosphere_padding * 2
-            result = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-
-            # Calculate center and planet radius
-            center = canvas_size // 2
-            planet_radius = size // 2
-
-            # Create the atmosphere layer
-            atmosphere = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
-            atmosphere_draw = ImageDraw.Draw(atmosphere)
-
-            # Draw the atmosphere as a larger circle
-            atmosphere_radius = planet_radius + atmosphere_padding
-            atmosphere_draw.ellipse(
-                (center - atmosphere_radius, center - atmosphere_radius,
-                 center + atmosphere_radius, center + atmosphere_radius),
-                fill=atmosphere_color
-            )
-
-            # Apply blur for a nice glow effect - use smaller blur for sharper edge
-            if self.has_rings:
-                blur_radius = atmosphere_padding // 3
-            else:
-                # Almost no blur for planets without rings - just enough to smooth the edge
-                blur_radius = max(1, atmosphere_padding // 10)  # Minimum blur of 1 pixel
-            atmosphere = atmosphere.filter(ImageFilter.GaussianBlur(blur_radius))
-
-            # Paste the atmosphere onto the result
-            result.paste(atmosphere, (0, 0), atmosphere)
-
-            # Paste the planet in the center
-            planet_pos = (center - planet_radius, center - planet_radius)
-            result.paste(base_image, planet_pos, base_image)
-
-            # Add a thin bright halo right at the edge of the planet for extra visibility
-            # We'll use a different approach to create a cleaner, more consistent halo
-
-            # Create a larger canvas for the halo to avoid edge artifacts
-            halo_canvas_size = canvas_size + 10  # Add padding to avoid edge artifacts
-            halo_center = halo_canvas_size // 2
-
-            # Create two images: one for the inner circle and one for the outer circle
-            inner_circle = Image.new("L", (halo_canvas_size, halo_canvas_size), 0)
-            outer_circle = Image.new("L", (halo_canvas_size, halo_canvas_size), 0)
-
-            # Create drawing objects
-            inner_draw = ImageDraw.Draw(inner_circle)
-            outer_draw = ImageDraw.Draw(outer_circle)
-
-            # Set up the halo parameters
-            # Make the inner radius slightly smaller to ensure it overlaps with the planet edge
-            # This helps prevent gaps between the halo and the planet due to the spherical distortion
-            inner_radius = planet_radius - 1  # Slightly smaller to ensure overlap
-            outer_radius = planet_radius + 3  # Outer edge of halo (3px thick)
-
-            # Draw filled circles (not outlines) for clean edges
-            inner_draw.ellipse(
-                (halo_center - inner_radius, halo_center - inner_radius,
-                 halo_center + inner_radius, halo_center + inner_radius),
-                fill=255
-            )
-
-            outer_draw.ellipse(
-                (halo_center - outer_radius, halo_center - outer_radius,
-                 halo_center + outer_radius, halo_center + outer_radius),
-                fill=255
-            )
-
-            # Create the halo by subtracting the inner circle from the outer circle
-            # This creates a perfect ring with clean edges
-            halo_mask = ImageChops.subtract(outer_circle, inner_circle)
-
-            # Apply a very small blur for anti-aliasing only
-            # Just enough to smooth the edges without creating artifacts
-            blur_amount = 0.3  # Minimal blur for clean edges
-            halo_mask = halo_mask.filter(ImageFilter.GaussianBlur(blur_amount))
-
-            # Create the colored halo with the mask
-            halo = Image.new("RGBA", (halo_canvas_size, halo_canvas_size), (0, 0, 0, 0))
-            halo_array = np.array(halo)
-            mask_array = np.array(halo_mask)
-
-            # Apply the color with the mask
-            for y in range(halo_canvas_size):
-                for x in range(halo_canvas_size):
-                    if mask_array[y, x] > 0:
-                        # Use the mask value as the alpha
-                        alpha = mask_array[y, x]
-                        halo_array[y, x] = [r, g, b, alpha]
-
-            # Convert back to PIL Image
-            halo = Image.fromarray(halo_array)
-
-            # Crop the halo to match the canvas size
-            crop_offset = (halo_canvas_size - canvas_size) // 2
-            halo = halo.crop((crop_offset, crop_offset,
-                             crop_offset + canvas_size,
-                             crop_offset + canvas_size))
-
-            # Composite the halo onto the result
-            result = Image.alpha_composite(result, halo)
-
-            duration_ms = (time.time() - start_time) * 1000
-            # Log details about the atmosphere
-            padding_percent = atmosphere_padding / planet_radius * 100
-            blur_info = f"blur: {blur_radius}px"
-            logger.log_step("apply_atmosphere", duration_ms, f"Padding: {padding_percent:.1f}%, {blur_info}")
-            return result
-        except Exception as e:
-            duration_ms = (time.time() - start_time) * 1000
-            logger.log_step("apply_atmosphere", duration_ms, f"Error: {str(e)}")
-            raise
-
 
 
     def _apply_rings(self, base_image: Image.Image) -> Image.Image:

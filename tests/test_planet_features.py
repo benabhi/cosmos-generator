@@ -19,21 +19,33 @@ class TestPlanetFeatures:
     Test cases for planet features.
     """
 
-    def test_atmosphere(self, desert_planet, temp_output_dir):
+    def test_atmosphere(self, planet_generator, temp_output_dir):
         """
         Test atmosphere feature.
         """
         # Create a planet with atmosphere
-        desert_planet.has_atmosphere = True
+        planet_with_atmosphere = planet_generator.create("Desert", {
+            "size": 512,
+            "seed": 12345,
+            "atmosphere": True,
+            "atmosphere_glow": 0.7,
+            "atmosphere_halo": 0.8,
+            "atmosphere_thickness": 4,
+            "atmosphere_blur": 0.6
+        })
 
         # Render the planet
-        image_with_atmosphere = desert_planet.render()
+        image_with_atmosphere = planet_with_atmosphere.render()
 
         # Create a planet without atmosphere
-        desert_planet.has_atmosphere = False
+        planet_without_atmosphere = planet_generator.create("Desert", {
+            "size": 512,
+            "seed": 12345,
+            "atmosphere": False
+        })
 
         # Render the planet
-        image_without_atmosphere = desert_planet.render()
+        image_without_atmosphere = planet_without_atmosphere.render()
 
         # Convert images to arrays for comparison
         array_with_atmosphere = np.array(image_with_atmosphere)
@@ -44,8 +56,45 @@ class TestPlanetFeatures:
 
         # Check that the image with atmosphere has some transparent pixels at the edges
         # (atmosphere creates a larger image with transparent padding)
-        assert array_with_atmosphere.shape[0] >= array_without_atmosphere.shape[0]
-        assert array_with_atmosphere.shape[1] >= array_without_atmosphere.shape[1]
+        assert array_with_atmosphere.shape[0] > array_without_atmosphere.shape[0]
+        assert array_with_atmosphere.shape[1] > array_without_atmosphere.shape[1]
+
+    def test_atmosphere_parameters(self, planet_generator, temp_output_dir):
+        """
+        Test atmosphere parameters.
+        """
+        # Create a planet with atmosphere and default parameters
+        planet_default = planet_generator.create("Desert", {
+            "size": 512,
+            "seed": 12345,
+            "atmosphere": True,
+            "atmosphere_glow": 0.5,
+            "atmosphere_halo": 0.7,
+            "atmosphere_blur": 0.5
+        })
+
+        # Render the planet
+        image_default = planet_default.render()
+
+        # Create a planet with atmosphere and custom parameters
+        planet_custom = planet_generator.create("Desert", {
+            "size": 512,
+            "seed": 12345,
+            "atmosphere": True,
+            "atmosphere_glow": 1.0,
+            "atmosphere_halo": 0.0,  # No halo
+            "atmosphere_blur": 0.2
+        })
+
+        # Render the planet
+        image_custom = planet_custom.render()
+
+        # Convert images to arrays for comparison
+        array_default = np.array(image_default)
+        array_custom = np.array(image_custom)
+
+        # Check that the images are different
+        assert not np.array_equal(array_default, array_custom)
 
     def test_clouds(self, desert_planet, temp_output_dir):
         """

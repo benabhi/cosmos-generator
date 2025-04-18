@@ -12,7 +12,7 @@ A Python library for procedurally generating detailed images of celestial bodies
 - Lighting/shading model with directional light source
 - Optional planetary features:
   - Rings: Elliptical ring systems with proper depth perception
-  - Atmosphere: Simple atmospheric glow effect (boolean parameter)
+  - Atmosphere: Configurable atmospheric glow and halo effects with adjustable parameters
   - Clouds: Layered cloud systems for applicable planet types with configurable coverage (0.0-1.0)
   - Surface details: Craters, mountains, etc.
 
@@ -48,6 +48,10 @@ planet = generator.create("Desert", {
         "falloff": 0.7
     },
     "atmosphere": True,
+    "atmosphere_glow": 0.7,  # 0.0 to 1.0, intensity of the glow
+    "atmosphere_halo": 0.8,  # 0.0 to 1.0, intensity of the halo
+    "atmosphere_thickness": 4,  # 1 to 10, thickness of the halo in pixels
+    "atmosphere_blur": 0.6,  # 0.0 to 1.0, amount of blur to apply
     "clouds": True,
     "cloud_coverage": 1.0  # 0.0 to 1.0, where 1.0 is maximum coverage
 })
@@ -97,6 +101,9 @@ python -m cosmos_generator test
 # With custom output path
 python -m cosmos_generator planet generate --type desert --seed 987 --output planet.png --rings --atmosphere --light-angle 30
 
+# With custom atmosphere parameters
+python -m cosmos_generator planet generate --type desert --seed 987 --atmosphere --atmosphere-glow 0.8 --atmosphere-halo 0.6 --atmosphere-thickness 5 --atmosphere-blur 0.4
+
 # With default output path (output/planets/result/desert/987.png)
 python -m cosmos_generator planet generate --type desert --seed 987 --rings --atmosphere --light-angle 30
 
@@ -136,6 +143,10 @@ Options for the `planet generate` subcommand:
 - `--variation NAME`: Texture variation (depends on planet type, see below)
 - `--rings`: Add rings
 - `--atmosphere`: Add atmosphere
+- `--atmosphere-glow VALUE`: Atmosphere glow intensity (0.0-1.0, default: 0.5)
+- `--atmosphere-halo VALUE`: Atmosphere halo intensity (0.0-1.0, default: 0.7)
+- `--atmosphere-thickness VALUE`: Atmosphere halo thickness in pixels (1-10, default: 3)
+- `--atmosphere-blur VALUE`: Atmosphere blur amount (0.0-1.0, default: 0.5)
 - `--clouds VALUE`: Add clouds with specific coverage (0.0-1.0, where 1.0 is full coverage)
 - `--light-intensity VALUE`: Light intensity (0.0-2.0)
 - `--light-angle DEG`: Light source angle (0-359)
@@ -237,7 +248,7 @@ Each planet generation is clearly marked in the log file with visual separators,
 - Execution times for each step of the process with specific details:
   - Texture generation: planet type, size
   - Lighting: angle, intensity, falloff factor
-  - Atmosphere: fill percentage, blur radius
+  - Atmosphere: glow intensity, halo intensity, halo thickness, blur amount, padding percentage
   - Clouds: coverage, generation threshold
   - Rings: complexity, number of rings, size factor
 - A detailed summary at the end of each generation showing:

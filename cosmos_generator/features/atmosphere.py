@@ -241,27 +241,83 @@ class Atmosphere:
         # Print the original color for debugging
         print(f"Original atmosphere color: R:{r}, G:{g}, B:{b}, A:{a}")
 
+        # Store the original color for reference
+        original_r, original_g, original_b = r, g, b
+
         # Force a minimum brightness to ensure visibility
-        min_brightness = 100
-        r = max(min_brightness, r)
-        g = max(min_brightness, g)
-        b = max(min_brightness, b)
+        # But keep the relative proportions between channels to preserve the color
+        min_brightness = 80
+        min_channel = min(r, g, b)
+        if min_channel < min_brightness and max(r, g, b) > 0:
+            # Calculate how much we need to boost to reach minimum brightness
+            boost_factor = min_brightness / max(1, min_channel)
+            # Apply the boost while preserving color relationships
+            r = min(255, int(r * boost_factor))
+            g = min(255, int(g * boost_factor))
+            b = min(255, int(b * boost_factor))
 
         # Preserve the color's character but make it more vibrant
         # Find the dominant color channel
         max_channel = max(r, g, b)
         min_channel = min(r, g, b)
 
-        # Calculate color intensity and boost it
-        intensity_boost = 2.5
+        # Use a simpler approach to preserve the original color while making it more vibrant
+        # This ensures we don't lose the color character
 
-        # Boost each channel while preserving color relationships
-        r = min(255, int(r * intensity_boost))
-        g = min(255, int(g * intensity_boost))
-        b = min(255, int(b * intensity_boost))
+        # First, determine which channel is dominant to understand the color character
+        is_red_dominant = r >= g and r >= b
+        is_green_dominant = g >= r and g >= b
+        is_blue_dominant = b >= r and b >= g
+
+        # Use the original color directly, just boost its intensity
+        # This preserves the exact hue of the original atmosphere color
+        intensity_boost = 1.8  # More moderate boost to preserve color
+
+        # Apply different boosts based on the color character
+        if is_red_dominant:
+            # For reddish atmospheres (desert planets)
+            r = min(255, int(r * intensity_boost * 1.2))  # Boost red more
+            g = min(255, int(g * intensity_boost * 0.9))  # Reduce green slightly
+            b = min(255, int(b * intensity_boost * 0.9))  # Reduce blue slightly
+        elif is_blue_dominant:
+            # For bluish atmospheres (ocean planets)
+            r = min(255, int(r * intensity_boost * 0.9))  # Reduce red slightly
+            g = min(255, int(g * intensity_boost * 0.9))  # Reduce green slightly
+            b = min(255, int(b * intensity_boost * 1.2))  # Boost blue more
+        elif is_green_dominant:
+            # For greenish atmospheres
+            r = min(255, int(r * intensity_boost * 0.9))  # Reduce red slightly
+            g = min(255, int(g * intensity_boost * 1.2))  # Boost green more
+            b = min(255, int(b * intensity_boost * 0.9))  # Reduce blue slightly
+        else:
+            # For balanced colors, boost all equally
+            r = min(255, int(r * intensity_boost))
+            g = min(255, int(g * intensity_boost))
+            b = min(255, int(b * intensity_boost))
 
         # Print the enhanced color for debugging
         print(f"Enhanced halo color: R:{r}, G:{g}, B:{b}")
+
+        # IMPORTANT: If all color channels are equal (gray), restore the original color
+        # This fixes the issue where the halo appears gray instead of colored
+        if r == g == b and r > 0:
+            # Calculate the average intensity
+            avg_intensity = r
+
+            # Restore the original color proportions but keep the enhanced intensity
+            if max(original_r, original_g, original_b) > 0:
+                # Calculate the original color ratios
+                orig_max = max(original_r, original_g, original_b)
+                r_ratio = original_r / orig_max
+                g_ratio = original_g / orig_max
+                b_ratio = original_b / orig_max
+
+                # Apply the original ratios to the enhanced intensity
+                r = min(255, int(avg_intensity * r_ratio * 1.2))
+                g = min(255, int(avg_intensity * g_ratio * 1.2))
+                b = min(255, int(avg_intensity * b_ratio * 1.2))
+
+                print(f"Restored color: R:{r}, G:{g}, B:{b}")
 
         # Create a two-layer halo for better definition
         # First layer: Main halo with original color
@@ -309,60 +365,168 @@ class Atmosphere:
                 outline=ring_color, width=outline_width
             )
 
-        # Create a separate layer for the outer glow for better blur control
-        glow_layer = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
-        glow_draw = ImageDraw.Draw(glow_layer)
+        # Create TWO separate layers for the outer glow:
+        # 1. A sharp glow layer for the visible halo
+        # 2. A diffuse glow layer for the second resplandor (blur effect)
+        sharp_glow_layer = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+        sharp_glow_draw = ImageDraw.Draw(sharp_glow_layer)
+
+        diffuse_glow_layer = Image.new("RGBA", (hi_res_size, hi_res_size), (0, 0, 0, 0))
+        diffuse_glow_draw = ImageDraw.Draw(diffuse_glow_layer)
 
         # Draw the outer glow (gradient ring) with more steps for smoother gradient
         steps = 30  # More steps for smoother gradient
 
-        # Create a much more vibrant color for the glow - more ethereal and visible
-        # Significantly enhance the color to make the second resplandor clearly visible
-        glow_r = min(255, r + 50)
-        glow_g = min(255, g + 50)
-        glow_b = min(255, b + 80)  # Add more blue for ethereal effect
+        # Create colors for both glow layers
+        # For the sharp glow, use the same color as the main halo to maintain consistency
+        sharp_glow_r, sharp_glow_g, sharp_glow_b = r, g, b
 
-        # Print the glow color for debugging
-        print(f"Outer glow color: R:{glow_r}, G:{glow_g}, B:{glow_b}")
+        # For the diffuse glow (second resplandor), use a much more vibrant and visible color
+        # Make it significantly brighter and more saturated to ensure visibility after blur
+        # Preserve the color character but make it more luminous
+        if is_red_dominant:
+            # For reddish atmospheres (desert planets), enhance the red glow
+            diffuse_glow_r = 255  # Maximum red
+            diffuse_glow_g = min(255, g + 50)
+            diffuse_glow_b = min(255, b + 70)
+        elif is_blue_dominant:
+            # For bluish atmospheres (ocean planets), enhance the blue glow
+            diffuse_glow_r = min(255, r + 50)
+            diffuse_glow_g = min(255, g + 70)
+            diffuse_glow_b = 255  # Maximum blue
+        elif is_green_dominant:
+            # For greenish atmospheres, enhance the green glow
+            diffuse_glow_r = min(255, r + 50)
+            diffuse_glow_g = 255  # Maximum green
+            diffuse_glow_b = min(255, b + 70)
+        else:
+            # For balanced colors, make it brighter overall
+            diffuse_glow_r = min(255, r + 70)
+            diffuse_glow_g = min(255, g + 70)
+            diffuse_glow_b = min(255, b + 90)
 
+        # Print the glow colors for debugging
+        print(f"Sharp glow color: R:{sharp_glow_r}, G:{sharp_glow_g}, B:{sharp_glow_b}")
+        print(f"Diffuse glow color: R:{diffuse_glow_r}, G:{diffuse_glow_g}, B:{diffuse_glow_b}")
+
+        # Draw both glow layers with different characteristics
         for i in range(steps):
             t = i / (steps - 1)  # 0 to 1
             current_radius = glow_inner + (glow_outer - glow_inner) * t
 
-            # Calculate alpha for this step with a smoother falloff
-            # Use a curve that creates a more visible outer glow
+            # Calculate alpha factors for both layers
             if t < 0.3:
                 # Inner part of the glow - stronger
-                alpha_factor = 0.8 - (t * 0.5)
+                sharp_alpha_factor = 0.9 - (t * 0.5)  # Stronger for sharp glow
+                diffuse_alpha_factor = 0.8 - (t * 0.5)  # Slightly weaker for diffuse glow
             else:
                 # Outer part of the glow - gradual falloff
-                alpha_factor = 0.65 * (1 - ((t - 0.3) / 0.7)) ** 1.2
+                sharp_alpha_factor = 0.7 * (1 - ((t - 0.3) / 0.7)) ** 1.5  # Faster falloff for sharp
+                diffuse_alpha_factor = 0.65 * (1 - ((t - 0.3) / 0.7)) ** 1.0  # Slower falloff for diffuse
 
-            # Apply the blur amount parameter to control the glow intensity
-            # Significantly increase the alpha to make the second resplandor more visible
-            alpha = int(base_alpha * alpha_factor * self.blur_amount * 3.0)
+            # Calculate final alpha values
+            # Sharp glow has higher alpha but less blur
+            sharp_alpha = int(base_alpha * sharp_alpha_factor * 1.5)
 
-            # Draw a circle with the calculated alpha and increased width for more visibility
-            glow_color = (glow_r, glow_g, glow_b, alpha)
+            # Diffuse glow has lower alpha but more blur - scaled by blur_amount parameter
+            diffuse_alpha = int(base_alpha * diffuse_alpha_factor * self.blur_amount * 3.0)
+
+            # Draw the sharp glow (visible halo line)
+            sharp_color = (sharp_glow_r, sharp_glow_g, sharp_glow_b, sharp_alpha)
             outline_width = 2 if t < 0.5 else 1  # Thicker for inner part
-            glow_draw.ellipse(
+            sharp_glow_draw.ellipse(
                 (hi_res_center - current_radius - outline_width/2, hi_res_center - current_radius - outline_width/2,
                  hi_res_center + current_radius + outline_width/2, hi_res_center + current_radius + outline_width/2),
-                outline=glow_color, width=outline_width
+                outline=sharp_color, width=outline_width
             )
 
-        # Apply a much stronger blur to the glow layer to create a visible second resplandor
-        # Significantly increase the blur amount to make it more diffuse and visible
-        blur_amount = max(5.0, thickness * self.blur_amount * 4.0)
-        print(f"Applying blur with strength: {blur_amount}")
-        glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(blur_amount))
+            # For the diffuse glow (second resplandor), create a much wider and more visible area
+            # Draw for all positions to create a complete, continuous glow effect
+            # Calculate a dynamic ring width that's wider for the middle positions
+            if t < 0.6:  # Draw for 60% of the range to create a more visible glow
+                # Calculate a more subtle ring for the diffuse glow
+                # Make it wider in the middle for a natural light distribution, but more subtle
+                base_ring_width = 12  # Reduced base width for subtlety
+                if t < 0.2:
+                    # Near the inner edge - medium width
+                    ring_width = base_ring_width * 1.2
+                elif t < 0.4:
+                    # Middle area - maximum width
+                    ring_width = base_ring_width * 1.5
+                else:
+                    # Outer area - gradually decreasing width
+                    ring_width = base_ring_width * (1.0 - ((t - 0.4) / 0.2))
 
-        # Composite the glow layer onto the result
-        hi_res_result = Image.alpha_composite(hi_res_result, glow_layer)
+                inner_radius = current_radius - ring_width
+                outer_radius = current_radius + ring_width
 
-        # Apply a slight blur to smooth the edges
-        blur_radius = max(1.0, thickness * 0.3)
-        hi_res_result = hi_res_result.filter(ImageFilter.GaussianBlur(blur_radius))
+                # Calculate a much more subtle alpha for the diffuse glow
+                # Use significantly lower boost factors for a more diffuse, less solid effect
+                if t < 0.2:
+                    # Inner part - light alpha
+                    boost_factor = 1.2
+                elif t < 0.4:
+                    # Middle part - very light alpha
+                    boost_factor = 0.9
+                else:
+                    # Outer part - extremely light alpha
+                    boost_factor = 0.6
+
+                # Apply the boost factor to the alpha
+                boosted_alpha = int(diffuse_alpha * boost_factor)
+                # Ensure alpha doesn't exceed 255
+                boosted_alpha = min(255, boosted_alpha)
+
+                # Create a filled ring by drawing two circles
+                diffuse_color = (diffuse_glow_r, diffuse_glow_g, diffuse_glow_b, boosted_alpha)
+
+                # Draw outer circle
+                diffuse_glow_draw.ellipse(
+                    (hi_res_center - outer_radius, hi_res_center - outer_radius,
+                     hi_res_center + outer_radius, hi_res_center + outer_radius),
+                    fill=diffuse_color, outline=None
+                )
+
+                # Cut out inner circle to create a ring
+                diffuse_glow_draw.ellipse(
+                    (hi_res_center - inner_radius, hi_res_center - inner_radius,
+                     hi_res_center + inner_radius, hi_res_center + inner_radius),
+                    fill=(0, 0, 0, 0), outline=None
+                )
+
+        # Apply different blur amounts to each glow layer
+
+        # For the sharp glow (visible halo line), apply minimal blur to keep it defined
+        sharp_blur = max(1.0, thickness * 0.3)
+        print(f"Applying sharp glow blur with strength: {sharp_blur}")
+        sharp_glow_layer = sharp_glow_layer.filter(ImageFilter.GaussianBlur(sharp_blur))
+
+        # For the diffuse glow (second resplandor), apply a much stronger blur
+        # Use a large blur radius to create a very diffuse, ethereal glow effect
+        # The blur amount is critical - we want it to be very diffuse but still slightly visible
+        diffuse_blur = max(12.0, thickness * self.blur_amount * 5.0)
+        print(f"Applying diffuse glow blur with strength: {diffuse_blur}")
+
+        # Apply the blur in three stages for a more diffuse, ethereal effect
+        # First stage: Apply a moderate blur to soften the initial shape
+        diffuse_glow_layer = diffuse_glow_layer.filter(ImageFilter.GaussianBlur(diffuse_blur * 0.3))
+
+        # Second stage: Apply a stronger blur to create more diffusion
+        diffuse_glow_layer = diffuse_glow_layer.filter(ImageFilter.GaussianBlur(diffuse_blur * 0.5))
+
+        # Third stage: Apply a final light blur to smooth out any remaining artifacts
+        diffuse_glow_layer = diffuse_glow_layer.filter(ImageFilter.GaussianBlur(diffuse_blur * 0.2))
+
+        # Composite the layers in the correct order:
+        # 1. First the diffuse glow (second resplandor)
+        hi_res_result = Image.alpha_composite(hi_res_result, diffuse_glow_layer)
+
+        # 2. Then the sharp glow (visible halo line)
+        hi_res_result = Image.alpha_composite(hi_res_result, sharp_glow_layer)
+
+        # Apply a very slight final blur to smooth any remaining artifacts
+        final_blur = max(0.5, thickness * 0.1)
+        hi_res_result = hi_res_result.filter(ImageFilter.GaussianBlur(final_blur))
 
         # Resize back to original resolution with high-quality resampling
         result = hi_res_result.resize((canvas_size, canvas_size), Image.LANCZOS)

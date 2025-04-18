@@ -74,11 +74,7 @@ def register_subcommand(subparsers: Any) -> None:
     parser.add_argument("--zoom", type=float, default=None,
                        help="Zoom level (0.0-1.0, where 0.0=far away/small, 1.0=very close/large)")
 
-    # List available planet types and variations
-    parser.add_argument("--list-types", action="store_true",
-                       help="List available planet types")
-    parser.add_argument("--list-variations", action="store_true",
-                       help="List available variations for each planet type")
+    # Note: --list-types and --list-variations have been moved to the planet level
 
 
 def main(args: argparse.Namespace) -> int:
@@ -94,25 +90,7 @@ def main(args: argparse.Namespace) -> int:
     # Create planet generator
     generator = PlanetGenerator()
 
-    # List available planet types if requested
-    if args.list_types:
-        print("Available planet types:")
-        for planet_type in generator.get_celestial_types():
-            print(f"  - {planet_type}")
-        return 0
-
-    # List available variations if requested
-    if args.list_variations:
-        print("Available variations for each planet type:")
-        for planet_type, variations in config.PLANET_VARIATIONS.items():
-            default_variation = config.DEFAULT_PLANET_VARIATIONS.get(planet_type, "")
-            print(f"  {planet_type.title()}:")
-            for variation in variations:
-                if variation == default_variation:
-                    print(f"    - {variation} (default)")
-                else:
-                    print(f"    - {variation}")
-        return 0
+    # Note: --list-types and --list-variations are now handled at the planet level
 
     # Convert planet type to title case for case-insensitive matching
     input_type = args.type.title()

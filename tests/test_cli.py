@@ -93,9 +93,7 @@ class TestPlanetGenerateCommand:
             'light_angle': 45.0,
             'zoom': None,
             'rotation': 0.0,
-            'variation': None,
-            'list_types': False,
-            'list_variations': False
+            'variation': None
         })
 
         # Run the generate command
@@ -132,9 +130,7 @@ class TestPlanetGenerateCommand:
             'light_angle': 30.0,
             'zoom': 0.5,
             'rotation': 45.0,
-            'variation': None,
-            'list_types': False,
-            'list_variations': False
+            'variation': None
         })
 
         # Run the generate command
@@ -174,9 +170,7 @@ class TestPlanetGenerateCommand:
             'light_angle': 45.0,
             'zoom': None,
             'rotation': 0.0,
-            'variation': None,
-            'list_types': False,
-            'list_variations': False
+            'variation': None
         })
 
         # Run the generate command
@@ -194,6 +188,53 @@ class TestPlanetGenerateCommand:
         assert image.width == config.PLANET_SIZE
         assert image.height == config.PLANET_SIZE
         assert image.mode == "RGBA"
+
+
+class TestPlanetCommand:
+    """
+    Test cases for the 'planet' command with direct options.
+    """
+
+    def test_list_types_command(self, capsys):
+        """
+        Test 'planet --list-types' command.
+        """
+        # Use the CLI directly
+        from cosmos_generator.cli import CosmosGeneratorCLI
+        cli = CosmosGeneratorCLI()
+
+        # Run the CLI with the list-types flag
+        result = cli.run(['planet', '--list-types'])
+
+        # Check that the command was successful
+        assert result == 0
+
+        # Check that the types were printed
+        captured = capsys.readouterr()
+        assert "Available planet types:" in captured.out
+        assert "Desert" in captured.out
+        assert "Ocean" in captured.out
+
+    def test_list_variations_command(self, capsys):
+        """
+        Test 'planet --list-variations' command.
+        """
+        # Use the CLI directly
+        from cosmos_generator.cli import CosmosGeneratorCLI
+        cli = CosmosGeneratorCLI()
+
+        # Run the CLI with the list-variations flag
+        result = cli.run(['planet', '--list-variations'])
+
+        # Check that the command was successful
+        assert result == 0
+
+        # Check that the variations were printed
+        captured = capsys.readouterr()
+        assert "Available variations for each planet type:" in captured.out
+        assert "Desert:" in captured.out
+        assert "Ocean:" in captured.out
+        assert "default" in captured.out
 
 
 class TestPlanetCleanCommand:
@@ -218,9 +259,7 @@ class TestPlanetCleanCommand:
             'light_angle': 45.0,
             'zoom': None,
             'rotation': 0.0,
-            'variation': None,
-            'list_types': False,
-            'list_variations': False
+            'variation': None
         })
 
         # Run the generate command
@@ -273,9 +312,7 @@ class TestPlanetLogsCommand:
             'light_angle': 45.0,
             'zoom': None,
             'rotation': 0.0,
-            'variation': None,
-            'list_types': False,
-            'list_variations': False
+            'variation': None
         })
 
         # Ensure the log directory exists

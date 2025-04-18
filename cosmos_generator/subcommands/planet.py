@@ -32,6 +32,12 @@ def register_subcommand(subparsers: Any) -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
+    # List available planet types and variations
+    parser.add_argument("--list-types", action="store_true",
+                       help="List available planet types")
+    parser.add_argument("--list-variations", action="store_true",
+                       help="List available variations for each planet type")
+
     # Create subparsers for planet subcommands
     planet_subparsers = parser.add_subparsers(
         title="subcommands",
@@ -97,6 +103,35 @@ def main(args: argparse.Namespace) -> int:
     Returns:
         Exit code
     """
+    # Handle list-types and list-variations at the planet level
+    if hasattr(args, 'list_types') and args.list_types:
+        # Import here to avoid circular imports
+        import config
+        from cosmos_generator.core.planet_generator import PlanetGenerator
+
+        # Create planet generator
+        generator = PlanetGenerator()
+
+        print("Available planet types:")
+        for planet_type in generator.get_celestial_types():
+            print(f"  - {planet_type}")
+        return 0
+
+    if hasattr(args, 'list_variations') and args.list_variations:
+        # Import here to avoid circular imports
+        import config
+
+        print("Available variations for each planet type:")
+        for planet_type, variations in config.PLANET_VARIATIONS.items():
+            default_variation = config.DEFAULT_PLANET_VARIATIONS.get(planet_type, "")
+            print(f"  {planet_type.title()}:")
+            for variation in variations:
+                if variation == default_variation:
+                    print(f"    - {variation} (default)")
+                else:
+                    print(f"    - {variation}")
+        return 0
+
     # If no planet subcommand was specified, show help
     if not hasattr(args, 'planet_subcommand') or not args.planet_subcommand:
         # Try to get the parser from the args

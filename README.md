@@ -108,10 +108,10 @@ python -m cosmos_generator planet generate --type ocean --variation archipelago
 python -m cosmos_generator planet generate --type desert --variation arid
 
 # List available variations for each planet type
-python -m cosmos_generator planet generate --list-variations
+python -m cosmos_generator planet --list-variations
 
 # List available planet types
-python -m cosmos_generator planet generate --list-types
+python -m cosmos_generator planet --list-types
 
 # Clean generated planet files
 python -m cosmos_generator planet clean         # Clean all files

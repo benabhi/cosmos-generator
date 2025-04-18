@@ -7,7 +7,7 @@ import random
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from cosmos_generator.core.noise_generator import NoiseGenerator
+from cosmos_generator.core.fast_noise_generator import FastNoiseGenerator
 from cosmos_generator.core.color_palette import ColorPalette, Color, RGB, RGBA
 
 
@@ -24,7 +24,7 @@ class TextureGenerator:
             seed: Random seed for reproducible texture generation
         """
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
-        self.noise_gen = NoiseGenerator(seed=self.seed)
+        self.noise_gen = FastNoiseGenerator(seed=self.seed)
         self.color_palette = ColorPalette(seed=self.seed)
 
     def create_base_sphere(self, size: int, color: Color = (255, 255, 255)) -> Image.Image:

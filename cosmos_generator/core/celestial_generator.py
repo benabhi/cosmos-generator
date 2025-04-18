@@ -4,7 +4,7 @@ Base generator class for celestial bodies.
 from typing import Dict, Any, Optional, List, Type
 import random
 
-from cosmos_generator.core.noise_generator import NoiseGenerator
+from cosmos_generator.core.fast_noise_generator import FastNoiseGenerator
 from cosmos_generator.core.color_palette import ColorPalette
 from cosmos_generator.core.texture_generator import TextureGenerator
 
@@ -23,7 +23,7 @@ class CelestialGenerator:
         """
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
         self.rng = random.Random(self.seed)
-        self.noise_gen = NoiseGenerator(seed=self.seed)
+        self.noise_gen = FastNoiseGenerator(seed=self.seed)
         self.color_palette = ColorPalette(seed=self.seed)
         self.texture_gen = TextureGenerator(seed=self.seed)
 

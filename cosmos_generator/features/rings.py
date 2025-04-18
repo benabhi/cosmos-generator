@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
 
 from cosmos_generator.core.color_palette import ColorPalette, RGBA
-from cosmos_generator.core.noise_generator import NoiseGenerator
+from cosmos_generator.core.fast_noise_generator import FastNoiseGenerator
 from cosmos_generator.utils import image_utils, math_utils
 
 
@@ -27,7 +27,7 @@ class Rings:
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
         self.rng = random.Random(self.seed)
         self.color_palette = ColorPalette(seed=self.seed)
-        self.noise_gen = NoiseGenerator(seed=self.seed)
+        self.noise_gen = FastNoiseGenerator(seed=self.seed)
 
     def generate_ring_texture(self, width: int, height: int,
                              inner_radius: float, outer_radius: float,

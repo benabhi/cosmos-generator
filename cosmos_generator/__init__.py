@@ -7,7 +7,7 @@ __version__ = "1.0.0"
 # Import main classes for easier access
 from cosmos_generator.core.planet_generator import PlanetGenerator
 from cosmos_generator.core.celestial_generator import CelestialGenerator
-from cosmos_generator.core.noise_generator import NoiseGenerator
+from cosmos_generator.core.fast_noise_generator import FastNoiseGenerator
 from cosmos_generator.core.color_palette import ColorPalette
 from cosmos_generator.core.texture_generator import TextureGenerator
 

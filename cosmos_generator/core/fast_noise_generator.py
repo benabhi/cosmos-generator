@@ -1,15 +1,16 @@
 """
-Noise generation algorithms for texture creation.
+Noise generation using PyFastNoiseLite for improved performance.
 """
-from typing import Tuple, List, Dict, Any, Optional, Callable
+from typing import Tuple, List, Optional, Callable
 import random
-import math
-import numpy as np
-from opensimplex import OpenSimplex
 
-class NoiseGenerator:
+import numpy as np
+from pyfastnoiselite.pyfastnoiselite import FastNoiseLite, NoiseType, FractalType, CellularDistanceFunction, CellularReturnType
+
+class FastNoiseGenerator:
     """
-    Implements and combines noise algorithms (Perlin, Simplex, Worley) for texture generation.
+    Implements noise algorithms using PyFastNoiseLite for improved performance.
+    Provides the same interface as NoiseGenerator but uses FastNoiseLite internally.
     """
 
     def __init__(self, seed: Optional[int] = None):
@@ -21,11 +22,34 @@ class NoiseGenerator:
         """
         self.seed = seed if seed is not None else random.randint(0, 2**32 - 1)
         self.rng = random.Random(self.seed)
-        self.simplex = OpenSimplex(seed=self.seed)
-        
-        # For Worley noise
-        self.worley_points: Dict[int, List[Tuple[float, float]]] = {}
-        
+
+        # Ensure the seed is within the acceptable range for FastNoiseLite
+        # FastNoiseLite expects a 32-bit signed integer
+        # We'll use modulo to ensure it's within the range of a 32-bit signed integer
+        safe_seed = self.seed % (2**31 - 1)
+
+        # Create FastNoiseLite instances for different noise types
+        self.simplex = FastNoiseLite(seed=safe_seed)
+        self.simplex.noise_type = NoiseType.NoiseType_OpenSimplex2
+
+        self.fractal = FastNoiseLite(seed=safe_seed)
+        self.fractal.noise_type = NoiseType.NoiseType_OpenSimplex2
+        self.fractal.fractal_type = FractalType.FractalType_FBm
+
+        self.ridged = FastNoiseLite(seed=safe_seed)
+        self.ridged.noise_type = NoiseType.NoiseType_OpenSimplex2
+        self.ridged.fractal_type = FractalType.FractalType_Ridged
+
+        self.cellular = FastNoiseLite(seed=safe_seed)
+        self.cellular.noise_type = NoiseType.NoiseType_Cellular
+        self.cellular.cellular_return_type = CellularReturnType.CellularReturnType_Distance
+
+        # For domain warping
+        self.warp = FastNoiseLite(seed=safe_seed)
+        self.warp.noise_type = NoiseType.NoiseType_OpenSimplex2
+
+
+
     def simplex_noise(self, x: float, y: float, scale: float = 1.0) -> float:
         """
         Generate 2D Simplex noise at the given coordinates.
@@ -38,10 +62,11 @@ class NoiseGenerator:
         Returns:
             Noise value in range [-1, 1]
         """
-        return self.simplex.noise2(x * scale, y * scale)
-    
-    def fractal_simplex(self, x: float, y: float, octaves: int = 6, 
-                        persistence: float = 0.5, lacunarity: float = 2.0, 
+        self.simplex.frequency = scale
+        return self.simplex.get_noise(x, y)
+
+    def fractal_simplex(self, x: float, y: float, octaves: int = 6,
+                        persistence: float = 0.5, lacunarity: float = 2.0,
                         scale: float = 1.0) -> float:
         """
         Generate fractal Simplex noise by combining multiple octaves.
@@ -57,21 +82,14 @@ class NoiseGenerator:
         Returns:
             Noise value in range [-1, 1]
         """
-        total = 0
-        frequency = scale
-        amplitude = 1.0
-        max_value = 0
-        
-        for _ in range(octaves):
-            total += self.simplex_noise(x * frequency, y * frequency) * amplitude
-            max_value += amplitude
-            amplitude *= persistence
-            frequency *= lacunarity
-            
-        return total / max_value
-    
-    def ridged_simplex(self, x: float, y: float, octaves: int = 6, 
-                       persistence: float = 0.5, lacunarity: float = 2.0, 
+        self.fractal.frequency = scale
+        self.fractal.fractal_octaves = octaves
+        self.fractal.fractal_gain = persistence
+        self.fractal.fractal_lacunarity = lacunarity
+        return self.fractal.get_noise(x, y)
+
+    def ridged_simplex(self, x: float, y: float, octaves: int = 6,
+                       persistence: float = 0.5, lacunarity: float = 2.0,
                        scale: float = 1.0) -> float:
         """
         Generate ridged fractal Simplex noise for terrain-like features.
@@ -87,45 +105,16 @@ class NoiseGenerator:
         Returns:
             Noise value in range [0, 1]
         """
-        total = 0
-        frequency = scale
-        amplitude = 1.0
-        max_value = 0
-        
-        for _ in range(octaves):
-            # Get absolute value of noise and invert it
-            value = 1.0 - abs(self.simplex_noise(x * frequency, y * frequency))
-            # Square the value to increase the ridges
-            value *= value
-            total += value * amplitude
-            max_value += amplitude
-            amplitude *= persistence
-            frequency *= lacunarity
-            
-        return total / max_value
-    
-    def _get_worley_points(self, cell_count: int) -> List[Tuple[float, float]]:
-        """
-        Get or generate Worley noise points for a specific cell count.
+        self.ridged.frequency = scale
+        self.ridged.fractal_octaves = octaves
+        self.ridged.fractal_gain = persistence
+        self.ridged.fractal_lacunarity = lacunarity
+        # FastNoiseLite's ridged multi returns values in [-1, 1], so we normalize to [0, 1]
+        return (self.ridged.get_noise(x, y) + 1.0) * 0.5
 
-        Args:
-            cell_count: Number of cells in each dimension
 
-        Returns:
-            List of point coordinates
-        """
-        if cell_count not in self.worley_points:
-            points = []
-            for i in range(cell_count):
-                for j in range(cell_count):
-                    # Add a random point within each cell
-                    x = (i + self.rng.random()) / cell_count
-                    y = (j + self.rng.random()) / cell_count
-                    points.append((x, y))
-            self.worley_points[cell_count] = points
-        return self.worley_points[cell_count]
-    
-    def worley_noise(self, x: float, y: float, cell_count: int = 10, 
+
+    def worley_noise(self, x: float, y: float, cell_count: int = 10,
                      distance_function: str = "euclidean") -> float:
         """
         Generate Worley (cellular) noise at the given coordinates.
@@ -139,27 +128,23 @@ class NoiseGenerator:
         Returns:
             Noise value in range [0, 1]
         """
-        points = self._get_worley_points(cell_count)
-        
-        # Calculate distances to all points
-        distances = []
-        for px, py in points:
-            if distance_function == "euclidean":
-                dist = math.sqrt((x - px)**2 + (y - py)**2)
-            elif distance_function == "manhattan":
-                dist = abs(x - px) + abs(y - py)
-            elif distance_function == "chebyshev":
-                dist = max(abs(x - px), abs(y - py))
-            else:
-                raise ValueError(f"Unknown distance function: {distance_function}")
-            distances.append(dist)
-        
-        # Sort distances and return the distance to the closest point
-        distances.sort()
-        # Normalize to [0, 1] range (approximately)
-        return min(1.0, distances[0] * cell_count * 2)
-    
-    def domain_warp(self, x: float, y: float, warp_function: Callable[[float, float], Tuple[float, float]], 
+        # Set up cellular noise parameters
+        self.cellular.frequency = cell_count
+
+        # Set distance function
+        if distance_function == "euclidean":
+            self.cellular.cellular_distance_function = CellularDistanceFunction.CellularDistanceFunction_Euclidean
+        elif distance_function == "manhattan":
+            self.cellular.cellular_distance_function = CellularDistanceFunction.CellularDistanceFunction_Manhattan
+        elif distance_function == "chebyshev":
+            self.cellular.cellular_distance_function = CellularDistanceFunction.CellularDistanceFunction_Hybrid
+        else:
+            raise ValueError(f"Unknown distance function: {distance_function}")
+
+        # FastNoiseLite's cellular noise returns values in [-1, 1], so we normalize to [0, 1]
+        return (self.cellular.get_noise(x * cell_count, y * cell_count) + 1.0) * 0.5
+
+    def domain_warp(self, x: float, y: float, warp_function: Callable[[float, float], Tuple[float, float]],
                     noise_function: Callable[[float, float], float]) -> float:
         """
         Apply domain warping to create more organic noise patterns.
@@ -175,8 +160,8 @@ class NoiseGenerator:
         """
         warped_x, warped_y = warp_function(x, y)
         return noise_function(warped_x, warped_y)
-    
-    def simplex_warp(self, x: float, y: float, warp_scale: float = 0.1, 
+
+    def simplex_warp(self, x: float, y: float, warp_scale: float = 0.1,
                      warp_strength: float = 0.5) -> Tuple[float, float]:
         """
         Warp coordinates using Simplex noise.
@@ -190,11 +175,12 @@ class NoiseGenerator:
         Returns:
             Warped coordinates (x, y)
         """
-        warp_x = x + self.simplex_noise(x * warp_scale, y * warp_scale) * warp_strength
-        warp_y = y + self.simplex_noise(y * warp_scale, x * warp_scale) * warp_strength
+        self.warp.frequency = warp_scale
+        warp_x = x + self.warp.get_noise(x, y) * warp_strength
+        warp_y = y + self.warp.get_noise(y, x) * warp_strength
         return warp_x, warp_y
-    
-    def generate_noise_map(self, width: int, height: int, 
+
+    def generate_noise_map(self, width: int, height: int,
                            noise_function: Callable[[float, float], float]) -> np.ndarray:
         """
         Generate a 2D noise map using the specified noise function.
@@ -208,16 +194,16 @@ class NoiseGenerator:
             2D numpy array of noise values
         """
         noise_map = np.zeros((height, width), dtype=np.float32)
-        
+
         for y in range(height):
             for x in range(width):
                 # Normalize coordinates to [0, 1] range
                 nx = x / width
                 ny = y / height
                 noise_map[y, x] = noise_function(nx, ny)
-                
+
         return noise_map
-    
+
     def normalize_noise_map(self, noise_map: np.ndarray) -> np.ndarray:
         """
         Normalize a noise map to the range [0, 1].
@@ -230,12 +216,12 @@ class NoiseGenerator:
         """
         min_val = np.min(noise_map)
         max_val = np.max(noise_map)
-        
+
         if max_val == min_val:
             return np.zeros_like(noise_map)
-            
+
         return (noise_map - min_val) / (max_val - min_val)
-    
+
     def combine_noise_maps(self, maps: List[np.ndarray], weights: Optional[List[float]] = None) -> np.ndarray:
         """
         Combine multiple noise maps with optional weights.
@@ -249,22 +235,22 @@ class NoiseGenerator:
         """
         if not maps:
             raise ValueError("No maps provided")
-            
+
         if weights is None:
             weights = [1.0 / len(maps)] * len(maps)
-            
+
         if len(maps) != len(weights):
             raise ValueError("Number of maps and weights must match")
-            
+
         # Ensure all maps have the same shape
         shape = maps[0].shape
         for m in maps:
             if m.shape != shape:
                 raise ValueError("All maps must have the same shape")
-                
+
         # Combine maps
         result = np.zeros(shape, dtype=np.float32)
         for i, m in enumerate(maps):
             result += m * weights[i]
-            
+
         return self.normalize_noise_map(result)

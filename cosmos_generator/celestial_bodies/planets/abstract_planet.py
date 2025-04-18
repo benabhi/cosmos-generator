@@ -11,17 +11,17 @@ para acomodar los anillos. Cuando tienen atmósfera, se ajusta el tamaño
 del planeta para que la atmósfera quepa en el tamaño original.
 """
 from typing import Optional
-import math
 import os
 import time
 import numpy as np
-from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageEnhance
+from PIL import Image, ImageDraw, ImageChops, ImageFilter
 
 from cosmos_generator.utils.logger import logger
 
 from cosmos_generator.celestial_bodies.base import AbstractCelestialBody
 from cosmos_generator.features.rings import Rings
-from cosmos_generator.utils import image_utils, lighting_utils
+from cosmos_generator.features.clouds import Clouds
+from cosmos_generator.utils import image_utils
 
 
 class AbstractPlanet(AbstractCelestialBody):
@@ -71,7 +71,17 @@ class AbstractPlanet(AbstractCelestialBody):
         self.has_rings = has_rings
         self.has_atmosphere = has_atmosphere
         self.has_clouds = kwargs.get("clouds", False)
-        self.cloud_coverage = kwargs.get("cloud_coverage", 0.5)
+
+        # Initialize cloud system
+        cloud_coverage = kwargs.get("cloud_coverage", 0.5)
+        self.clouds = Clouds(
+            seed=self.seed,
+            coverage=cloud_coverage,
+            enabled=self.has_clouds,
+            size=self.size
+        )
+        # Set the light angle for the clouds to match the planet
+        self.clouds.set_light_angle(self.light_angle)
 
         # Create a rings generator with the same seed
         self.rings_generator = Rings(seed=self.seed)
@@ -93,8 +103,8 @@ class AbstractPlanet(AbstractCelestialBody):
                 "has_atmosphere": self.has_atmosphere,
                 "has_clouds": self.has_clouds,
             }
-            if self.has_clouds and hasattr(self, "cloud_coverage"):
-                params["cloud_coverage"] = self.cloud_coverage
+            if self.has_clouds:
+                params["cloud_coverage"] = self.clouds.coverage
 
             # Add any planet-specific parameters
             for key, value in self.params.items():
@@ -202,9 +212,8 @@ class AbstractPlanet(AbstractCelestialBody):
 
             # 2. Then apply clouds if enabled
             if self.has_clouds:
-                coverage = getattr(self, "cloud_coverage", 0.5)
-                logger.debug(f"Applying clouds to {self.PLANET_TYPE} planet (coverage: {coverage:.2f})", "planet")
-                result = self._apply_clouds(result)
+                logger.debug(f"Applying clouds to {self.PLANET_TYPE} planet (coverage: {self.clouds.coverage:.2f})", "planet")
+                result = self.clouds.apply_to_planet(result)
                 features_applied.append("clouds")
 
             # 3. Finally apply rings if enabled
@@ -377,401 +386,7 @@ class AbstractPlanet(AbstractCelestialBody):
             logger.log_step("apply_atmosphere", duration_ms, f"Error: {str(e)}")
             raise
 
-    def _enhance_cloud_contrast(self, cloud_image: Image.Image, light_direction: tuple) -> Image.Image:
-        """
-        Enhance the contrast of clouds, particularly in illuminated areas.
 
-        Args:
-            cloud_image: Cloud image with lighting applied
-            light_direction: Light direction vector (x, y, z)
-
-        Returns:
-            Cloud image with enhanced contrast in illuminated areas
-        """
-        # Convert to numpy array for processing
-        img_array = np.array(cloud_image)
-        size = img_array.shape[0]
-        center = size // 2
-
-        # Extract light direction components
-        light_x, light_y = light_direction[0], light_direction[1]
-
-        # Create a contrast enhancement mask based on light direction
-        # We'll enhance contrast more on the illuminated side
-        result_array = img_array.copy()
-
-        # Process each pixel
-        for y in range(size):
-            for x in range(size):
-                # Only process pixels with some opacity
-                if img_array[y, x, 3] > 0:
-                    # Calculate position relative to center
-                    rel_x = (x - center) / center
-                    rel_y = (y - center) / center
-
-                    # Calculate dot product with light direction (2D projection)
-                    dot_product = rel_x * light_x + rel_y * light_y
-
-                    # Convert to a 0-1 range where 1 is fully illuminated
-                    illumination = 1.0 - (dot_product + 1.0) / 2.0
-
-                    # Apply stronger contrast enhancement in illuminated areas
-                    if illumination > 0.5:  # More illuminated side
-                        # Calculate contrast factor - stronger in more illuminated areas
-                        contrast_factor = 1.0 + (illumination - 0.5) * 0.6  # Up to 30% increase
-
-                        # Apply contrast enhancement to RGB channels
-                        for i in range(3):
-                            # Apply contrast enhancement
-                            # Formula: new_value = 128 + (old_value - 128) * contrast_factor
-                            pixel_value = float(img_array[y, x, i])
-                            adjusted_value = 128 + (pixel_value - 128) * contrast_factor
-                            result_array[y, x, i] = np.clip(adjusted_value, 0, 255).astype(np.uint8)
-
-        # Convert back to PIL Image
-        return Image.fromarray(result_array)
-
-    def _create_light_based_opacity_mask(self, cloud_mask: Image.Image, light_direction: tuple) -> Image.Image:
-        """
-        Create an opacity adjustment mask based on light direction to make clouds more visible in illuminated areas.
-        This implementation creates a completely new mask to avoid any artifacts.
-
-        Args:
-            cloud_mask: Original cloud mask
-            light_direction: Light direction vector (x, y, z)
-
-        Returns:
-            Adjusted cloud mask with increased opacity in illuminated areas
-        """
-        # Get the size of the mask
-        size = cloud_mask.width
-        center = size // 2
-
-        # Extract light direction components
-        light_x, light_y = light_direction[0], light_direction[1]
-
-        # Create a completely new illumination gradient
-        # This is a simple hemisphere lighting model
-        gradient = Image.new('L', (size, size), 0)
-        gradient_draw = ImageDraw.Draw(gradient)
-
-        # Draw a radial gradient from the light direction
-        # The center of the gradient is offset in the direction opposite to the light
-        # This creates a smooth illumination effect with the brightest part opposite to the light source
-        light_center_x = int(center - light_x * center * 0.7)  # Offset center in direction opposite to light
-        light_center_y = int(center - light_y * center * 0.7)
-
-        # Draw concentric circles with decreasing brightness from the light center
-        max_radius = int(size * 0.8)  # Slightly larger than the planet radius
-        for r in range(max_radius, 0, -1):
-            # Calculate brightness based on distance from light center
-            # Closer to light center = brighter
-            brightness = int(255 * (1.0 - r / max_radius))
-            gradient_draw.ellipse(
-                (light_center_x - r, light_center_y - r, light_center_x + r, light_center_y + r),
-                fill=brightness
-            )
-
-        # Apply a circular mask to the gradient to match the planet shape
-        circle_mask = image_utils.create_circle_mask(size)
-        gradient = ImageChops.multiply(gradient, circle_mask)
-
-        # Apply a blur to smooth the gradient
-        gradient = gradient.filter(ImageFilter.GaussianBlur(size // 20))
-
-        # We'll create the final adjusted mask by combining the original mask with the gradient
-
-        # Convert to numpy arrays for faster processing
-        mask_array = np.array(cloud_mask)
-        gradient_array = np.array(gradient)
-        adjusted_array = np.zeros_like(mask_array)
-
-        # Apply the gradient to the mask
-        for y in range(size):
-            for x in range(size):
-                if mask_array[y, x] > 0:  # Only process cloud pixels
-                    # Get the illumination factor from the gradient (0-255)
-                    illumination = gradient_array[y, x] / 255.0
-
-                    # Apply a curve to enhance the effect
-                    # Brighter areas get more boost
-                    opacity_boost = 1.0 + illumination * 0.5  # Up to 50% boost in fully lit areas
-
-                    # Apply the boost to the original opacity
-                    new_opacity = min(255, int(mask_array[y, x] * opacity_boost))
-                    adjusted_array[y, x] = new_opacity
-
-        # Convert back to PIL Image
-        return Image.fromarray(adjusted_array)
-
-    def _apply_clouds(self, base_image: Image.Image) -> Image.Image:
-        """
-        Apply cloud layer to the planet.
-
-        Args:
-            base_image: Base planet image
-
-        Returns:
-            Planet image with clouds
-        """
-        start_time = time.time()
-        try:
-            # Ensure the planet image has an alpha channel
-            if base_image.mode != "RGBA":
-                base_image = base_image.convert("RGBA")
-
-            # Get the size of the planet image (may include atmosphere)
-            size = base_image.width
-
-            # VOLUMETRIC CLOUD GENERATION
-            # Base cloud layer - larger, more distributed cloud formations
-            # Use a lower frequency for the base to create more spread-out formations
-            base_cloud_noise = self.noise_gen.generate_noise_map(
-                self.size, self.size,
-                lambda x, y: self.noise_gen.domain_warp(
-                    x, y,
-                    # Lower frequency for more spread-out distribution
-                    lambda dx, dy: self.noise_gen.simplex_warp(dx, dy, 0.1, 0.15),
-                    # Fewer octaves but higher persistence for more natural cloud shapes
-                    lambda dx, dy: self.noise_gen.fractal_simplex(dx, dy, 3, 0.65, 2.0, 1.5)
-                )
-            )
-
-            # Add a cellular noise component to create more varied cloud patterns
-            # This helps break up the uniformity and creates more natural distribution
-            cellular_noise = self.noise_gen.generate_noise_map(
-                self.size, self.size,
-                lambda x, y: 1.0 - self.noise_gen.worley_noise(x, y, 4, "euclidean")
-            )
-
-            # Detail layer - subtle texture for cloud volume
-            detail_noise = self.noise_gen.generate_noise_map(
-                self.size, self.size,
-                # Use 3 octaves for more natural detail
-                lambda x, y: self.noise_gen.fractal_simplex(x, y, 3, 0.5, 2.0, 2.0)
-            )
-
-            # Edge definition layer - softer edges for a more natural look
-            edge_noise = self.noise_gen.generate_noise_map(
-                self.size, self.size,
-                # Use a gentler ridge function with more natural variation
-                lambda x, y: self.noise_gen.ridged_simplex(x, y, 2, 0.5, 2.0, 2.5)
-            )
-
-            # Combine the noise layers to create balanced cloud formations
-            # Create a new array for the combined noise
-            combined_noise = np.zeros((self.size, self.size), dtype=np.float32)
-
-            for y in range(self.size):
-                for x in range(self.size):
-                    # Base shape (50%) - dominant cloud formations
-                    base = base_cloud_noise[y, x]
-                    # Cellular component (20%) - helps with distribution and breaking up uniformity
-                    cellular = cellular_noise[y, x]
-                    # Detail (15%) - adds texture for volume
-                    detail = detail_noise[y, x]
-                    # Edge definition (15%) - natural cloud boundaries
-                    edge = edge_noise[y, x]
-
-                    # Combine with weights for more natural, volumetric appearance
-                    # The cellular noise helps break up the uniformity
-                    combined = base * 0.5 + cellular * 0.2 + detail * 0.15 + edge * 0.15
-
-                    # Apply a non-linear curve to create more defined cloud shapes
-                    # This creates more distinct clouds with better separation
-                    if combined > 0.4 and combined < 0.7:
-                        # Create a more pronounced bulge in the middle range
-                        # This gives clouds more volume and definition
-                        factor = (combined - 0.4) / 0.3  # 0 to 1 in the 0.4-0.7 range
-                        # Use a non-linear curve (sine) for more natural cloud shapes
-                        curve_factor = math.sin(factor * math.pi / 2)  # 0 to 1, non-linear
-                        combined = 0.4 + curve_factor * 0.3  # More natural transition
-
-                    # Add slight variation for natural appearance
-                    # Use a smaller random factor to maintain overall shape
-                    variation = (self.rng.random() - 0.5) * 0.03  # Small random variation
-                    combined = max(0.0, min(1.0, combined + variation))  # Keep within 0-1 range
-
-                    # Store the result
-                    combined_noise[y, x] = combined
-
-            # Use the combined noise for cloud generation
-            cloud_noise = combined_noise
-
-            # Create the cloud mask
-            cloud_mask = Image.new("L", (self.size, self.size), 0)
-            cloud_data = cloud_mask.load()
-
-            # Adjust threshold for cloud coverage with a gentler curve
-            # Lower threshold = more clouds
-            # Use a more aggressive threshold to increase cloud visibility
-            cloud_threshold = 0.45 - (self.cloud_coverage * 0.45)  # More aggressive adjustment for higher visibility
-
-            # Fill the cloud mask with a balanced approach for cloud-like appearance
-            for y in range(self.size):
-                for x in range(self.size):
-                    # Get the noise value at this pixel
-                    value = cloud_noise[y, x]
-
-                    # Use a wider, more volumetric transition zone for cloud edges
-                    if value > cloud_threshold - 0.2:  # Even wider transition zone (0.2) for more gradual edges
-                        if value < cloud_threshold:  # Edge zone
-                            # More gradual transition for softer, more volumetric edges
-                            edge_factor = (value - (cloud_threshold - 0.2)) / 0.2  # 0 to 1 over wider range
-                            # Use a non-linear curve for more natural edge falloff
-                            edge_factor = math.pow(edge_factor, 1.5)  # Non-linear falloff (more natural)
-                            # Lower minimum opacity for more natural cloud edges
-                            alpha = int(70 * edge_factor)  # 0 to 70 opacity for edges
-                        else:  # Main cloud zone
-                            # Calculate normalized distance from threshold
-                            normalized = (value - cloud_threshold) / (1.0 - cloud_threshold)
-
-                            # Three-zone curve for more volumetric appearance
-                            if normalized < 0.3:  # Outer cloud zone
-                                # More gradual transition in the outer zone
-                                # Start at 70 (matching edge transition) and go up to 160
-                                alpha = int(70 + normalized * 300)  # 70-160 range for outer zone
-                            elif normalized < 0.7:  # Mid-cloud zone - the bulk of the cloud
-                                # Middle zone has more consistent opacity for volume
-                                # This creates the impression of thickness
-                                alpha = int(160 + (normalized - 0.3) * 150)  # 160-220 range for mid zone
-                            else:  # Dense cloud center
-                                # Slightly lower maximum opacity to avoid the "ice" look
-                                alpha = int(220 + (normalized - 0.7) * 100)  # 220-250 range for centers
-
-                        # Apply a smaller random variation for smoother appearance
-                        # Just enough to avoid perfectly flat areas
-                        variation = int((self.rng.random() - 0.5) * 8)  # Reduced variation (-4 to +4)
-                        alpha = max(0, min(255, alpha + variation))  # Keep within 0-255 range
-                        cloud_data[x, y] = alpha
-
-            # Apply circular mask to the clouds
-            circle_mask = image_utils.create_circle_mask(self.size)
-            cloud_mask = ImageChops.multiply(cloud_mask, circle_mask)
-
-            # Create softer, less reflective clouds for a more volumetric appearance
-            # Reduce brightness slightly to avoid the "ice" look while maintaining a natural appearance
-            cloud_color = (245, 242, 240, 255)  # Slightly darker, softer white for more natural clouds
-
-            # Create the cloud layer
-            clouds = Image.new("RGBA", (self.size, self.size), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(clouds)
-            draw.ellipse((0, 0, self.size-1, self.size-1), fill=cloud_color)
-
-            # Apply the cloud mask
-            clouds.putalpha(cloud_mask)
-
-            # Store the original cloud mask for reference and debugging if needed
-            # We'll use this later if we need to compare the original and adjusted masks
-
-            # Import here to avoid circular imports
-            import config
-            from cosmos_generator.utils.directory_utils import ensure_directory_exists
-
-            # Create a seed-specific directory for cloud textures
-            seed_clouds_dir = os.path.join(config.PLANETS_CLOUDS_TEXTURES_DIR, str(self.seed))
-            ensure_directory_exists(seed_clouds_dir)
-
-            # Save the original cloud mask
-            cloud_mask.save(os.path.join(seed_clouds_dir, "mask.png"))
-
-            # Save a copy of the cloud mask with better visibility for reference
-            enhanced_mask = cloud_mask.copy()
-            # Enhance contrast for better visibility when viewed directly
-            for y in range(self.size):
-                for x in range(self.size):
-                    pixel = enhanced_mask.getpixel((x, y))
-                    if pixel > 0:  # If there's any cloud at all
-                        # Boost low values for better visibility
-                        enhanced_mask.putpixel((x, y), min(255, pixel + 50))
-            enhanced_mask.save(os.path.join(seed_clouds_dir, "texture.png"))
-
-            # Create a normal map from the cloud noise for 3D lighting effect
-            # Use the original cloud_noise directly since it's already in the right format
-            # We don't need to create a separate height map
-
-            # Calculate light direction vector for later use
-            light_direction_vector = (
-                -math.cos(math.radians(self.light_angle)),
-                -math.sin(math.radians(self.light_angle)),
-                1.0
-            )
-
-            # Create an opacity adjustment mask based on light direction
-            # This will increase opacity in illuminated areas to make clouds more visible
-            opacity_adjustment_mask = self._create_light_based_opacity_mask(
-                cloud_mask, light_direction_vector
-            )
-
-            # Apply the opacity adjustment to the clouds
-            clouds_adjusted = clouds.copy()
-            clouds_adjusted.putalpha(opacity_adjustment_mask)
-
-            # Save the adjusted mask for debugging
-            opacity_adjustment_mask.save(os.path.join(seed_clouds_dir, "adjusted_mask.png"))
-
-            # Volumetric lighting for more natural, puffy cloud appearance
-            # Balance ambient and diffuse for better volume perception
-            # Calculate a normal map with more height variation for better volume
-            cloud_normal_map = lighting_utils.calculate_normal_map(cloud_noise, 2.0)  # Increased height (2.0) for more volume
-
-            lit_clouds = lighting_utils.apply_directional_light(
-                clouds_adjusted,
-                cloud_normal_map,
-                light_direction=light_direction_vector,
-                ambient=0.75,  # Slightly lower ambient (0.75) to allow for more shadowing
-                diffuse=0.7,   # Increased diffuse (0.7) for better volume definition
-                specular=0.02  # Minimal specular (0.02) to avoid the reflective "ice" look
-            )
-
-            # Apply a variable blur for more natural cloud appearance
-            # Stronger blur in the center, lighter at the edges for better volume perception
-            # First apply a light overall blur
-            lit_clouds = lit_clouds.filter(ImageFilter.GaussianBlur(0.6))  # Lighter overall blur
-
-            # Then apply a subtle unsharp mask to enhance the cloud texture
-            # This creates more definition without making them look reflective
-            enhancer = ImageEnhance.Sharpness(lit_clouds)
-            lit_clouds = enhancer.enhance(1.2)  # Subtle sharpness enhancement
-
-            # Apply spherical distortion to the clouds for a more realistic curved appearance
-            lit_clouds = image_utils.apply_spherical_distortion(lit_clouds, strength=0.15)
-
-            # Apply post-processing to enhance contrast in illuminated areas
-            lit_clouds = self._enhance_cloud_contrast(lit_clouds, light_direction_vector)
-
-            # If the image size is different from the planet size (due to atmosphere or rings),
-            # we need to center the clouds on the planet
-            if size != self.size:
-                # Create a new image with the same size as the base image
-                centered_clouds = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-                # Calculate the offset to center the clouds
-                offset = (size - self.size) // 2
-                # Paste the clouds in the center
-                centered_clouds.paste(lit_clouds, (offset, offset), lit_clouds)
-                lit_clouds = centered_clouds
-
-            # Composite clouds over the planet
-            result = Image.alpha_composite(base_image, lit_clouds)
-
-            duration_ms = (time.time() - start_time) * 1000
-            # Log details about the clouds with enhanced parameters
-            threshold = cloud_threshold
-            # Calculate illuminated and shadowed opacity boost factors for logging
-            illuminated_boost = 1.0 + 0.6 * 0.5  # Max boost in illuminated areas (at illumination=1.0)
-            shadowed_boost = 1.0 + 0.2 * 0.5     # Max boost in shadowed areas (at illumination=0.5)
-
-            # Log enhanced details including opacity adjustments and lighting parameters
-            logger.log_step("apply_clouds", duration_ms,
-                          f"Coverage: {self.cloud_coverage:.2f}, Threshold: {threshold:.2f}, " +
-                          f"Opacity: base=70-250, illuminated_boost={illuminated_boost:.2f}, shadowed_boost={shadowed_boost:.2f}, " +
-                          f"Lighting: ambient=0.75, diffuse=0.7, specular=0.02, blur=0.6, sharpness=1.2, " +
-                          f"Style: volumetric clouds with improved distribution, Spherical distortion: 15%")
-            return result
-        except Exception as e:
-            duration_ms = (time.time() - start_time) * 1000
-            logger.log_step("apply_clouds", duration_ms, f"Error: {str(e)}")
-            raise
 
     def _apply_rings(self, base_image: Image.Image) -> Image.Image:
         """

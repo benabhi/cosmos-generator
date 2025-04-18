@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import config
 from cosmos_generator.core.planet_generator import PlanetGenerator
 from cosmos_generator.utils.container import Container
-from cosmos_generator.core.noise_generator import NoiseGenerator
+from cosmos_generator.core.fast_noise_generator import FastNoiseGenerator
 
 
 @pytest.fixture
@@ -30,9 +30,9 @@ def planet_generator():
 @pytest.fixture
 def noise_generator():
     """
-    Fixture that provides a NoiseGenerator instance with a fixed seed.
+    Fixture that provides a FastNoiseGenerator instance with a fixed seed.
     """
-    return NoiseGenerator(seed=12345)
+    return FastNoiseGenerator(seed=12345)
 
 
 @pytest.fixture
@@ -51,13 +51,13 @@ def temp_output_dir():
     """
     # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
-    
+
     # Store the original output directory
     original_output_dir = config.OUTPUT_DIR
-    
+
     # Override the output directory in the config
     config.OUTPUT_DIR = os.path.join(temp_dir, "output")
-    
+
     # Update all dependent paths
     config.PLANETS_DIR = os.path.join(config.OUTPUT_DIR, "planets")
     config.PLANETS_DEBUG_DIR = os.path.join(config.PLANETS_DIR, "debug")
@@ -67,20 +67,20 @@ def temp_output_dir():
     config.PLANETS_TEXTURES_DIR = os.path.join(config.PLANETS_DEBUG_DIR, "textures")
     config.PLANETS_TERRAIN_TEXTURES_DIR = os.path.join(config.PLANETS_TEXTURES_DIR, "terrain")
     config.PLANETS_CLOUDS_TEXTURES_DIR = os.path.join(config.PLANETS_TEXTURES_DIR, "clouds")
-    
+
     # Create the necessary directories
     os.makedirs(config.PLANETS_DEBUG_DIR, exist_ok=True)
     os.makedirs(config.PLANETS_EXAMPLES_DIR, exist_ok=True)
     os.makedirs(config.PLANETS_RESULT_DIR, exist_ok=True)
     os.makedirs(config.PLANETS_TERRAIN_TEXTURES_DIR, exist_ok=True)
     os.makedirs(config.PLANETS_CLOUDS_TEXTURES_DIR, exist_ok=True)
-    
+
     # Create result directories for each planet type
     for planet_type in config.PLANET_TYPES:
         os.makedirs(os.path.join(config.PLANETS_RESULT_DIR, planet_type), exist_ok=True)
-    
+
     yield config.OUTPUT_DIR
-    
+
     # Restore the original output directory
     config.OUTPUT_DIR = original_output_dir
     config.PLANETS_DIR = os.path.join(config.OUTPUT_DIR, "planets")
@@ -91,7 +91,7 @@ def temp_output_dir():
     config.PLANETS_TEXTURES_DIR = os.path.join(config.PLANETS_DEBUG_DIR, "textures")
     config.PLANETS_TERRAIN_TEXTURES_DIR = os.path.join(config.PLANETS_TEXTURES_DIR, "terrain")
     config.PLANETS_CLOUDS_TEXTURES_DIR = os.path.join(config.PLANETS_TEXTURES_DIR, "clouds")
-    
+
     # Clean up the temporary directory
     shutil.rmtree(temp_dir)
 

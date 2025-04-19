@@ -386,7 +386,13 @@ The web interface also provides a RESTful API that can be used to interact with 
 - Get recent log entries
 - Clean all generated files
 
-For detailed information about the API endpoints, parameters, and examples, see the [Web API documentation](web/API.md).
+For detailed information about the API endpoints, parameters, and examples, see the [Web API documentation](web/API.md). The API documentation includes:
+
+- Complete list of all API endpoints
+- Detailed parameter descriptions with types, defaults, and valid ranges
+- Error response examples
+- Comprehensive examples using curl and JavaScript
+- Code snippets for common operations like filtering planets and viewing logs
 
 ## Requirements
 

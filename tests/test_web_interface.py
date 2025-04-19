@@ -4,7 +4,7 @@ Tests for the web interface.
 import os
 import sys
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Add the parent directory to the path so we can import the web module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -14,7 +14,8 @@ from web.utils import (
     get_planet_types,
     get_planet_variations,
     get_default_variations,
-    filter_planets
+    filter_planets,
+    get_recent_logs
 )
 
 
@@ -113,31 +114,87 @@ class TestWebInterface(unittest.TestCase):
                 'params': {}
             }
         ]
-        
+
         # Test filtering by type
         filtered = filter_planets(planets, {'type': 'desert'})
         self.assertEqual(len(filtered), 2)
         self.assertEqual(filtered[0]['type'], 'Desert')
         self.assertEqual(filtered[1]['type'], 'Desert')
-        
+
         # Test filtering by seed
         filtered = filter_planets(planets, {'seed': '123'})
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0]['seed'], '12345')
-        
+
         # Test filtering by features
         filtered = filter_planets(planets, {'has_rings': True})
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0]['seed'], '12345')
-        
+
         filtered = filter_planets(planets, {'has_clouds': True})
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0]['seed'], '67890')
-        
+
         # Test multiple filters
         filtered = filter_planets(planets, {'type': 'desert', 'has_atmosphere': True})
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0]['seed'], '12345')
+
+    @patch('os.path.exists')
+    @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data='line1\nline2\nline3\nline4\nline5')
+    def test_get_recent_logs_planets(self, mock_open, mock_exists):
+        """Test the get_recent_logs function for planet logs."""
+        # Mock os.path.exists to return True
+        mock_exists.return_value = True
+
+        # Get the last 3 lines of the log
+        logs = get_recent_logs(3, 'planets')
+
+        # Check that the function returned the expected number of lines
+        self.assertEqual(len(logs), 3)
+
+        # Check that the function returned the expected lines
+        self.assertEqual(logs, ['line3\n', 'line4\n', 'line5'])
+
+        # Check that the function called open with the correct path
+        mock_open.assert_called_once()
+
+    @patch('os.path.exists')
+    @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data='line1\nline2\nline3\nline4\nline5')
+    def test_get_recent_logs_webserver(self, mock_open, mock_exists):
+        """Test the get_recent_logs function for webserver logs."""
+        # Mock os.path.exists to return True
+        mock_exists.return_value = True
+
+        # Get the last 2 lines of the log
+        logs = get_recent_logs(2, 'webserver')
+
+        # Check that the function returned the expected number of lines
+        self.assertEqual(len(logs), 2)
+
+        # Check that the function returned the expected lines
+        self.assertEqual(logs, ['line4\n', 'line5'])
+
+        # Check that the function called open with the correct path
+        mock_open.assert_called_once()
+
+    @patch('os.path.exists')
+    def test_get_recent_logs_file_not_found(self, mock_exists):
+        """Test the get_recent_logs function when the log file doesn't exist."""
+        # Mock os.path.exists to return False
+        mock_exists.return_value = False
+
+        # Get logs when the file doesn't exist
+        logs = get_recent_logs(10, 'planets')
+
+        # Check that the function returned the expected message
+        self.assertEqual(logs, ['No planet logs found'])
+
+        # Get webserver logs when the file doesn't exist
+        logs = get_recent_logs(10, 'webserver')
+
+        # Check that the function returned the expected message
+        self.assertEqual(logs, ['No web logs found'])
 
 
 if __name__ == '__main__':

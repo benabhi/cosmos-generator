@@ -1,0 +1,110 @@
+2025-04-18 18:44:27,768 ERROR: Exception on /planets [GET] [in /home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/web/routes.py", line 49, in planets
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/ubuntu/Code/cosmos-generator/web/templates/planets.html", line 105, in template
+    planets: {{ planets | tojson }
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: unexpected '}'
+2025-04-18 18:51:16,905 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
+2025-04-18 18:53:02,609 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
+2025-04-18 18:56:10,465 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
+2025-04-18 18:58:02,371 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:49]
+2025-04-18 20:40:38,021 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:50]
+2025-04-18 20:40:52,029 INFO: 127.0.0.1 GET /logs? 200 OK 26552 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:40:54,292 INFO: 127.0.0.1 GET /api/logs?type=webserver&lines=100 200 OK 4080 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:40:55,816 INFO: 127.0.0.1 GET /api/logs?type=planets&lines=100 200 OK 4900 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:41:49,472 INFO: 127.0.0.1 GET /? 200 OK 35296 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:45:58,166 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:50]
+2025-04-18 20:46:00,225 INFO: 127.0.0.1 GET /? 200 OK 36044 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:46:08,452 INFO: 127.0.0.1 GET /? 200 OK 36044 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:47:48,234 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:50]
+2025-04-18 20:47:50,111 INFO: 127.0.0.1 GET /? 200 OK 36044 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:48:01,546 INFO: 127.0.0.1 GET /? 200 OK 36044 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:49:00,543 INFO: 127.0.0.1 GET /logs? 200 OK 26914 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:49:22,961 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:50]
+2025-04-18 20:49:23,968 ERROR: Exception on / [GET] [in /home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/web/routes.py", line 27, in index
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/ubuntu/Code/cosmos-generator/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/ubuntu/Code/cosmos-generator/web/templates/index.html", line 320, in template
+    }
+jinja2.exceptions.TemplateSyntaxError: unexpected '}'
+2025-04-18 20:49:23,970 INFO: 127.0.0.1 GET /? 500 INTERNAL SERVER ERROR 265 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:51:25,343 INFO: Cosmos Generator Web Interface startup [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:50]
+2025-04-18 20:51:28,833 INFO: 127.0.0.1 GET /? 200 OK 36049 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:51:39,476 INFO: 127.0.0.1 GET /? 200 OK 36049 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:34,083 INFO: 127.0.0.1 POST /api/generate? 200 OK 88 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:34,184 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1084 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:34,742 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:35,365 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:36,492 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:37,052 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:37,612 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:38,172 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:38,730 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]
+2025-04-18 20:58:39,288 INFO: 127.0.0.1 GET /api/status/1745020714083? 200 OK 1327 [in /home/ubuntu/Code/cosmos-generator/web/__init__.py:55]

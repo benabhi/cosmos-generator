@@ -2,15 +2,13 @@
 Utility functions for the web interface.
 """
 import os
-import json
 import glob
 import subprocess
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 import threading
 import time
 
 import config
-from cosmos_generator.utils.logger import logger
 
 
 def get_planet_types() -> List[str]:
@@ -338,7 +336,7 @@ def get_recent_logs(lines: int = 100, log_type: str = 'planets') -> List[str]:
 
     Args:
         lines: Number of lines to retrieve
-        log_type: Type of log to retrieve ('planets' or 'web')
+        log_type: Type of log to retrieve ('planets' or 'webserver')
 
     Returns:
         List of log lines
@@ -367,18 +365,4 @@ def get_recent_logs(lines: int = 100, log_type: str = 'planets') -> List[str]:
         return ["No planet logs found"]
 
 
-def get_planet_preview(planet_type: str, seed: str) -> Optional[str]:
-    """
-    Get the path to a planet preview image.
-
-    Args:
-        planet_type: Type of planet
-        seed: Seed value
-
-    Returns:
-        Path to preview image or None if not found
-    """
-    path = os.path.join(config.PLANETS_RESULT_DIR, planet_type.lower(), f"{seed}.png")
-    if os.path.exists(path):
-        return path
-    return None
+# Function get_planet_preview was removed as it was not being used

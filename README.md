@@ -357,6 +357,9 @@ Cosmos Generator includes a web interface for generating and exploring planets. 
 - Detailed logs viewer
 - Responsive design that works on desktop and mobile devices
 
+![Web Interface Preview](cosmos_generator/examples/images/web_interface.png)
+*Preview of the Cosmos Generator web interface showing the planet generation form and preview panel*
+
 To launch the web interface, use the `web` subcommand:
 
 ```bash
@@ -371,6 +374,19 @@ python -m cosmos_generator web --debug
 ```
 
 Once launched, you can access the web interface by opening a web browser and navigating to the URL shown in the console (e.g., http://localhost:4000).
+
+### Web API
+
+The web interface also provides a RESTful API that can be used to interact with the generator programmatically. The API supports the following operations:
+
+- Get available planet types and variations
+- Get a list of generated planets with filtering
+- Generate a new planet with specified parameters
+- Check the status of a generation process
+- Get recent log entries
+- Clean all generated files
+
+For detailed information about the API endpoints, parameters, and examples, see the [Web API documentation](web/API.md).
 
 ## Requirements
 

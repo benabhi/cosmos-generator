@@ -6,7 +6,7 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 
-from web.app import create_app
+from web import create_app
 from cosmos_generator.utils.exceptions import ValidationError
 
 

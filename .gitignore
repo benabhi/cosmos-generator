@@ -41,3 +41,5 @@ output/**/*.log
 output/*.png
 output/**/*.png
 web/logs/
+tests/output/
+tests/web/

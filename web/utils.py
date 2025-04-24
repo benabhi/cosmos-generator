@@ -361,6 +361,14 @@ def _generate_planet_thread(process_id: str, params: Dict[str, Any]) -> None:
                 # Check for specific error messages in the output
                 if "Planet already exists" in line:
                     generation_processes[process_id]["error"] = line.strip()
+                elif "Invalid seed" in line:
+                    generation_processes[process_id]["error"] = line.strip()
+                elif "Invalid planet type" in line:
+                    generation_processes[process_id]["error"] = line.strip()
+                elif "Invalid variation" in line:
+                    generation_processes[process_id]["error"] = line.strip()
+                elif "Error generating planet" in line:
+                    generation_processes[process_id]["error"] = line.strip()
 
             # Wait for process to complete
             return_code = process.wait()

@@ -13,9 +13,9 @@ from web.utils import (
     generate_planet_async,
     get_generation_status,
     get_recent_logs,
-    is_seed_used,
     clean_planets
 )
+from cosmos_generator.utils.csv_utils import is_seed_used
 
 # Create blueprint
 api_bp = Blueprint('api', __name__)
@@ -146,7 +146,27 @@ def generate():
         error_messages = []
         for error in errors:
             for param, message in error.items():
-                error_messages.append(f"{param}: {message}")
+                # Make error messages more user-friendly
+                if param == 'seed':
+                    error_messages.append(f"Invalid seed: {message}")
+                elif param == 'type':
+                    error_messages.append(f"Invalid planet type: {message}")
+                elif param == 'variation':
+                    error_messages.append(f"Invalid variation: {message}")
+                elif param == 'clouds':
+                    error_messages.append(f"Invalid cloud parameter: {message}")
+                elif param == 'cloud_coverage':
+                    error_messages.append(f"Invalid cloud coverage: {message} (must be between 0.0 and 1.0)")
+                elif param == 'rings_complexity':
+                    error_messages.append(f"Invalid rings complexity: {message} (must be between 1 and 5)")
+                elif param == 'rings_tilt':
+                    error_messages.append(f"Invalid rings tilt: {message} (must be between -45 and 45)")
+                else:
+                    error_messages.append(f"{param}: {message}")
+
+        # Check if the seed already exists
+        if 'seed' in params and is_seed_used(params['seed']):
+            error_messages.append(f"A planet with seed '{params['seed']}' already exists. Please use a different seed.")
 
         return jsonify({
             'error': 'Invalid parameters',

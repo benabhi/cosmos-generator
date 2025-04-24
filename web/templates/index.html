@@ -2,8 +2,84 @@
 
 {% block title %}Cosmos Generator - Planet Generator{% endblock %}
 
+{% block head %}
+<style>
+    /* Hide elements with x-cloak until Alpine.js is loaded */
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* Modal styles - Same as in planets.html */
+    .planet-log-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.75);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .planet-log-modal-content {
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        background-color: var(--space-dark);
+        border: 1px solid var(--space-secondary);
+        border-radius: 0.5rem;
+    }
+
+    .planet-log-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--space-secondary);
+    }
+
+    .planet-log-modal-body {
+        padding: 1rem;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: var(--space-text);
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div x-data="planetGenerator">
+    <!-- Error logs modal - Using the same style as planets.html -->
+    <div id="error-logs-modal" x-cloak x-show="showErrorLogsModal" class="planet-log-modal"
+        @click.self="showErrorLogsModal = false">
+        <div class="planet-log-modal-content">
+            <div class="planet-log-modal-header">
+                <h3 class="font-sci-fi text-lg text-space-highlight">GENERATION LOGS</h3>
+                <button @click="showErrorLogsModal = false" class="text-space-text hover:text-space-highlight">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="planet-log-modal-body">
+                <template x-for="(log, index) in generationLogs" :key="index">
+                    <div
+                        x-html="log.replace(/(Error|ERROR|Failed|FAILED|Exception|EXCEPTION)/g, '<span class=\'text-red-400 font-semibold\'>$1</span>')">
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Left panel: Generator controls -->
         <div class="sci-fi-panel rounded-lg p-6 h-[800px] flex flex-col">
@@ -401,9 +477,37 @@
             </div>
 
             <!-- Error message (if any) - shown regardless of preview status -->
-            <div x-show="generationError" class="bg-red-900/30 text-red-300 p-3 rounded-md mb-4">
-                <p x-text="generationError"></p>
+            <div x-show="generationError"
+                class="bg-red-900/30 text-red-300 p-4 rounded-md mb-4 border border-red-500/50">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <!-- Warning icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-grow">
+                        <h3 class="text-sm font-medium text-red-300">Generation Error</h3>
+                        <div class="mt-2 text-sm text-red-200">
+                            <p
+                                x-html="generationError.replace(/\n/g, '<br>').replace(/(Error|ERROR|Failed|FAILED|Exception|EXCEPTION)/g, '<span class=\'text-red-400 font-semibold\'>$1</span>')">
+                            </p>
+                        </div>
+                        <!-- Show logs button -->
+                        <div x-show="generationLogs && generationLogs.length > 0" class="mt-3">
+                            <button @click="showErrorLogsModal = true"
+                                class="text-xs text-red-400 hover:text-red-300 underline">
+                                Show detailed logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+
 
             <!-- Preview content (only shown when a planet has been generated) -->
             <div x-show="!generating && previewUrl" class="flex flex-col h-full">
@@ -471,6 +575,7 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 {% block scripts %}
 <script>
@@ -520,6 +625,7 @@
             cloudMaskUrl: null,
             generationError: null,
             generationLogs: [],
+            showErrorLogsModal: false,
 
             // Initialize
             init() {
@@ -793,6 +899,34 @@
                 // Log parameters for debugging
                 console.log('Generation parameters:', generationParams);
 
+                // First, check if the seed already exists
+                if (generationParams.seed) {
+                    fetch(`/api/check-seed/${generationParams.seed}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.used) {
+                                // Seed already exists, show error
+                                this.generationError = `A planet with seed "${generationParams.seed}" already exists. Please try a different seed or delete the existing planet.`;
+                                this.generating = false;
+                                return;
+                            } else {
+                                // Seed doesn't exist, proceed with generation
+                                this.startGeneration(generationParams);
+                            }
+                        })
+                        .catch(error => {
+                            // Error checking seed, proceed with generation anyway
+                            console.error('Error checking seed:', error);
+                            this.startGeneration(generationParams);
+                        });
+                } else {
+                    // No seed specified, proceed with generation
+                    this.startGeneration(generationParams);
+                }
+            },
+
+            // Start the generation process
+            startGeneration(generationParams) {
                 // Start generation
                 fetch('/api/generate', {
                     method: 'POST',
@@ -804,7 +938,13 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.error) {
-                            this.generationError = data.error;
+                            // Format error message with details if available
+                            if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+                                // Create a more descriptive error message
+                                this.generationError = data.error + ": " + data.details.join(", ");
+                            } else {
+                                this.generationError = data.error;
+                            }
                             this.generating = false;
                             return;
                         }
@@ -886,8 +1026,43 @@
                             // Mark generation as complete
                             this.generating = false;
                         } else if (data.status === 'failed') {
-                            // Handle failure
-                            this.generationError = data.error || "Generation failed";
+                            // Handle failure with more descriptive error messages
+                            let errorMessage = data.error || "Generation failed";
+
+                            // Check for specific error conditions and provide more helpful messages
+                            if (errorMessage.includes("Planet already exists")) {
+                                errorMessage = `A planet with seed "${this.params.seed}" already exists. Please try a different seed or delete the existing planet.`;
+                            } else if (errorMessage.includes("Invalid seed")) {
+                                errorMessage = `Invalid seed: "${this.params.seed}". Seeds must be numeric values.`;
+                            } else if (errorMessage.includes("Invalid planet type")) {
+                                errorMessage = `Invalid planet type: "${this.params.type}". Please select a valid planet type.`;
+                            } else if (errorMessage.includes("Invalid variation")) {
+                                errorMessage = `Invalid variation: "${this.params.variation}" for planet type "${this.params.type}". Please select a valid variation.`;
+                            } else if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+                                // If we have details, include them in the error message
+                                errorMessage = `${errorMessage}: ${data.details.join(", ")}`;
+                            } else if (data.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+                                // If we have logs, try to find error messages in the logs
+                                const errorLogs = data.logs.filter(log =>
+                                    log.includes("Error") ||
+                                    log.includes("error") ||
+                                    log.includes("Failed") ||
+                                    log.includes("failed") ||
+                                    log.includes("Exception") ||
+                                    log.includes("exception")
+                                );
+
+                                if (errorLogs.length > 0) {
+                                    // Use the last error log as the error message
+                                    const lastErrorLog = errorLogs[errorLogs.length - 1];
+                                    errorMessage = `${errorMessage}: ${lastErrorLog}`;
+                                }
+                            }
+
+                            // Log the full error data for debugging
+                            console.error('Generation failed:', data);
+
+                            this.generationError = errorMessage;
                             this.generating = false;
                         } else {
                             // Continue polling

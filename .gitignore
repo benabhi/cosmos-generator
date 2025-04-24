@@ -40,4 +40,4 @@ output/*.log
 output/**/*.log
 output/*.png
 output/**/*.png
-web/logs/*.log
+web/logs/

@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Cosmos Generator - Planets Explorer{% endblock %}
+
+{% block head %}
+<style>
+    /* Ensure buttons in planet cards have proper hover effects */
+    .planet-card .sci-fi-button,
+    .planet-card .sci-fi-button-danger {
+        position: relative;
+        z-index: 10;
+        pointer-events: auto;
+        text-align: center;
+    }
+    
+    /* Hide scrollbar for Webkit browsers */
+    .tags-container::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Hide scrollbar for Firefox */
+    .tags-container {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        position: relative;
+        z-index: 20;
+        pointer-events: auto;
+    }
+    
+    /* Ensure the tags container is interactive */
+    .planet-card .tags-container {
+        cursor: grab;
+    }
+    
+    .planet-card .tags-container.grabbing {
+        cursor: grabbing;
+    }
+    
+    /* Make sure tag elements are interactive */
+    .planet-card .tags-container span {
+        pointer-events: auto;
+        user-select: none;
+    }
+    
+    /* Modal styles */
+    .planet-log-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.75);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .planet-log-modal-content {
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        background-color: var(--space-dark);
+        border: 1px solid var(--space-secondary);
+        border-radius: 0.5rem;
+    }
+    
+    .planet-log-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--space-secondary);
+    }
+    
+    .planet-log-modal-body {
+        padding: 1rem;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: var(--space-text);
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div x-data="planetsExplorer()">
+    <!-- Log Modal -->
+    <div x-show="showLogModal" class="planet-log-modal" @click.self="showLogModal = false">
+        <div class="planet-log-modal-content">
+            <div class="planet-log-modal-header">
+                <h3 class="font-sci-fi text-lg text-space-highlight" x-text="logModalTitle"></h3>
+                <button @click="showLogModal = false" class="text-space-text hover:text-space-highlight">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="planet-log-modal-body">
+                <div x-show="logLoading" class="text-center py-4">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-space-highlight"></div>
+                    <p class="mt-2">Loading log...</p>
+                </div>
+                <pre x-show="!logLoading" x-text="logContent"></pre>
+            </div>
+        </div>
+    </div>
+    <div class="sci-fi-panel rounded-lg p-6" style="transition: none;">
+        <h2 class="text-2xl font-sci-fi mb-6 text-space-highlight">PLANETS EXPLORER</h2>
+        
+        <!-- Filters -->
+        <div class="mb-6 p-4 border border-space-secondary/30 rounded-md">
+            <h3 class="text-sm font-medium text-space-highlight mb-4">FILTERS</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Planet Type Filter -->
+                <div>
+                    <label for="filter-type" class="text-xs font-medium block mb-1">Planet Type</label>
+                    <select id="filter-type" x-model="filters.type" @change="applyFilters()" class="sci-fi-input w-full p-2 rounded-md">
+                        <option value="">All Types</option>
+                        {% for type in planet_types %}
+                        <option value="{{ type|lower }}">{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Seed Filter -->
+                <div>
+                    <label for="filter-seed" class="text-xs font-medium block mb-1">Seed</label>
+                    <input type="text" id="filter-seed" x-model="filters.seed" @input="applyFilters()" class="sci-fi-input w-full p-2 rounded-md" placeholder="Search by seed...">
+                </div>
+                
+                <!-- Feature Filters -->
+                <div class="flex flex-col justify-center">
+                    <div class="flex space-x-4">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" x-model="filters.has_rings" @change="applyFilters()" class="sci-fi-checkbox">
+                            <span class="text-xs font-medium">Has Rings</span>
+                        </label>
+                        
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" x-model="filters.has_atmosphere" @change="applyFilters()" class="sci-fi-checkbox">
+                            <span class="text-xs font-medium">Has Atmosphere</span>
+                        </label>
+                        
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" x-model="filters.has_clouds" @change="applyFilters()" class="sci-fi-checkbox">
+                            <span class="text-xs font-medium">Has Clouds</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reset Filters Button -->
+            <div class="mt-4 text-right">
+                <button @click="resetFilters()" class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs">
+                    RESET FILTERS
+                </button>
+            </div>
+        </div>
+        
+        <!-- Results -->
+        <div>
+            <h3 class="text-sm font-medium text-space-highlight mb-4">RESULTS (<span x-text="filteredPlanets.length"></span>)</h3>
+            
+            <!-- No results message -->
+            <template x-if="filteredPlanets.length === 0">
+                <div class="text-center p-8 border border-space-secondary/30 rounded-md">
+                    <p class="text-gray-400">No planets found matching your filters.</p>
+                    <button @click="resetFilters()" class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs mt-4">
+                        RESET FILTERS
+                    </button>
+                </div>
+            </template>
+            
+            <!-- Planet grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" x-show="filteredPlanets.length > 0">
+                <template x-for="planet in filteredPlanets" :key="planet.path">
+                    <div class="planet-card sci-fi-panel rounded-lg overflow-hidden">
+                        <!-- Planet image -->
+                        <div class="aspect-square bg-space-dark">
+                            <img :src="planet.url" :alt="'Planet ' + planet.seed" class="w-full h-full object-contain">
+                        </div>
+                        
+                        <!-- Planet info -->
+                        <div class="p-4">
+                            <h3 class="font-sci-fi text-lg mb-1 text-space-highlight" x-text="planet.type.toUpperCase() + ' PLANET'"></h3>
+                            <p class="text-sm mb-2">Seed: <span class="text-space-highlight" x-text="planet.seed"></span></p>
+                            
+                            <!-- Features badges -->
+                            {% raw %}
+                            <div class="tags-container overflow-x-auto whitespace-nowrap mt-2 pb-1" 
+                                 x-data="{ isGrabbing: false }" 
+                                 @mousedown="isGrabbing = true" 
+                                 @mouseup="isGrabbing = false" 
+                                 @mouseleave="isGrabbing = false" 
+                                 @mousemove="if(isGrabbing) $el.scrollLeft -= $event.movementX"
+                                 :class="{ 'grabbing': isGrabbing }">
+                            {% endraw %}
+                                <template x-if="planet.params && planet.params.variation">
+                                    <span class="bg-space-purple text-xs py-1 px-2 rounded-full inline-block mr-2 whitespace-nowrap" x-text="planet.params.variation"></span>
+                                </template>
+                                
+                                <template x-if="planet.params && planet.params.rings">
+                                    <span class="bg-space-blue text-xs py-1 px-2 rounded-full inline-block mr-2 whitespace-nowrap">Rings</span>
+                                </template>
+                                
+                                <template x-if="planet.params && planet.params.atmosphere">
+                                    <span class="bg-space-blue text-xs py-1 px-2 rounded-full inline-block mr-2 whitespace-nowrap">Atmosphere</span>
+                                </template>
+                                
+                                <template x-if="planet.params && planet.params.clouds">
+                                    <span class="bg-space-blue text-xs py-1 px-2 rounded-full inline-block mr-2 whitespace-nowrap">Clouds</span>
+                                </template>
+                            </div>
+                            
+                            <!-- Action buttons -->
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <a :href="'/static/planets/' + planet.type.toLowerCase() + '/' + planet.seed + '/planet.png'" target="_blank" class="sci-fi-button py-1 px-3 rounded-md text-xs text-center">
+                                    VIEW
+                                </a>
+                                
+                                <a :href="'/static/planets/' + planet.type.toLowerCase() + '/' + planet.seed + '/planet.png'" download="'planet_' + planet.type + '_' + planet.seed + '.png'" class="sci-fi-button py-1 px-3 rounded-md text-xs text-center">
+                                    DOWNLOAD
+                                </a>
+                                
+                                <button @click="showPlanetLog(planet)" class="sci-fi-button py-1 px-3 rounded-md text-xs text-center">
+                                    LOGS
+                                </button>
+                                
+                                <button @click="deletePlanet(planet)" class="sci-fi-button-danger py-1 px-3 rounded-md text-xs text-center">
+                                    DELETE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function planetsExplorer() {
+        return {
+            // All planets
+            planets: {{ planets | tojson }},
+            
+            // Filtered planets
+            filteredPlanets: [],
+            
+            // Filter criteria
+            filters: {
+                type: "{{ filters.type }}",
+                seed: "{{ filters.seed }}",
+                has_rings: {{ 'true' if filters.has_rings else 'false' }},
+                has_atmosphere: {{ 'true' if filters.has_atmosphere else 'false' }},
+                has_clouds: {{ 'true' if filters.has_clouds else 'false' }}
+            },
+            
+            // Log modal state
+            showLogModal: false,
+            logModalTitle: '',
+            logContent: '',
+            logLoading: false,
+            
+            // Initialize
+            init() {
+                this.applyFilters();
+                
+                // Setup tag containers scrolling
+                this.$nextTick(() => {
+                    // Implementación manual del desplazamiento de etiquetas para asegurar compatibilidad
+                    const tagContainers = document.querySelectorAll('.tags-container');
+                    
+                    tagContainers.forEach(container => {
+                        let isGrabbing = false;
+                        let startX;
+                        let scrollLeft;
+                        
+                        container.addEventListener('mousedown', (e) => {
+                            isGrabbing = true;
+                            container.classList.add('grabbing');
+                            startX = e.pageX - container.offsetLeft;
+                            scrollLeft = container.scrollLeft;
+                            e.preventDefault(); // Prevenir selección de texto
+                        });
+                        
+                        container.addEventListener('mouseleave', () => {
+                            isGrabbing = false;
+                            container.classList.remove('grabbing');
+                        });
+                        
+                        container.addEventListener('mouseup', () => {
+                            isGrabbing = false;
+                            container.classList.remove('grabbing');
+                        });
+                        
+                        container.addEventListener('mousemove', (e) => {
+                            if (!isGrabbing) return;
+                            const x = e.pageX - container.offsetLeft;
+                            const walk = (x - startX) * 1.5; // Multiplicador de velocidad
+                            container.scrollLeft = scrollLeft - walk;
+                        });
+                        
+                        // Asegurar que el contenedor sea desplazable con rueda del mouse
+                        container.addEventListener('wheel', (e) => {
+                            e.preventDefault();
+                            container.scrollLeft += e.deltaY;
+                        });
+                    });
+                });
+            },
+            
+            // Apply filters to planets
+            applyFilters() {
+                this.filteredPlanets = this.planets.filter(planet => {
+                    // Filter by type
+                    if (this.filters.type && planet.type.toLowerCase() !== this.filters.type.toLowerCase()) {
+                        return false;
+                    }
+                    
+                    // Filter by seed
+                    if (this.filters.seed && !planet.seed.includes(this.filters.seed)) {
+                        return false;
+                    }
+                    
+                    // Filter by features
+                    if (this.filters.has_rings && (!planet.params || !planet.params.rings)) {
+                        return false;
+                    }
+                    
+                    if (this.filters.has_atmosphere && (!planet.params || !planet.params.atmosphere)) {
+                        return false;
+                    }
+                    
+                    if (this.filters.has_clouds && (!planet.params || !planet.params.clouds)) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // Update URL with filters
+                this.updateUrl();
+            },
+            
+            // Reset all filters
+            resetFilters() {
+                this.filters = {
+                    type: "",
+                    seed: "",
+                    has_rings: false,
+                    has_atmosphere: false,
+                    has_clouds: false
+                };
+                
+                this.applyFilters();
+            },
+            
+            // Update URL with current filters
+            updateUrl() {
+                const params = new URLSearchParams();
+                
+                if (this.filters.type) {
+                    params.set('type', this.filters.type);
+                }
+                
+                if (this.filters.seed) {
+                    params.set('seed', this.filters.seed);
+                }
+                
+                // Add feature filters
+                if (this.filters.has_rings) {
+                    params.set('has_rings', 'true');
+                }
+                
+                if (this.filters.has_atmosphere) {
+                    params.set('has_atmosphere', 'true');
+                }
+                
+                if (this.filters.has_clouds) {
+                    params.set('has_clouds', 'true');
+                }
+                
+                const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                window.history.replaceState({}, '', newUrl);
+            },
+            
+            // Show planet log in modal
+            showPlanetLog(planet) {
+                this.logModalTitle = `${planet.type.toUpperCase()} PLANET (Seed: ${planet.seed}) - Log`;
+                this.logContent = 'Loading...';
+                this.logLoading = true;
+                this.showLogModal = true;
+                
+                // Fetch log content
+                fetch(`/api/planet-log/${planet.type.toLowerCase()}/${planet.seed}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to load log');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.logContent = data.log_content || 'No log content available';
+                        this.logLoading = false;
+                    })
+                    .catch(error => {
+                        this.logContent = `Error loading log: ${error.message}`;
+                        this.logLoading = false;
+                    });
+            },
+            
+            // Delete a planet
+            deletePlanet(planet) {
+                if (!confirm(`Are you sure you want to delete this ${planet.type} planet with seed ${planet.seed}?`)) {
+                    return;
+                }
+                
+                // Show loading state
+                const deleteButton = event.currentTarget;
+                const originalText = deleteButton.innerText;
+                deleteButton.innerText = 'DELETING...';
+                deleteButton.disabled = true;
+                
+                // Call API to delete planet
+                fetch('/api/delete-planet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        seed: planet.seed
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete planet');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Remove planet from array
+                        this.planets = this.planets.filter(p => p.seed !== planet.seed);
+                        this.applyFilters();
+                    } else {
+                        alert(`Error: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    alert(`Error: ${error.message}`);
+                })
+                .finally(() => {
+                    // Reset button state
+                    deleteButton.innerText = originalText;
+                    deleteButton.disabled = false;
+                });
+            }
+        };
+    }
+</script>
+{% endblock %}

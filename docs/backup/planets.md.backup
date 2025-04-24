@@ -1,0 +1,348 @@
+# Planet Generation
+
+This document describes the planet generation capabilities of the Cosmos Generator, including planet types, variations, Python API usage, and command-line interface.
+
+## Python API
+
+```python
+from cosmos_generator import PlanetGenerator
+from cosmos_generator.utils import Container
+
+# Create generator
+generator = PlanetGenerator()
+
+# Generate desert planet with rings, atmosphere and clouds
+planet = generator.create("Desert", {
+    "seed": 12345,
+    "variation": "arid",  # Optional, uses default if not specified
+    "rings": True,
+    "lighting": {
+        "intensity": 1.0,
+        "angle": 45,
+        "falloff": 0.7
+    },
+    "atmosphere": True,
+    "atmosphere_glow": 0.7,  # 0.0 to 1.0, intensity of the glow
+    "atmosphere_halo": 0.8,  # 0.0 to 1.0, intensity of the halo
+    "atmosphere_thickness": 4,  # 1 to 10, thickness of the halo in pixels
+    "atmosphere_blur": 0.6,  # 0.0 to 1.0, amount of blur to apply
+    "clouds": True,
+    "cloud_coverage": 1.0  # 0.0 to 1.0, where 1.0 is maximum coverage
+})
+
+# Generate ocean planet with archipelago variation
+ocean_planet = generator.create("Ocean", {
+    "seed": 54321,
+    "variation": "archipelago",  # "water_world" is the default
+    "atmosphere": True
+})
+
+# Basic save method
+planet.save("desert_planet_12345.png")
+
+# Use container for fixed size display, rotation and zoom control
+container = Container(zoom_level=0.7)  # Optional zoom level (0.0=far/small, 1.0=close/large)
+container.set_content(planet)
+container.rotate(45)  # Optional rotation
+container.export("desert_planet_container.png")
+
+# Default zoom levels are:
+# - 0.95 for planets without rings
+# - 0.25 for planets with rings
+```
+
+## Command Line Interface
+
+Cosmos Generator uses a subcommand structure to organize its functionalities:
+
+```bash
+# Show general help
+python -m cosmos_generator --help
+
+# Show version
+python -m cosmos_generator --version
+
+# Show specific help for the planet subcommand
+python -m cosmos_generator planet --help
+
+# Run tests
+python -m cosmos_generator test
+
+# Launch web interface
+python -m cosmos_generator web
+python -m cosmos_generator web --host 127.0.0.1 --port 8080 --debug
+```
+
+### Planet Generation
+
+```bash
+# With custom output path
+python -m cosmos_generator planet generate --type desert --seed 987 --output planet.png --rings --atmosphere --light-angle 30
+
+# With custom atmosphere parameters
+python -m cosmos_generator planet generate --type desert --seed 987 --atmosphere --atmosphere-glow 0.8 --atmosphere-halo 0.6 --atmosphere-thickness 5 --atmosphere-blur 0.4
+
+# With default output path (output/planets/desert/00000987/planet.png)
+python -m cosmos_generator planet generate --type desert --seed 987 --rings --atmosphere --light-angle 30
+
+# Generate planet with clouds (random coverage)
+python -m cosmos_generator planet generate --type ocean --clouds --seed 12345
+
+# Generate planet with specific cloud coverage (70%)
+python -m cosmos_generator planet generate --type ocean --clouds --clouds-coverage 0.7 --seed 12345
+
+# Generate planet with specific variation
+python -m cosmos_generator planet generate --type ocean --variation archipelago
+python -m cosmos_generator planet generate --type desert --variation arid
+
+# List available variations for each planet type
+python -m cosmos_generator planet --list-variations
+
+# List available planet types
+python -m cosmos_generator planet --list-types
+
+# Clean generated planets
+python -m cosmos_generator planet clean --all                # Clean all generated planets, empty log and CSV files
+python -m cosmos_generator planet clean --seeds 12345,67890  # Clean specific planets by seed
+
+# View planet generation logs
+python -m cosmos_generator planet logs                # Show all logs
+python -m cosmos_generator planet logs --tail 20       # Show the last 20 lines
+python -m cosmos_generator planet logs --lines 50      # Show 50 lines
+python -m cosmos_generator planet logs --level INFO    # Filter by level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+# The summary is automatically included in the log file after each generation
+python -m cosmos_generator planet logs --path          # Show the log file path
+```
+
+Options for the `planet generate` subcommand:
+- `--type TYPE`: Planet type (desert, furnace, etc.) - case insensitive
+- `--seed SEED`: Seed for reproducible generation (default: random)
+- `--output FILE`: Output file path (default: output/planets/[type]/[seed]/planet.png)
+- `--variation NAME`: Texture variation (depends on planet type, see below)
+- `--color-palette-id VALUE`: Color palette ID (1-3, default: random) - selects a specific color palette for the planet
+- `--rings`: Add rings
+- `--rings-complexity VALUE`: Ring system complexity (1=minimal, 2=medium, 3=full, default: random)
+- `--rings-tilt VALUE`: Tilt angle of the rings in degrees (0-90, where 0=edge-on, 90=face-on, default: random)
+- `--atmosphere`: Add atmosphere
+- `--atmosphere-glow VALUE`: Atmosphere glow intensity (0.0-1.0, default: 0.5)
+- `--atmosphere-halo VALUE`: Atmosphere halo intensity (0.0-1.0, default: 0.7)
+- `--atmosphere-thickness VALUE`: Atmosphere halo thickness in pixels (1-10, default: 3)
+- `--atmosphere-blur VALUE`: Atmosphere blur amount (0.0-1.0, default: 0.5)
+- `--clouds`: Add clouds with random coverage
+- `--clouds-coverage VALUE`: Set specific cloud coverage (0.0-1.0, where 1.0 is full coverage)
+- `--light-intensity VALUE`: Light intensity (0.0-2.0)
+- `--light-angle DEG`: Light source angle (0-359)
+- `--rotation DEG`: Rotation in degrees
+- `--zoom VALUE`: Zoom level (0.0-1.0, where 0.0=far/small, 1.0=close/large). Default values: 0.95 for planets without rings, 0.25 for planets with rings.
+- `--list-types`: List available planet types
+- `--list-variations`: List available variations for each planet type
+- `--help`: Show help
+
+Options for the `planet clean` subcommand:
+- `--all`: Clean all generated planets, empty the planets.log file and reset the planets.csv file to only contain the header
+- `--seeds SEEDS`: Clean specific planets by seed (comma-separated list, e.g., 12345,67890)
+- `--help`: Show help
+
+Options for the `planet logs` subcommand:
+- `--lines N`: Show N lines of the log (default: all)
+- `--tail N`: Show the last N lines of the log
+- `--level LEVEL`: Filter logs by minimum level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- `--path`: Show the log file path
+- `--help`: Show help
+
+## Planet Variations
+
+Cosmos Generator supports different texture variations for each planet type. You can specify a variation using the `--variation` parameter. If not specified, a default variation will be used.
+
+Currently available variations:
+
+- **Desert**:
+  - `arid` (default): Classic desert planet with dunes and canyons
+  - `dunes`: Desert planet with prominent dune patterns and wind erosion
+  - `mesa`: Desert planet with mesa-like formations and reddish plateaus
+
+- **Ocean**:
+  - `water_world` (default): Planet entirely covered by water with no land masses
+  - `archipelago`: Ocean planet with scattered islands and archipelagos
+  - `reef`: Ocean planet with colorful coral reef formations and shallow waters
+
+- **Furnace**:
+  - `magma_rivers` (default): Scorching planet with magma rivers flowing over a dark surface
+  - `ember_wastes`: Vast expanses of coal and ash with glowing embers
+  - `volcanic_hellscape`: Volcanic surface with craters and lava flows
+
+- **Jovian**:
+  - `bands` (default): Gas giant with horizontal bands of swirling gases
+  - `storm`: Gas giant with prominent storm systems and turbulent patterns
+  - `nebulous`: Gas giant with nebulous, cloud-like formations
+
+- **Vital**:
+  - `earthlike` (default): Earth-like planet with balanced continents, oceans, and diverse biomes
+  - `archipelago`: Planet with numerous small islands and archipelagos in vast oceans
+  - `pangaea`: Planet with a single large supercontinent and diverse climate zones
+
+- **Toxic**:
+  - `toxic_veins` (default): Dark planet with fluorescent toxic veins running across the surface
+  - `acid_lakes`: Planet with pools of corrosive acid and toxic terrain
+  - `corrosive_storms`: Planet with swirling patterns of corrosive storms and electrical discharges
+
+- **Ice**:
+  - `glacier` (default): Frozen planet with massive ice formations, deep crevasses, and crystalline structures
+  - `tundra`: Ice planet with snow-covered plains, rocky outcrops, and frozen vegetation
+  - `frozen_ocean`: Ice planet with a frozen ocean surface, cracked ice sheets, and pressure ridges
+
+- **Rocky**:
+  - `cratered` (default): Rugged planet with a heavily cratered surface, similar to Mercury or the Moon
+  - `fractured`: Planet with deep canyons, fissures, and tectonic fractures across the surface
+  - `mountainous`: Planet dominated by massive mountain ranges, deep valleys, and rugged peaks
+
+- **Jungle**:
+  - `overgrown` (default): Planet completely overtaken by wild, untamed vegetation with massive vines and roots
+  - `canopy`: Planet with structured vegetation showing distinct canopy layers and organized ecosystems
+  - `bioluminescent`: Dark jungle planet with glowing vegetation creating patterns of light across the surface
+
+You can list all available variations with:
+```bash
+python -m cosmos_generator planet generate --list-variations
+```
+
+Example usage:
+```bash
+# Generate an Ocean planet with archipelago variation
+python -m cosmos_generator planet generate --type ocean --variation archipelago
+
+# Generate a Desert planet with default variation (arid)
+python -m cosmos_generator planet generate --type desert
+
+# Generate a Jovian planet with specific color palette (palette ID 2)
+python -m cosmos_generator planet generate --type jovian --color-palette-id 2
+```
+
+## Output Folder Structure
+
+Cosmos Generator organizes the generated files in the following folder structure:
+
+```
+output/                                # Base output directory
+└── planets/                           # Main folder for planets
+    ├── planets.log                    # Main log file (all logs are appended here)
+    ├── planets.csv                    # CSV file tracking all generated planets
+    ├── desert/                        # Desert type planets
+    │   └── [seed]/                    # Seed-specific folder (e.g., 00012345)
+    │       ├── planet.png             # Final planet image
+    │       ├── terrain_texture.png    # Base terrain texture
+    │       ├── cloud_texture.png      # Cloud texture (if clouds enabled)
+    │       ├── cloud_mask.png         # Cloud mask (if clouds enabled)
+    │       ├── planet.log             # Individual log for this planet
+    │       └── details.csv            # Details about this planet (type, variation, features)
+    ├── ocean/                         # Ocean type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       ├── planet.png             # Final planet image
+    │       ├── terrain_texture.png    # Base terrain texture
+    │       └── ...
+    ├── furnace/                       # Furnace type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       └── ...
+    ├── jovian/                        # Jovian type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       └── ...
+    ├── vital/                         # Vital type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       └── ...
+    ├── toxic/                         # Toxic type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       └── ...
+    ├── ice/                           # Ice type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       └── ...
+    ├── rocky/                         # Rocky type planets
+    │   └── [seed]/                    # Seed-specific folder
+    │       └── ...
+    └── jungle/                        # Jungle type planets
+        └── [seed]/                    # Seed-specific folder
+            └── ...
+```
+
+Where:
+- `[seed]` is the seed number padded to 8 digits (e.g., 00012345)
+
+### Folder Description
+
+- **planets.log**: Main log file that contains logs from all planet generations. All individual planet logs are appended to this file.
+
+- **planets.csv**: CSV file that tracks all generated planets with their details. Format: `seed,planet_type,variation,atmosphere,rings,clouds` where feature flags (atmosphere, rings, clouds) use 0/1 values.
+
+- **[planet_type]/[seed]/**: Each planet has its own directory organized by planet type and seed:
+  - **planet.png**: The final rendered planet image
+  - **terrain_texture.png**: Base terrain texture before applying lighting and effects
+  - **cloud_texture.png**: Cloud texture (only present if clouds are enabled)
+  - **cloud_mask.png**: Cloud mask (only present if clouds are enabled)
+  - **planet.log**: Individual log file for this specific planet generation
+
+## Logging System
+
+Cosmos Generator includes a detailed logging system that records information about the planet generation process. The logs are saved in two locations:
+
+- **Main log file**: `output/planets/planets.log` - Contains logs from all planet generations
+- **Individual log files**: `output/planets/[planet_type]/[seed]/planet.log` - Contains logs specific to a single planet generation
+
+Logs can be viewed with the `planet logs` subcommand.
+
+Each planet generation is clearly marked in the log file with visual separators, making it easy to identify where a generation starts and ends. The logging system records:
+
+- General information about planet generation (type, seed, parameters)
+- Execution times for each step of the process with specific details:
+  - Texture generation: planet type, size
+  - Lighting: angle, intensity, falloff factor
+  - Atmosphere: glow intensity, halo intensity, halo thickness, blur amount, padding percentage
+  - Clouds: coverage, generation threshold
+  - Rings: complexity, number of rings, size factor
+- A detailed summary at the end of each generation showing:
+  - Duration of each step
+  - Percentage of total time spent on each step
+  - Total generation time
+- Errors and exceptions that may occur during the process
+- Paths of generated files
+
+The summary is automatically included in the log file after each generation.
+
+Example log output:
+
+```
+2025-04-17 15:59:25 [INFO] cosmos_generator: [cli] Generating Desert planet with seed 12345
+2025-04-17 15:59:25 [INFO] cosmos_generator: [generator] Initializing Desert planet instance
+2025-04-17 15:59:25 [DEBUG] cosmos_generator: [generator] Planet instance initialized in 1.97ms (rendering will start next)
+2025-04-17 15:59:25 [INFO] cosmos_generator: [generator]
+================================================================================
+=== STARTING GENERATION: DESERT PLANET (SEED: 12345) - 2025-04-17 15:59:25 ===
+================================================================================
+2025-04-17 15:59:25 [DEBUG] cosmos_generator: [generator] Generation parameters:
+    size: 512
+    light_intensity: 1.0
+    light_angle: 45.0
+    has_rings: False
+    has_atmosphere: False
+    has_clouds: False
+2025-04-17 15:59:25 [DEBUG] cosmos_generator: [planet] Generating texture for Desert planet (size: 512x512)
+2025-04-17 16:00:21 [DEBUG] cosmos_generator: [generator] Step 'generate_texture' completed in 55298.61ms - Type: Desert, Size: 512x512
+2025-04-17 16:00:21 [DEBUG] cosmos_generator: [planet] Applying lighting to Desert planet (angle: 45.0°, intensity: 1.0)
+2025-04-17 16:00:22 [DEBUG] cosmos_generator: [generator] Step 'apply_lighting' completed in 1109.86ms - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+2025-04-17 16:00:22 [INFO] cosmos_generator: [cli] Planet generation completed in 56477.01ms
+2025-04-17 16:00:22 [INFO] cosmos_generator: [generator]
+================================================================================
+=== GENERATION COMPLETED: DESERT PLANET (SEED: 12345) - 2025-04-17 16:00:22 ===
+=== Duration: 56474.67ms ===
+================================================================================
+2025-04-17 16:00:22 [INFO] cosmos_generator: [generator] Successfully generated Desert planet with seed 12345 in 56474.67ms
+2025-04-17 16:00:22 [INFO] cosmos_generator: [generator] Saved to output/planets/desert/00012345/planet.png
+2025-04-17 16:00:22 [DEBUG] cosmos_generator: [generator]
+--------------------------------------------------------------------------------
+=== GENERATION STEPS SUMMARY ===
+--------------------------------------------------------------------------------
+    generate_texture: 55298.61ms (98.0%) - Type: Desert, Size: 512x512
+    apply_lighting: 1109.86ms (2.0%) - Angle: 45.0°, Intensity: 1.0, Falloff: 0.6
+    apply_features: 0.00ms (0.0%) - No features applied
+--------------------------------------------------------------------------------
+    Total steps duration: 56408.46ms
+--------------------------------------------------------------------------------
+```

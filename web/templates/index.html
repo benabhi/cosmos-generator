@@ -1,0 +1,906 @@
+{% extends "base.html" %}
+
+{% block title %}Cosmos Generator - Planet Generator{% endblock %}
+
+{% block content %}
+<div x-data="planetGenerator">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left panel: Generator controls -->
+        <div class="sci-fi-panel rounded-lg p-6 h-[800px] flex flex-col">
+            <h2 class="text-2xl font-sci-fi mb-6 text-space-highlight">PLANET GENERATOR</h2>
+
+            <!-- Buttons moved to parent container -->
+            <div class="flex justify-between mb-4">
+                <button type="button" @click="randomizeAll"
+                    class="sci-fi-button-secondary py-2 px-4 rounded-md text-xs flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    RANDOMIZE ALL
+                </button>
+                <button type="button" @click="generatePlanet" class="sci-fi-button mr-7 py-2 px-4 rounded-md text-xs"
+                    :disabled="generating">
+                    <span x-show="!generating">GENERATE</span>
+                    <span x-show="generating" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        GENERATING...
+                    </span>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto flex-grow mb-6 pr-4">
+                <form id="planet-form" @submit.prevent="generatePlanet" class="h-full">
+                    <!-- Planet Configuration Group -->
+                    <div class="mb-6 p-3 border border-space-secondary/30 rounded-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-medium text-space-highlight">Planet Configuration</h3>
+                        </div>
+
+                        <!-- Planet type -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="planet-type" class="text-xs font-medium">Planet Type</label>
+                                <button type="button" @click="randomizePlanetType"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+                            <select id="planet-type" x-model="params.type" @change="updateVariations"
+                                class="sci-fi-input w-full p-2 rounded-md">
+                                {% for type in planet_types %}
+                                <option value="{{ type|lower }}">{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- Variation -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="variation" class="text-xs font-medium">Variation</label>
+                                <button type="button" @click="randomizeVariation"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+                            <select id="variation" x-model="params.variation"
+                                class="sci-fi-input w-full p-2 rounded-md">
+                                <template x-for="variation in availableVariations" :key="variation">
+                                    <option :value="variation" x-text="variation"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <!-- Color Palette -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="color-palette" class="text-xs font-medium">Color Palette</label>
+                                <button type="button" @click="randomizeColorPalette"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+                            <div class="flex items-center">
+                                <select id="color-palette" x-model="params.color_palette_id"
+                                    @change="updatePalettePreview" class="sci-fi-input w-full p-2 rounded-md">
+                                    <option value="">Random</option>
+                                    <template x-for="(palette, id) in availableColorPalettes" :key="id">
+                                        <option :value="parseInt(id)" x-text="'Palette ' + id"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <!-- Color palette preview -->
+                            <div class="sci-fi-palette-container"
+                                x-show="params.color_palette_id && availableColorPalettes[params.color_palette_id]">
+                                <h4 class="sci-fi-palette-title"
+                                    x-text="'Planet ' + params.type.charAt(0).toUpperCase() + params.type.slice(1) + ' - Palette ' + params.color_palette_id">
+                                </h4>
+
+                                <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                    <template
+                                        x-for="(colors, category) in availableColorPalettes[params.color_palette_id]"
+                                        :key="category">
+                                        <div class="sci-fi-color-category">
+                                            <div class="sci-fi-category-label" x-text="formatCategoryName(category)">
+                                            </div>
+                                            <div class="sci-fi-color-swatches">
+                                                <template x-for="(color, index) in colors" :key="index">
+                                                    <div class="sci-fi-color-swatch"
+                                                        :style="{ backgroundColor: 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')' }"
+                                                        :title="'RGB(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')'">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seed -->
+                        <div class="mb-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="seed" class="text-xs font-medium">Seed</label>
+                                <button type="button" @click="randomizeSeed"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+                            <input type="text" id="seed" x-model="params.seed"
+                                class="sci-fi-input w-full p-2 rounded-md" placeholder="Enter seed (optional)">
+                        </div>
+                    </div>
+                    <!-- Camera Controls Group -->
+                    <div class="mb-6 p-3 border border-space-secondary/30 rounded-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-medium text-space-highlight">Camera Controls</h3>
+                            <button type="button" @click="randomizeCameraControls"
+                                class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                RANDOMIZE
+                            </button>
+                        </div>
+
+                        <!-- Zoom -->
+                        <div class="mb-3">
+                            <label for="zoom" class="text-xs font-medium">Zoom</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="zoom" x-model="params.zoom" min="0" max="1" step="0.01"
+                                    class="sci-fi-slider flex-grow">
+                                <span class="text-xs w-8 text-right" x-text="parseFloat(params.zoom).toFixed(2)"></span>
+                            </div>
+                        </div>
+
+                        <!-- Rotation -->
+                        <div class="mb-3">
+                            <label for="rotation" class="text-xs font-medium">Rotation</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="rotation" x-model="params.rotation" min="0" max="360" step="15"
+                                    class="sci-fi-slider flex-grow">
+                                <span class="text-xs w-8 text-right" x-text="params.rotation + '°'"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Lighting Controls Group -->
+                    <div class="mb-6 p-3 border border-space-secondary/30 rounded-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-medium text-space-highlight">Lighting Controls</h3>
+                            <button type="button" @click="randomizeLightingControls"
+                                class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                RANDOMIZE
+                            </button>
+                        </div>
+
+                        <!-- Light Angle -->
+                        <div class="mb-3">
+                            <label for="light-angle" class="text-xs font-medium">Light Angle</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="light-angle" x-model="params.light_angle" min="0" max="360"
+                                    step="15" class="sci-fi-slider flex-grow">
+                                <span class="text-xs w-8 text-right" x-text="params.light_angle + '°'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Light Intensity -->
+                        <div class="mb-3">
+                            <label for="light-intensity" class="text-xs font-medium">Light Intensity</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="light-intensity" x-model="params.light_intensity" min="0.5"
+                                    max="1.5" step="0.1" class="sci-fi-slider flex-grow">
+                                <span class="text-xs w-8 text-right"
+                                    x-text="parseFloat(params.light_intensity).toFixed(1)"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Features Group -->
+                    <div class="mb-6 p-3 border border-space-secondary/30 rounded-md">
+                        <h3 class="text-sm font-medium text-space-highlight mb-3">Features</h3>
+
+                        <!-- Rings -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="rings" x-model="params.rings" class="sci-fi-checkbox">
+                                    <label for="rings" class="ml-2 text-xs font-medium">Rings</label>
+                                </div>
+                                <button type="button" x-show="params.rings" @click="randomizeRingsParams"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+                            <!-- Rings Parameters -->
+                            <div x-show="params.rings" class="mt-2 pl-6 space-y-2">
+                                <!-- Rings Complexity -->
+                                <div>
+                                    <label for="rings-complexity" class="text-xs font-medium">Complexity</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="rings-complexity" x-model="params.rings_complexity"
+                                            min="1" max="3" step="1" class="sci-fi-slider flex-grow">
+                                        <span class="text-xs w-8 text-right" x-text="params.rings_complexity"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Rings Tilt -->
+                                <div>
+                                    <label for="rings-tilt" class="text-xs font-medium">Tilt</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="rings-tilt" x-model="params.rings_tilt" min="0" max="75"
+                                            step="5" class="sci-fi-slider flex-grow">
+                                        <span class="text-xs w-8 text-right" x-text="params.rings_tilt + '°'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Atmosphere -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="atmosphere" x-model="params.atmosphere"
+                                        class="sci-fi-checkbox">
+                                    <label for="atmosphere" class="ml-2 text-xs font-medium">Atmosphere</label>
+                                </div>
+                                <button type="button" x-show="params.atmosphere" @click="randomizeAtmosphereParams"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+                            <!-- Atmosphere Parameters -->
+                            <div x-show="params.atmosphere" class="mt-2 pl-6 space-y-2">
+                                <!-- Atmosphere Glow -->
+                                <div>
+                                    <label for="atmosphere-glow" class="text-xs font-medium">Glow</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="atmosphere-glow" x-model="params.atmosphere_glow"
+                                            min="0" max="1" step="0.1" class="sci-fi-slider flex-grow">
+                                        <span class="text-xs w-8 text-right"
+                                            x-text="parseFloat(params.atmosphere_glow).toFixed(1)"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Atmosphere Halo -->
+                                <div>
+                                    <label for="atmosphere-halo" class="text-xs font-medium">Halo</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="atmosphere-halo" x-model="params.atmosphere_halo"
+                                            min="0" max="1" step="0.1" class="sci-fi-slider flex-grow">
+                                        <span class="text-xs w-8 text-right"
+                                            x-text="parseFloat(params.atmosphere_halo).toFixed(1)"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Atmosphere Thickness -->
+                                <div>
+                                    <label for="atmosphere-thickness" class="text-xs font-medium">Thickness</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="atmosphere-thickness"
+                                            x-model="params.atmosphere_thickness" min="1" max="10" step="1"
+                                            class="sci-fi-slider flex-grow">
+                                        <span class="text-xs w-8 text-right"
+                                            x-text="params.atmosphere_thickness"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Atmosphere Blur -->
+                                <div>
+                                    <label for="atmosphere-blur" class="text-xs font-medium">Blur</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="atmosphere-blur" x-model="params.atmosphere_blur"
+                                            min="0" max="1" step="0.1" class="sci-fi-slider flex-grow">
+                                        <span class="text-xs w-8 text-right"
+                                            x-text="parseFloat(params.atmosphere_blur).toFixed(1)"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Clouds -->
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="has-clouds" x-model="params.has_clouds"
+                                        class="sci-fi-checkbox">
+                                    <label for="has-clouds" class="ml-2 text-xs font-medium">Clouds</label>
+                                </div>
+                                <button type="button" x-show="params.has_clouds" @click="randomizeCloudsParams"
+                                    class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    RANDOMIZE
+                                </button>
+                            </div>
+
+                            <!-- Cloud Parameters -->
+                            <div x-show="params.has_clouds" class="mt-2 pl-6">
+                                <!-- Cloud Coverage -->
+                                <div>
+                                    <label for="clouds" class="text-xs font-medium">Coverage</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="range" id="clouds" x-model="params.clouds" min="0" max="1"
+                                            step="0.1" class="sci-fi-slider flex-grow"
+                                            @input="params.has_clouds = true">
+                                        <span class="text-xs w-8 text-right"
+                                            x-text="parseFloat(params.clouds).toFixed(1)"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Removed buttons from here as they are now in the parent container -->
+        </div>
+        <!-- Right panel: Preview -->
+        <div class="sci-fi-panel rounded-lg p-6 h-[800px] flex flex-col">
+            <h2 class="text-2xl font-sci-fi mb-6 text-space-highlight">PREVIEW</h2>
+
+            <!-- Initial empty state with message -->
+            <div x-show="!generating && !previewUrl" class="flex flex-col items-center justify-center flex-grow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-space-secondary mb-4" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <p class="text-center text-space-text">Press GENERATE to create a new planet</p>
+            </div>
+
+            <!-- Loading spinner -->
+            <div x-show="generating" class="flex flex-col items-center justify-center flex-grow">
+                <div
+                    class="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-space-highlight">
+                </div>
+                <p class="mt-4 text-center text-space-text">Generating planet...</p>
+            </div>
+
+            <!-- Error message (if any) - shown regardless of preview status -->
+            <div x-show="generationError" class="bg-red-900/30 text-red-300 p-3 rounded-md mb-4">
+                <p x-text="generationError"></p>
+            </div>
+
+            <!-- Preview content (only shown when a planet has been generated) -->
+            <div x-show="!generating && previewUrl" class="flex flex-col h-full">
+
+                <!-- Texture previews -->
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <!-- Terrain texture -->
+                    <div class="sci-fi-panel p-2 rounded-lg">
+                        <h3 class="text-xs font-medium text-space-highlight mb-2">TERRAIN TEXTURE</h3>
+                        <div class="aspect-square bg-space-dark flex items-center justify-center overflow-hidden">
+                            <template x-if="terrainTextureUrl">
+                                <img :src="terrainTextureUrl" alt="Terrain texture" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!terrainTextureUrl">
+                                <div class="text-xs text-gray-500">No texture available</div>
+                            </template>
+                        </div>
+                    </div>
+                    <!-- Cloud texture -->
+                    <div class="sci-fi-panel p-2 rounded-lg">
+                        <h3 class="text-xs font-medium text-space-highlight mb-2">CLOUD TEXTURE</h3>
+                        <div class="aspect-square bg-space-dark flex items-center justify-center overflow-hidden">
+                            <template x-if="cloudTextureUrl">
+                                <img :src="cloudTextureUrl" alt="Cloud texture" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!cloudTextureUrl">
+                                <div class="text-xs text-gray-500">No texture available</div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Cloud mask -->
+                    <div class="sci-fi-panel p-2 rounded-lg">
+                        <h3 class="text-xs font-medium text-space-highlight mb-2">CLOUD MASK</h3>
+                        <div class="aspect-square bg-space-dark flex items-center justify-center overflow-hidden">
+                            <template x-if="cloudMaskUrl">
+                                <img :src="cloudMaskUrl" alt="Cloud mask" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!cloudMaskUrl">
+                                <div class="text-xs text-gray-500">No mask available</div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Planet preview - Fixed height to prevent overflow but showing full planet -->
+                <div class="flex-grow bg-space-dark rounded-lg flex items-center justify-center overflow-hidden"
+                    style="height: 400px;">
+                    <img :src="previewUrl" alt="Generated planet" class="max-w-full max-h-full object-contain">
+                </div>
+
+                <!-- Download button - Outside the planet container at the bottom -->
+                <div x-show="previewUrl" class="mt-3 mb-1 text-center">
+                    <a :href="previewUrl" download class="sci-fi-button py-1 px-3 rounded-md inline-block text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        DOWNLOAD
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    // Variables from Jinja2
+    const planet_variations = {{ planet_variations| tojson }};
+    const default_variations = {{ default_variations| tojson }};
+    const color_palettes = {{ color_palettes| tojson }};
+    const default_type = "{{ default_type }}";
+
+    {% raw %}
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('planetGenerator', () => ({
+            // Parameters
+            params: {
+                type: default_type,
+                seed: "",
+                variation: "",
+                color_palette_id: null,  // Will be randomized on init
+                zoom: 0.5,
+                rings: false,
+                rings_complexity: 2,     // 1=minimal, 2=medium, 3=full
+                rings_tilt: 30,         // 0-75 degrees (0=edge-on, 75=more face-on)
+                atmosphere: false,
+                atmosphere_glow: 0.5,
+                atmosphere_halo: 0.8,
+                atmosphere_thickness: 3,
+                atmosphere_blur: 0.8,
+                has_clouds: false,
+                clouds: 0.5, // This is a numeric value for cloud coverage
+                light_angle: 45,
+                light_intensity: 1.0,
+                rotation: 0
+            },
+
+            // Available color palettes for the selected planet type
+            availableColorPalettes: {},
+
+            // Available variations for the selected planet type
+            availableVariations: [],
+
+            // Generation state
+            generating: false,
+            processId: null,
+            previewUrl: null,
+            terrainTextureUrl: null,
+            cloudTextureUrl: null,
+            cloudMaskUrl: null,
+            generationError: null,
+            generationLogs: [],
+
+            // Initialize
+            init() {
+                this.randomizeSeed();
+                this.updateVariations();
+                this.updateColorPalettes();
+                this.randomizeColorPalette();
+            },
+
+            // Update available variations when planet type changes
+            updateVariations() {
+                const variations = planet_variations;
+                this.availableVariations = variations[this.params.type.toLowerCase()] || [];
+
+                // Set default variation for this type
+                const defaultVariations = default_variations;
+                this.params.variation = defaultVariations[this.params.type.toLowerCase()] || "";
+
+                // Update color palettes for the new planet type
+                this.updateColorPalettes();
+            },
+
+            // Update available color palettes when planet type changes
+            updateColorPalettes() {
+                const allPalettes = color_palettes;
+                console.log('All palettes:', allPalettes);
+                console.log('Current planet type:', this.params.type.toLowerCase());
+                this.availableColorPalettes = allPalettes[this.params.type.toLowerCase()] || {};
+                console.log('Available palettes:', this.availableColorPalettes);
+            },
+
+            // Format category name for display
+            formatCategoryName(category) {
+                // Convert snake_case to Title Case (e.g., "base_1" -> "Base 1")
+                // First, replace underscores with spaces
+                const withSpaces = category.replace(/_/g, ' ');
+                // Then capitalize the first letter of each word
+                return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+            },
+
+            // Generate a random seed that doesn't already exist
+            randomizeSeed() {
+                // Generate a random seed
+                const generateRandomSeed = () => Math.floor(Math.random() * 100000).toString();
+
+                // First attempt
+                let newSeed = generateRandomSeed();
+
+                // Check if the seed already exists
+                fetch(`/api/check-seed/${newSeed}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.used) {
+                            // If the seed is already used, try again with a new seed
+                            console.log(`Seed ${newSeed} already exists, trying another one...`);
+
+                            // Try up to 10 times to find an unused seed
+                            let attempts = 0;
+                            const maxAttempts = 10;
+
+                            const tryAnotherSeed = () => {
+                                attempts++;
+                                if (attempts >= maxAttempts) {
+                                    console.warn(`Failed to find an unused seed after ${maxAttempts} attempts.`);
+                                    this.params.seed = newSeed; // Use the last generated seed anyway
+                                    return;
+                                }
+
+                                newSeed = generateRandomSeed();
+                                fetch(`/api/check-seed/${newSeed}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.used) {
+                                            console.log(`Seed ${newSeed} already exists, trying another one...`);
+                                            tryAnotherSeed();
+                                        } else {
+                                            console.log(`Found unused seed: ${newSeed}`);
+                                            this.params.seed = newSeed;
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error("Error checking seed:", error);
+                                        this.params.seed = newSeed; // Use the current seed on error
+                                    });
+                            };
+
+                            tryAnotherSeed();
+                        } else {
+                            // If the seed is not used, use it
+                            console.log(`Using unused seed: ${newSeed}`);
+                            this.params.seed = newSeed;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error checking seed:", error);
+                        this.params.seed = newSeed; // Use the generated seed on error
+                    });
+            },
+
+            // Randomize planet type
+            randomizePlanetType() {
+                // Get all available planet types
+                const planetTypes = Array.from(document.querySelectorAll('#planet-type option')).map(option => option.value);
+
+                // Select a random planet type
+                const randomIndex = Math.floor(Math.random() * planetTypes.length);
+                this.params.type = planetTypes[randomIndex];
+
+                // Update variations for the new planet type
+                this.updateVariations();
+
+                // No longer automatically changing seed
+            },
+
+            // Randomize variation
+            randomizeVariation() {
+                if (this.availableVariations.length > 0) {
+                    // Select a random variation
+                    const randomIndex = Math.floor(Math.random() * this.availableVariations.length);
+                    this.params.variation = this.availableVariations[randomIndex];
+
+                    // No longer automatically changing seed
+                }
+            },
+
+            // Randomize camera controls (zoom and rotation)
+            randomizeCameraControls() {
+                // Randomize zoom (0.0-1.0)
+                this.params.zoom = parseFloat((Math.random()).toFixed(2));
+
+                // Randomize rotation (0-360, step 15)
+                const rotationSteps = 360 / 15;
+                this.params.rotation = Math.floor(Math.random() * rotationSteps) * 15;
+            },
+
+            // Randomize lighting controls (angle and intensity)
+            randomizeLightingControls() {
+                // Randomize light angle (0-360, step 15)
+                const angleSteps = 360 / 15;
+                this.params.light_angle = Math.floor(Math.random() * angleSteps) * 15;
+
+                // Randomize light intensity (0.5-1.5, step 0.1)
+                this.params.light_intensity = parseFloat((0.5 + Math.random()).toFixed(1));
+            },
+
+            // Randomize atmosphere parameters
+            randomizeAtmosphereParams() {
+                // Generate random values for each atmosphere parameter
+                this.params.atmosphere_glow = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
+                this.params.atmosphere_halo = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
+                this.params.atmosphere_thickness = Math.floor(Math.random() * 10) + 1;      // 1-10
+                this.params.atmosphere_blur = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
+            },
+
+            // Randomize rings parameters
+            randomizeRingsParams() {
+                // Generate random values for each rings parameter
+                this.params.rings_complexity = Math.floor(Math.random() * 3) + 1;      // 1-3
+                this.params.rings_tilt = Math.floor(Math.random() * 16) * 5;           // 0-75, step 5
+            },
+
+            // Randomize clouds parameters
+            randomizeCloudsParams() {
+                // Generate random value for cloud coverage (0.0-1.0)
+                // Ensure it's a number by using parseFloat
+                this.params.clouds = parseFloat((Math.random()).toFixed(1));
+            },
+
+            // Randomize color palette
+            randomizeColorPalette() {
+                // Get available palette IDs for the current planet type
+                const paletteIds = Object.keys(this.availableColorPalettes);
+
+                if (paletteIds.length > 0) {
+                    // Select a random palette ID
+                    const randomIndex = Math.floor(Math.random() * paletteIds.length);
+                    this.params.color_palette_id = parseInt(paletteIds[randomIndex]);
+                    // Update the palette preview
+                    this.updatePalettePreview();
+                } else {
+                    // If no palettes available, set to null (random)
+                    this.params.color_palette_id = null;
+                }
+            },
+
+            // Update palette preview when palette changes
+            updatePalettePreview() {
+                // This function is called when the palette selection changes
+                // The actual preview is handled by Alpine.js reactivity
+                console.log('Palette preview updated:', this.params.color_palette_id);
+            },
+
+            // Randomize all parameters
+            randomizeAll() {
+                // Randomize planet type first (this will update variations and color palettes)
+                this.randomizePlanetType();
+
+                // Randomize seed
+                this.randomizeSeed();
+
+                // Randomize variation
+                this.randomizeVariation();
+
+                // Randomize color palette
+                this.randomizeColorPalette();
+
+                // Randomize camera controls
+                this.randomizeCameraControls();
+
+                // Randomize lighting controls
+                this.randomizeLightingControls();
+
+                // Randomize features
+                // Randomly enable/disable rings
+                this.params.rings = Math.random() > 0.5;
+                if (this.params.rings) {
+                    this.randomizeRingsParams();
+                }
+
+                // Randomly enable/disable atmosphere
+                this.params.atmosphere = Math.random() > 0.5;
+                if (this.params.atmosphere) {
+                    this.randomizeAtmosphereParams();
+                }
+
+                // Randomly enable/disable clouds
+                this.params.has_clouds = Math.random() > 0.5;
+                if (this.params.has_clouds) {
+                    this.randomizeCloudsParams();
+                }
+            },
+
+            // Generate a planet
+            generatePlanet() {
+                // Reset state
+                this.generating = true;
+                this.generationError = null;
+                this.generationLogs = [];
+                this.terrainTextureUrl = null;
+                this.cloudTextureUrl = null;
+                this.cloudMaskUrl = null;
+                this.previewUrl = null; // Clear previous preview to show spinner
+
+                // Prepare parameters
+                const generationParams = { ...this.params };
+
+                // Ensure type is never empty
+                if (!generationParams.type || generationParams.type.trim() === '') {
+                    generationParams.type = 'desert';
+                }
+
+                // Store if clouds are enabled for later use
+                const hasClouds = generationParams.has_clouds;
+
+                // Always set clouds parameter as a boolean
+                generationParams.clouds = hasClouds;
+
+                // If clouds are enabled, also set cloud_coverage
+                if (hasClouds) {
+                    // Use the original clouds value (numeric) for cloud_coverage
+                    // Convert to float to ensure it's a number, not a string
+                    generationParams.cloud_coverage = parseFloat(this.params.clouds);
+                }
+
+                // Remove has_clouds as it's not needed by the API
+                delete generationParams.has_clouds;
+
+                // Store cloud status for later use
+                this._hasClouds = hasClouds;
+
+                // Log parameters for debugging
+                console.log('Generation parameters:', generationParams);
+
+                // Start generation
+                fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(generationParams)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            this.generationError = data.error;
+                            this.generating = false;
+                            return;
+                        }
+
+                        this.processId = data.process_id;
+                        this.pollGenerationStatus();
+                    })
+                    .catch(error => {
+                        this.generationError = "Failed to start generation: " + error.message;
+                        this.generating = false;
+                    });
+            },
+
+            // Poll generation status
+            pollGenerationStatus() {
+                if (!this.processId) return;
+
+                fetch(`/api/status/${this.processId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Log status for debugging
+                        console.log('Generation status:', data);
+
+                        // Update logs
+                        this.generationLogs = data.logs || [];
+
+                        // Check status
+                        if (data.status === 'completed') {
+                            // Get the image URL from the response
+                            this.previewUrl = data.image_url;
+                            console.log('Image URL:', this.previewUrl);
+
+                            // Extract seed and planet type from the URL
+                            // The URL format is: /static/planets/{planet_type}/{seed}/planet.png
+                            const urlParts = this.previewUrl.split('/');
+                            if (urlParts.length >= 5) {
+                                const planetType = urlParts[3];
+                                const seed = urlParts[4];
+
+                                console.log('Parsed planet type:', planetType);
+                                console.log('Parsed seed:', seed);
+
+                                // Set texture URLs using the correct paths
+                                this.terrainTextureUrl = `/static/planets/${planetType}/${seed}/terrain_texture.png`;
+                                console.log('Terrain texture URL:', this.terrainTextureUrl);
+
+                                // Cloud textures (if clouds are enabled)
+                                if (this._hasClouds) {
+                                    this.cloudTextureUrl = `/static/planets/${planetType}/${seed}/cloud_texture.png`;
+                                    this.cloudMaskUrl = `/static/planets/${planetType}/${seed}/cloud_mask.png`;
+                                    console.log('Cloud texture URL:', this.cloudTextureUrl);
+                                    console.log('Cloud mask URL:', this.cloudMaskUrl);
+                                }
+                            }
+
+                            // Preload images before showing them
+                            const preloadImages = [];
+                            if (this.terrainTextureUrl) {
+                                const img = new Image();
+                                img.src = this.terrainTextureUrl;
+                                preloadImages.push(new Promise(resolve => { img.onload = resolve; }));
+                            }
+
+                            if (this.cloudTextureUrl) {
+                                const img = new Image();
+                                img.src = this.cloudTextureUrl;
+                                preloadImages.push(new Promise(resolve => { img.onload = resolve; }));
+                            }
+
+                            if (this.cloudMaskUrl) {
+                                const img = new Image();
+                                img.src = this.cloudMaskUrl;
+                                preloadImages.push(new Promise(resolve => { img.onload = resolve; }));
+                            }
+
+                            // Set preview URL
+                            this.previewUrl = data.image_url;
+
+                            // Mark generation as complete
+                            this.generating = false;
+                        } else if (data.status === 'failed') {
+                            // Handle failure
+                            this.generationError = data.error || "Generation failed";
+                            this.generating = false;
+                        } else {
+                            // Continue polling
+                            setTimeout(() => this.pollGenerationStatus(), 500);
+                        }
+                    })
+                    .catch(error => {
+                        this.generationError = "Failed to check generation status: " + error.message;
+                        this.generating = false;
+                    });
+            }
+        }))
+    });
+    {% endraw %}
+</script>
+{% endblock %}

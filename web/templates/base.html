@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cosmos Generator{% endblock %}</title>
+
+    <!-- Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js from CDN -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Alpine.js Portal Plugin -->
+    <script>
+        // Simple portal implementation for Alpine.js
+        document.addEventListener('alpine:init', () => {
+            Alpine.directive('portal', (el, { expression }, { evaluateLater, effect }) => {
+                const getTarget = evaluateLater(expression);
+
+                effect(() => {
+                    getTarget(target => {
+                        // Create a target if it doesn't exist
+                        if (typeof target === 'string') {
+                            let targetEl = document.querySelector(target);
+                            if (!targetEl) {
+                                targetEl = document.createElement('div');
+                                targetEl.id = target.replace('#', '');
+                                targetEl.className = 'portal-target';
+                                document.body.appendChild(targetEl);
+                            }
+                            target = targetEl;
+                        }
+
+                        // Move the element to the target
+                        if (target instanceof HTMLElement) {
+                            target.appendChild(el);
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+    <!-- Custom Tailwind configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: {
+                            dark: '#0a0a1a',
+                            blue: '#1a1a4a',
+                            purple: '#2a1a4a',
+                            accent: '#7e3af2',
+                            highlight: '#00d4ff',
+                            secondary: '#ff5e7d'
+                        }
+                    },
+                    fontFamily: {
+                        'sci-fi': ['Orbitron', 'sans-serif'],
+                        'mono': ['Space Mono', 'monospace']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(0, 212, 255, 0.5)' },
+                            '100%': { boxShadow: '0 0 20px rgba(0, 212, 255, 0.8)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/palette-styles.css') }}">
+
+    <!-- Additional custom styles -->
+    <style>
+        body {
+            background-color: #0a0a1a;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(30, 30, 70, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(50, 30, 90, 0.4) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .sci-fi-border {
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        .sci-fi-panel {
+            background: rgba(10, 10, 30, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .sci-fi-button {
+            background: linear-gradient(135deg, rgba(30, 30, 70, 0.8), rgba(50, 30, 90, 0.8));
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .sci-fi-button:hover {
+            background: linear-gradient(135deg, rgba(40, 40, 90, 0.9), rgba(70, 40, 120, 0.9));
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .sci-fi-button-secondary {
+            background: linear-gradient(135deg, rgba(70, 30, 50, 0.8), rgba(90, 30, 70, 0.8));
+            border: 1px solid rgba(255, 94, 125, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .sci-fi-button-secondary:hover {
+            background: linear-gradient(135deg, rgba(90, 40, 70, 0.9), rgba(120, 40, 90, 0.9));
+            box-shadow: 0 0 15px rgba(255, 94, 125, 0.5);
+        }
+
+        .sci-fi-input {
+            background: rgba(20, 20, 40, 0.6);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .sci-fi-input:focus {
+            border-color: rgba(0, 212, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+            outline: none;
+        }
+
+        /* Glowing text effect */
+        .glow-text {
+            text-shadow: 0 0 5px rgba(0, 212, 255, 0.7);
+        }
+
+        .glow-text-secondary {
+            text-shadow: 0 0 5px rgba(255, 94, 125, 0.7);
+        }
+
+        /* Animated background for active nav items */
+        .nav-active {
+            background: linear-gradient(90deg,
+                    rgba(0, 212, 255, 0) 0%,
+                    rgba(0, 212, 255, 0.2) 50%,
+                    rgba(0, 212, 255, 0) 100%);
+            animation: nav-glow 3s infinite;
+        }
+
+        @keyframes nav-glow {
+
+            0%,
+            100% {
+                background-position: -200% 0;
+            }
+
+            50% {
+                background-position: 200% 0;
+            }
+        }
+
+        /* Planet card hover effect */
+        .planet-card {
+            transition: all 0.3s ease;
+        }
+
+        .planet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 10, 30, 0.8);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.8);
+        }
+
+        /* Loading animation */
+        .loading-ring {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+        }
+
+        .loading-ring:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #00d4ff;
+            border-color: #00d4ff transparent #00d4ff transparent;
+            animation: loading-ring 1.2s linear infinite;
+        }
+
+        @keyframes loading-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: 280px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-collapsed {
+            width: 80px;
+        }
+
+        .sidebar-item {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-left: 3px solid #00d4ff;
+        }
+
+        /* Floating objects animation */
+        .floating-object {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-object-slow {
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .floating-object-fast {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* Ensure dropdowns are always on top and correctly positioned */
+        .dropdown-menu {
+            z-index: 99999 !important;
+        }
+
+        /* Fix for dropdown positioning */
+        .relative {
+            position: relative !important;
+        }
+
+        /* Specific fix for dropdown menus in the header */
+        header .dropdown-menu,
+        header [x-show="generateOpen"],
+        header [x-show="exploreOpen"] {
+            z-index: 99999 !important;
+            position: absolute !important;
+        }
+
+        /* Portal container styles */
+        .portal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            overflow: visible;
+            pointer-events: none;
+            z-index: 99999;
+        }
+
+        .portal-container>* {
+            pointer-events: auto;
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+
+<body class="min-h-screen flex flex-col" x-data="{ cleanOpen: false }">
+    <!-- Header -->
+    <header class="sci-fi-panel py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <h1 class="text-2xl md:text-3xl font-sci-fi font-bold text-space-highlight glow-text">
+                    COSMOS GENERATOR
+                </h1>
+            </div>
+
+            <nav class="hidden md:flex space-x-6"
+                x-data="{ generateOpen: false, exploreOpen: false }">
+                <a href="{{ url_for('main.dashboard') }}"
+                    class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors {% if request.path == url_for('main.dashboard') %}nav-active{% endif %}">
+                    DASHBOARD
+                </a>
+
+                <!-- Generate dropdown -->
+                <div class="relative" @click.away="generateOpen = false">
+                    <button @click="generateOpen = !generateOpen" x-ref="generateBtn"
+                        class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors flex items-center">
+                        GENERATE
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div x-show="generateOpen" x-portal="'#dropdown-portal'"
+                        class="absolute left-0 mt-2 w-48 sci-fi-panel rounded-md py-2 z-[99999] dropdown-menu"
+                        style="position: fixed !important; z-index: 99999 !important;"
+                        @click.away="generateOpen = false"
+                        x-init="$el.style.top = $refs.generateBtn.getBoundingClientRect().bottom + 'px'; $el.style.left = $refs.generateBtn.getBoundingClientRect().left + 'px';">
+                        <a href="{{ url_for('main.index') }}" class="block px-4 py-2 hover:text-space-highlight">
+                            <span class="text-space-highlight mr-2">•</span> Planets
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Stars (Coming Soon)
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Solar Systems (Coming Soon)
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Explore dropdown -->
+                <div class="relative" @click.away="exploreOpen = false">
+                    <button @click="exploreOpen = !exploreOpen" x-ref="exploreBtn"
+                        class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors flex items-center">
+                        EXPLORE
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div x-show="exploreOpen" x-portal="'#dropdown-portal'"
+                        class="absolute left-0 mt-2 w-48 sci-fi-panel rounded-md py-2 z-[99999] dropdown-menu"
+                        style="position: fixed !important; z-index: 99999 !important;" @click.away="exploreOpen = false"
+                        x-init="$el.style.top = $refs.exploreBtn.getBoundingClientRect().bottom + 'px'; $el.style.left = $refs.exploreBtn.getBoundingClientRect().left + 'px';">
+                        <a href="{{ url_for('main.planets') }}" class="block px-4 py-2 hover:text-space-highlight">
+                            <span class="text-space-highlight mr-2">•</span> Planets
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Stars (Coming Soon)
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Solar Systems (Coming Soon)
+                        </a>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('main.logs') }}"
+                    class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors {% if request.path == url_for('main.logs') %}nav-active{% endif %}">
+                    LOGS
+                </a>
+
+                <!-- Clean dropdown -->
+                <div class="relative" @click.away="cleanOpen = false">
+                    <button @click="cleanOpen = !cleanOpen" x-ref="cleanBtn"
+                        class="font-sci-fi py-2 px-4 rounded-md hover:text-space-highlight transition-colors flex items-center">
+                        CLEAN
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div x-show="cleanOpen" x-portal="'#dropdown-portal'"
+                        class="absolute left-0 mt-2 w-48 sci-fi-panel rounded-md py-2 z-[99999] dropdown-menu"
+                        style="position: fixed !important; z-index: 99999 !important;"
+                        @click.away="cleanOpen = false"
+                        x-init="$el.style.top = $refs.cleanBtn.getBoundingClientRect().bottom + 'px'; $el.style.left = $refs.cleanBtn.getBoundingClientRect().left + 'px';">
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight clean-planets-button">
+                            <span class="text-space-highlight mr-2">•</span> Planets
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Stars (Coming Soon)
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Solar Systems (Coming Soon)
+                        </a>
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> All (Coming Soon)
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden" x-data="{ open: false }">
+                <button @click="open = !open" class="sci-fi-button p-2 rounded-md" x-ref="mobileMenuBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+
+                <!-- Mobile menu -->
+                <div x-show="open" x-portal="'#dropdown-portal'" @click.away="open = false"
+                    class="absolute sci-fi-panel rounded-md py-2 z-[99999] dropdown-menu"
+                    style="position: fixed !important; z-index: 99999 !important; top: 4rem; right: 1rem;">
+                    <a href="{{ url_for('main.dashboard') }}"
+                        class="block px-4 py-2 hover:text-space-highlight">DASHBOARD</a>
+
+                    <div x-data="{ generateOpen: false, exploreOpen: false }">
+                        <!-- Generate submenu -->
+                        <button @click="generateOpen = !generateOpen"
+                            class="flex justify-between items-center w-full px-4 py-2 hover:text-space-highlight">
+                            <span>GENERATE</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="generateOpen" class="pl-4">
+                            <a href="{{ url_for('main.index') }}" class="block px-4 py-2 hover:text-space-highlight">
+                                <span class="text-space-highlight mr-2">•</span> Planets
+                            </a>
+                            <a href="#"
+                                class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                                <span class="text-space-secondary mr-2">•</span> Stars (Coming Soon)
+                            </a>
+                            <a href="#"
+                                class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                                <span class="text-space-secondary mr-2">•</span> Solar Systems (Coming Soon)
+                            </a>
+                        </div>
+
+                        <!-- Explore submenu -->
+                        <button @click="exploreOpen = !exploreOpen"
+                            class="flex justify-between items-center w-full px-4 py-2 hover:text-space-highlight">
+                            <span>EXPLORE</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="exploreOpen" class="pl-4">
+                            <a href="{{ url_for('main.planets') }}" class="block px-4 py-2 hover:text-space-highlight">
+                                <span class="text-space-highlight mr-2">•</span> Planets
+                            </a>
+                            <a href="#"
+                                class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                                <span class="text-space-secondary mr-2">•</span> Stars (Coming Soon)
+                            </a>
+                            <a href="#"
+                                class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                                <span class="text-space-secondary mr-2">•</span> Solar Systems (Coming Soon)
+                            </a>
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('main.logs') }}" class="block px-4 py-2 hover:text-space-highlight">LOGS</a>
+
+                    <!-- Clean submenu -->
+                    <button @click="cleanOpen = !cleanOpen"
+                        class="flex justify-between items-center w-full px-4 py-2 hover:text-space-highlight">
+                        <span>CLEAN</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div x-show="cleanOpen" class="pl-4">
+                        <a href="#" class="block px-4 py-2 hover:text-space-highlight clean-planets-button">
+                            <span class="text-space-highlight mr-2">•</span> Planets
+                        </a>
+                        <a href="#"
+                            class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Stars (Coming Soon)
+                        </a>
+                        <a href="#"
+                            class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> Solar Systems (Coming Soon)
+                        </a>
+                        <a href="#"
+                            class="block px-4 py-2 hover:text-space-highlight opacity-50 cursor-not-allowed">
+                            <span class="text-space-secondary mr-2">•</span> All (Coming Soon)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="sci-fi-panel py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm text-gray-400">
+                COSMOS GENERATOR &copy; 2025 | <span class="text-space-highlight">PROCEDURAL CELESTIAL BODIES</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Clean functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Function to handle clean planets action
+            function handleCleanPlanets() {
+                if (!confirm('Are you sure you want to clean all generated planets? This action cannot be undone.')) {
+                    return;
+                }
+
+                // Show loading state
+                const cleanButtons = document.querySelectorAll('.clean-planets-button');
+
+                cleanButtons.forEach(button => {
+                    // Save original text
+                    const originalText = button.innerHTML;
+
+                    // Check if it's a dropdown menu item or a regular button
+                    if (originalText.includes('•')) {
+                        button.innerHTML = '<span class="text-space-highlight mr-2">•</span> CLEANING...';
+                    } else {
+                        button.innerHTML = 'CLEANING...';
+                    }
+
+                    button.style.pointerEvents = 'none';
+
+                    // Store the original text for later restoration
+                    button.dataset.originalText = originalText;
+                });
+
+                // Call the clean API
+                fetch('/api/clean', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('All files cleaned successfully!');
+                            // Reload the page to refresh any displayed content
+                            window.location.reload();
+                        } else {
+                            alert('Failed to clean files: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('An error occurred: ' + error.message);
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        cleanButtons.forEach(button => {
+                            // Restore original text from dataset
+                            if (button.dataset.originalText) {
+                                button.innerHTML = button.dataset.originalText;
+                            } else {
+                                // Fallback in case dataset is not available
+                                if (button.innerHTML.includes('CLEANING')) {
+                                    if (button.innerHTML.includes('•')) {
+                                        button.innerHTML = '<span class="text-space-highlight mr-2">•</span> Planets';
+                                    } else {
+                                        button.innerHTML = 'CLEAN';
+                                    }
+                                }
+                            }
+                            button.style.pointerEvents = 'auto';
+                        });
+                    });
+            }
+
+            // Attach event listeners to clean planets buttons
+            document.querySelectorAll('.clean-planets-button').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    handleCleanPlanets();
+                });
+            });
+
+            // Alpine.js initialization complete
+            document.addEventListener('alpine:initialized', () => {
+                console.log('Alpine.js initialized');
+
+                // Fix for dropdown menus z-index
+                const fixDropdownZIndex = () => {
+                    document.querySelectorAll('[x-show="generateOpen"], [x-show="exploreOpen"]').forEach(dropdown => {
+                        dropdown.style.zIndex = '99999';
+                        dropdown.style.position = 'absolute';
+                    });
+                };
+
+                // Run initially
+                fixDropdownZIndex();
+
+                // Run when dropdowns are toggled
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('button') &&
+                        (e.target.closest('button').getAttribute('@click') === 'generateOpen = !generateOpen' ||
+                            e.target.closest('button').getAttribute('@click') === 'exploreOpen = !exploreOpen')) {
+                        setTimeout(fixDropdownZIndex, 10);
+                    }
+                });
+            });
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+
+    <!-- Portal container for dropdowns -->
+    <div id="dropdown-portal" class="portal-container" style="position: relative; z-index: 99999;"></div>
+</body>
+
+</html>

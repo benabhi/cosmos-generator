@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Cosmos Generator - Logs{% endblock %}
+
+{% block head %}
+<style>
+    /* Log line styles */
+    .log-line {
+        border-bottom: 1px solid rgba(30, 30, 70, 0.3);
+        transition: background-color 0.2s ease;
+    }
+    
+    .log-line:hover {
+        background-color: rgba(0, 212, 255, 0.05);
+    }
+    
+    /* Custom scrollbar for log container */
+    #log-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #log-container::-webkit-scrollbar-track {
+        background: rgba(10, 10, 30, 0.5);
+        border-radius: 4px;
+    }
+    
+    #log-container::-webkit-scrollbar-thumb {
+        background: rgba(0, 212, 255, 0.3);
+        border-radius: 4px;
+    }
+    
+    #log-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 212, 255, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="logsViewer()">
+    <div class="sci-fi-panel rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-sci-fi text-space-highlight glow-text">SYSTEM LOGS</h2>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="border-b border-space-blue mb-6">
+            <div class="flex">
+                <button 
+                    @click="activeTab = 'planets'; fetchLogs()" 
+                    :class="{'text-space-highlight border-b-2 border-space-highlight -mb-px glow-text': activeTab === 'planets', 'text-gray-400 hover:text-gray-200': activeTab !== 'planets'}"
+                    class="py-2 px-4 font-sci-fi text-sm mr-4 focus:outline-none transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" />
+                    </svg>
+                    PLANET LOGS
+                </button>
+                <button 
+                    @click="activeTab = 'webserver'; fetchLogs()" 
+                    :class="{'text-space-highlight border-b-2 border-space-highlight -mb-px glow-text': activeTab === 'webserver', 'text-gray-400 hover:text-gray-200': activeTab !== 'webserver'}"
+                    class="py-2 px-4 font-sci-fi text-sm focus:outline-none transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                    </svg>
+                    SERVER LOGS
+                </button>
+            </div>
+        </div>
+        
+        <!-- Controls panel -->
+        <div class="p-4 border border-space-secondary/30 rounded-md mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                <!-- Lines selector on the left -->
+                <div>
+                    <label for="lines-filter" class="block mb-1 text-xs font-medium text-space-highlight">LINES TO DISPLAY</label>
+                    <select id="lines-filter" x-model.number="lines" @change="fetchLogs" class="sci-fi-input p-2 rounded-md text-sm">
+                        <option value="50">50 lines</option>
+                        <option value="100">100 lines</option>
+                        <option value="200">200 lines</option>
+                        <option value="500">500 lines</option>
+                        <option value="1000">1000 lines</option>
+                    </select>
+                </div>
+                
+                <!-- Buttons on the right -->
+                <div class="flex flex-wrap items-center gap-2 md:gap-3">
+                    <button @click="fetchLogs" class="sci-fi-button py-2 px-4 rounded-md w-full md:w-auto transition-all hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                        </svg>
+                        REFRESH
+                    </button>
+                    
+                    <div class="relative w-full md:w-auto" x-data="{ open: false }">
+                        <button @click="open = !open" class="sci-fi-button py-2 px-4 rounded-md w-full md:w-auto transition-all hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                            </svg>
+                            FILTER
+                        </button>
+                        
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-64 sci-fi-panel rounded-md py-2 z-50 sci-fi-border">
+                            <div class="p-3">
+                                <div class="mb-3">
+                                    <label for="log-filter" class="block mb-1 text-xs font-medium text-space-highlight">FILTER TEXT</label>
+                                    <input type="text" id="log-filter" x-model="filter" @input="applyFilter" placeholder="Filter logs..." class="sci-fi-input w-full p-2 rounded-md text-sm">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="block mb-1 text-xs font-medium text-space-highlight">LOG LEVEL</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" x-model="levels.debug" @change="applyFilter" class="sci-fi-input h-4 w-4">
+                                            <span class="ml-2 text-sm text-blue-300">DEBUG</span>
+                                        </label>
+                                        
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" x-model="levels.info" @change="applyFilter" class="sci-fi-input h-4 w-4">
+                                            <span class="ml-2 text-sm text-green-300">INFO</span>
+                                        </label>
+                                        
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" x-model="levels.warning" @change="applyFilter" class="sci-fi-input h-4 w-4">
+                                            <span class="ml-2 text-sm text-yellow-300">WARNING</span>
+                                        </label>
+                                        
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" x-model="levels.error" @change="applyFilter" class="sci-fi-input h-4 w-4">
+                                            <span class="ml-2 text-sm text-red-300">ERROR</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button @click="resetFilter" class="sci-fi-button-secondary py-1 px-3 rounded-md text-xs w-full">
+                                    RESET FILTER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button @click="autoRefresh = !autoRefresh" 
+                        :class="{'border-space-highlight': autoRefresh, 'text-space-highlight': autoRefresh}" 
+                        class="sci-fi-button py-2 px-4 rounded-md w-full md:w-auto transition-all hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                        <span x-text="autoRefresh ? 'AUTO ON' : 'AUTO OFF'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Log display container -->
+        <div class="bg-space-dark rounded-lg p-3 font-mono text-xs overflow-hidden sci-fi-border" style="height: 70vh;">
+            <div x-show="loading" class="flex justify-center items-center h-full">
+                <div class="loading-ring"></div>
+            </div>
+            
+            <div x-show="!loading" class="h-full overflow-y-auto" id="log-container">
+                <template x-if="filteredLogs.length === 0">
+                    <div class="text-center py-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-gray-400">No logs found matching your filters</p>
+                    </div>
+                </template>
+                
+                <template x-for="(log, index) in filteredLogs" :key="index">
+                    <div class="py-1 log-line" :class="{
+                        'text-blue-300': log.includes('[DEBUG]'),
+                        'text-green-300': log.includes('[INFO]'),
+                        'text-yellow-300': log.includes('[WARNING]'),
+                        'text-red-300': log.includes('[ERROR]')
+                    }" x-text="log"></div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function logsViewer() {
+        return {
+            // Logs data
+            logs: {{ logs|tojson }},
+            filteredLogs: [],
+            
+            // Pagination and refresh
+            lines: {{ lines }},
+            loading: false,
+            autoRefresh: false,
+            refreshInterval: null,
+            activeTab: '{{ log_type }}',
+            
+            // Filtering
+            filter: "",
+            levels: {
+                debug: true,
+                info: true,
+                warning: true,
+                error: true
+            },
+            
+            // Initialize
+            init() {
+                this.applyFilter();
+                
+                // Set up auto-refresh
+                this.$watch('autoRefresh', value => {
+                    if (value) {
+                        this.refreshInterval = setInterval(() => this.fetchLogs(), 5000);
+                    } else {
+                        clearInterval(this.refreshInterval);
+                    }
+                });
+                
+                // Scroll to top initially (since logs are in reverse order)
+                this.$nextTick(() => {
+                    const container = document.getElementById('log-container');
+                    if (container) {
+                        container.scrollTop = 0;
+                    }
+                });
+            },
+            
+            // Fetch logs from server
+            fetchLogs() {
+                this.loading = true;
+                
+                fetch(`/api/logs?type=${this.activeTab}&lines=${this.lines}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Logs are already reversed in the backend
+                        this.logs = data.logs;
+                        this.applyFilter();
+                        this.loading = false;
+                        
+                        // Update URL
+                        const url = new URL(window.location);
+                        url.searchParams.set('lines', this.lines);
+                        url.searchParams.set('type', this.activeTab);
+                        window.history.replaceState({}, '', url);
+                        
+                        // Scroll to top since logs are now in reverse order
+                        this.$nextTick(() => {
+                            const container = document.getElementById('log-container');
+                            if (container) {
+                                container.scrollTop = 0;
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Failed to fetch logs:", error);
+                        this.loading = false;
+                    });
+            },
+            
+            // Apply filters to logs
+            applyFilter() {
+                this.filteredLogs = this.logs.filter(log => {
+                    // Filter by text
+                    if (this.filter && !log.toLowerCase().includes(this.filter.toLowerCase())) {
+                        return false;
+                    }
+                    
+                    // Filter by log level
+                    if (log.includes('[DEBUG]') && !this.levels.debug) {
+                        return false;
+                    }
+                    
+                    if (log.includes('[INFO]') && !this.levels.info) {
+                        return false;
+                    }
+                    
+                    if (log.includes('[WARNING]') && !this.levels.warning) {
+                        return false;
+                    }
+                    
+                    if (log.includes('[ERROR]') && !this.levels.error) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+            },
+            
+            // Reset all filters
+            resetFilter() {
+                this.filter = "";
+                this.levels = {
+                    debug: true,
+                    info: true,
+                    warning: true,
+                    error: true
+                };
+                
+                this.applyFilter();
+            }
+        };
+    }
+</script>
+{% endblock %}

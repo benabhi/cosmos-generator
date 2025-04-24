@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="80" fill="url(#planet-gradient)" />
+  <ellipse cx="100" cy="100" rx="95" ry="20" fill="url(#ring-gradient)" transform="rotate(20 100 100)" />
+  <circle cx="100" cy="100" r="82" fill="none" stroke="url(#glow-gradient)" stroke-width="2" />
+  <circle cx="70" cy="80" r="15" fill="url(#moon-gradient)" />
+  <circle cx="70" cy="80" r="16" fill="none" stroke="rgba(0, 212, 255, 0.5)" stroke-width="1" />
+  <circle cx="130" cy="60" r="8" fill="url(#moon2-gradient)" />
+  <circle cx="130" cy="60" r="9" fill="none" stroke="rgba(126, 58, 242, 0.5)" stroke-width="1" />
+  
+  <defs>
+    <linearGradient id="planet-gradient" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a1a4a" />
+      <stop offset="1" stop-color="#2a1a4a" />
+    </linearGradient>
+    
+    <linearGradient id="ring-gradient" x1="5" y1="100" x2="195" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="rgba(0, 212, 255, 0)" />
+      <stop offset="0.2" stop-color="rgba(0, 212, 255, 0.2)" />
+      <stop offset="0.5" stop-color="rgba(0, 212, 255, 0.5)" />
+      <stop offset="0.8" stop-color="rgba(0, 212, 255, 0.2)" />
+      <stop offset="1" stop-color="rgba(0, 212, 255, 0)" />
+    </linearGradient>
+    
+    <linearGradient id="glow-gradient" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00d4ff" />
+      <stop offset="1" stop-color="#7e3af2" />
+    </linearGradient>
+    
+    <radialGradient id="moon-gradient" cx="70" cy="80" r="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e2e8f0" />
+      <stop offset="1" stop-color="#a0aec0" />
+    </radialGradient>
+    
+    <radialGradient id="moon2-gradient" cx="130" cy="60" r="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fed7aa" />
+      <stop offset="1" stop-color="#fb923c" />
+    </radialGradient>
+  </defs>
+</svg>

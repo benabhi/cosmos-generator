@@ -261,10 +261,22 @@ class Container(ContainerInterface):
         if not has_rings:
             # Para planetas sin anillos
             if self.zoom_level == 1.0:
-                # Para zoom = 1.0, usamos un tamaño ligeramente menor que la imagen original
-                # para asegurarnos de que el planeta esté completamente visible
-                min_crop_size = int(planet_size * 0.98)  # 98% del tamaño de la imagen original
-                logger.info(f"Using slightly smaller crop size for zoom 1.0: {min_crop_size}", "container")
+                # Para zoom = 1.0, usamos un tamaño significativamente mayor que la imagen original
+                # para asegurarnos de que el planeta y su atmósfera estén completamente visibles
+
+                # Detectar si el planeta tiene atmósfera
+                has_atmosphere = False
+                if hasattr(self.content, "atmosphere") and hasattr(self.content.atmosphere, "enabled"):
+                    has_atmosphere = self.content.atmosphere.enabled
+
+                if has_atmosphere:
+                    # Si tiene atmósfera, usamos un tamaño ligeramente mayor para asegurar que el planeta esté completamente visible
+                    min_crop_size = int(planet_size * 1.05)  # 105% del tamaño de la imagen original
+                    logger.info(f"Using slightly larger crop size for zoom 1.0 with atmosphere: {min_crop_size}", "container")
+                else:
+                    # Si no tiene atmósfera, usamos un tamaño ligeramente mayor
+                    min_crop_size = int(planet_size * 1.1)  # 110% del tamaño de la imagen original
+                    logger.info(f"Using slightly larger crop size for zoom 1.0 (no atmosphere): {min_crop_size}", "container")
             else:
                 # Para otros niveles de zoom, usamos el tamaño del planeta
                 min_crop_size = planet_size
@@ -275,9 +287,19 @@ class Container(ContainerInterface):
             # Para planetas con anillos
             # Para zoom = 1.0, queremos mostrar solo el planeta (sin anillos)
             if self.zoom_level is not None and self.zoom_level == 1.0:
-                # Usamos un tamaño ligeramente mayor que el planeta para evitar recortar los bordes
-                min_crop_size = int(planet_only_size * 1.2)  # 20% más grande que el planeta
-                logger.info(f"Zoom 1.0 for planet with rings: showing only the planet with padding (crop size: {min_crop_size})", "container")
+                # Detectar si el planeta tiene atmósfera
+                has_atmosphere = False
+                if hasattr(self.content, "atmosphere") and hasattr(self.content.atmosphere, "enabled"):
+                    has_atmosphere = self.content.atmosphere.enabled
+
+                if has_atmosphere:
+                    # Si tiene atmósfera, usamos un tamaño moderado para que el planeta se vea más cerca
+                    min_crop_size = int(planet_only_size * 1.2)  # 120% más grande que el planeta
+                    logger.info(f"Zoom 1.0 for planet with rings and atmosphere: showing planet with atmosphere (crop size: {min_crop_size})", "container")
+                else:
+                    # Si no tiene atmósfera, usamos un tamaño ligeramente mayor
+                    min_crop_size = int(planet_only_size * 1.2)  # 20% más grande que el planeta
+                    logger.info(f"Zoom 1.0 for planet with rings (no atmosphere): showing only the planet with margin (crop size: {min_crop_size})", "container")
             else:
                 # Para zoom = 0.0, queremos mostrar el planeta completo con anillos
                 # Para valores intermedios, interpolamos entre el tamaño del planeta con anillos y sin anillos
@@ -303,6 +325,8 @@ class Container(ContainerInterface):
         # - zoom_level = 0.0 -> crop_size = max_crop_size (planeta pequeño/lejos)
         # - zoom_level = 1.0 -> crop_size = min_crop_size (planeta grande/cerca)
         crop_range = max_crop_size - min_crop_size
+
+        # Interpolación lineal entre max_crop_size y min_crop_size basada en zoom_level
         crop_size = max_crop_size - int(zoom_level * crop_range)
 
         logger.info(f"Calculated crop size for zoom {zoom_level}: {crop_size}", "container")

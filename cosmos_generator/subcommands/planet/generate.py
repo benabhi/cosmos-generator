@@ -62,14 +62,12 @@ def register_subcommand(subparsers: Any) -> None:
                        help="Tilt angle of the rings in degrees (0-90, where 0=edge-on, 90=face-on)")
     parser.add_argument("--atmosphere", action="store_true",
                        help="Add atmosphere")
-    parser.add_argument("--atmosphere-glow", type=float, default=0.5,
-                       help="Atmosphere glow intensity (0.0-1.0)")
-    parser.add_argument("--atmosphere-halo", type=float, default=0.7,
-                       help="Atmosphere halo intensity (0.0-1.0)")
-    parser.add_argument("--atmosphere-thickness", type=int, default=3,
-                       help="Atmosphere halo thickness in pixels (1-10)")
-    parser.add_argument("--atmosphere-blur", type=float, default=0.5,
-                       help="Atmosphere blur amount (0.0-1.0)")
+    parser.add_argument("--atmosphere-density", type=float, default=0.5,
+                       help="Atmosphere density (0.0-1.0), affects thickness and opacity")
+    parser.add_argument("--atmosphere-scattering", type=float, default=0.7,
+                       help="Atmosphere light scattering intensity (0.0-1.0), controls the limb brightening effect")
+    parser.add_argument("--atmosphere-color-shift", type=float, default=0.3,
+                       help="Atmosphere color shift amount (0.0-1.0), controls color variation")
     parser.add_argument("--clouds", action="store_true",
                        help="Add clouds")
     parser.add_argument("--clouds-coverage", type=float, default=None,
@@ -173,13 +171,15 @@ def main(args: argparse.Namespace) -> int:
             params["rings_tilt"] = tilt
             print(f"Using random rings tilt: {tilt:.1f} degrees")
 
+    # Handle atmosphere parameters
     if args.atmosphere:
         params["atmosphere"] = True
-        # Add atmosphere parameters
-        params["atmosphere_glow"] = max(0.0, min(1.0, args.atmosphere_glow))
-        params["atmosphere_halo"] = max(0.0, min(1.0, args.atmosphere_halo))
-        params["atmosphere_thickness"] = max(1, min(10, args.atmosphere_thickness))
-        params["atmosphere_blur"] = max(0.0, min(1.0, args.atmosphere_blur))
+        params["atmosphere_density"] = max(0.0, min(1.0, args.atmosphere_density))
+        params["atmosphere_scattering"] = max(0.0, min(1.0, args.atmosphere_scattering))
+        params["atmosphere_color_shift"] = max(0.0, min(1.0, args.atmosphere_color_shift))
+        print(f"Using atmosphere with density: {params['atmosphere_density']:.2f}, " +
+              f"scattering: {params['atmosphere_scattering']:.2f}, " +
+              f"color shift: {params['atmosphere_color_shift']:.2f}")
 
     if args.clouds or args.clouds_coverage is not None:
         params["clouds"] = True

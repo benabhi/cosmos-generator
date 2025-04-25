@@ -368,48 +368,38 @@
                             </div>
                             <!-- Atmosphere Parameters -->
                             <div x-show="params.atmosphere" class="mt-2 pl-6 space-y-2">
-                                <!-- Atmosphere Glow -->
+                                <!-- Atmosphere Density -->
                                 <div>
-                                    <label for="atmosphere-glow" class="text-xs font-medium">Glow</label>
+                                    <label for="atmosphere-density" class="text-xs font-medium">Density</label>
                                     <div class="flex items-center space-x-2">
-                                        <input type="range" id="atmosphere-glow" x-model="params.atmosphere_glow"
+                                        <input type="range" id="atmosphere-density" x-model="params.atmosphere_density"
                                             min="0" max="1" step="0.1" class="sci-fi-slider flex-grow">
                                         <span class="text-xs w-8 text-right"
-                                            x-text="parseFloat(params.atmosphere_glow).toFixed(1)"></span>
+                                            x-text="parseFloat(params.atmosphere_density).toFixed(1)"></span>
                                     </div>
                                 </div>
 
-                                <!-- Atmosphere Halo -->
+                                <!-- Atmosphere Scattering -->
                                 <div>
-                                    <label for="atmosphere-halo" class="text-xs font-medium">Halo</label>
+                                    <label for="atmosphere-scattering" class="text-xs font-medium">Scattering</label>
                                     <div class="flex items-center space-x-2">
-                                        <input type="range" id="atmosphere-halo" x-model="params.atmosphere_halo"
-                                            min="0" max="1" step="0.1" class="sci-fi-slider flex-grow">
-                                        <span class="text-xs w-8 text-right"
-                                            x-text="parseFloat(params.atmosphere_halo).toFixed(1)"></span>
-                                    </div>
-                                </div>
-
-                                <!-- Atmosphere Thickness -->
-                                <div>
-                                    <label for="atmosphere-thickness" class="text-xs font-medium">Thickness</label>
-                                    <div class="flex items-center space-x-2">
-                                        <input type="range" id="atmosphere-thickness"
-                                            x-model="params.atmosphere_thickness" min="1" max="10" step="1"
+                                        <input type="range" id="atmosphere-scattering"
+                                            x-model="params.atmosphere_scattering" min="0" max="1" step="0.1"
                                             class="sci-fi-slider flex-grow">
                                         <span class="text-xs w-8 text-right"
-                                            x-text="params.atmosphere_thickness"></span>
+                                            x-text="parseFloat(params.atmosphere_scattering).toFixed(1)"></span>
                                     </div>
                                 </div>
 
-                                <!-- Atmosphere Blur -->
+                                <!-- Atmosphere Color Shift -->
                                 <div>
-                                    <label for="atmosphere-blur" class="text-xs font-medium">Blur</label>
+                                    <label for="atmosphere-color-shift" class="text-xs font-medium">Color Shift</label>
                                     <div class="flex items-center space-x-2">
-                                        <input type="range" id="atmosphere-blur" x-model="params.atmosphere_blur"
-                                            min="0" max="1" step="0.1" class="sci-fi-slider flex-grow">
+                                        <input type="range" id="atmosphere-color-shift"
+                                            x-model="params.atmosphere_color_shift" min="0" max="1" step="0.1"
+                                            class="sci-fi-slider flex-grow">
                                         <span class="text-xs w-8 text-right"
-                                            x-text="parseFloat(params.atmosphere_blur).toFixed(1)"></span>
+                                            x-text="parseFloat(params.atmosphere_color_shift).toFixed(1)"></span>
                                     </div>
                                 </div>
                             </div>
@@ -599,10 +589,9 @@
                 rings_complexity: 2,     // 1=minimal, 2=medium, 3=full
                 rings_tilt: 30,         // 0-75 degrees (0=edge-on, 75=more face-on)
                 atmosphere: false,
-                atmosphere_glow: 0.5,
-                atmosphere_halo: 0.8,
-                atmosphere_thickness: 3,
-                atmosphere_blur: 0.8,
+                atmosphere_density: 0.5,
+                atmosphere_scattering: 0.7,
+                atmosphere_color_shift: 0.3,
                 has_clouds: false,
                 clouds: 0.5, // This is a numeric value for cloud coverage
                 light_angle: 45,
@@ -774,10 +763,9 @@
             // Randomize atmosphere parameters
             randomizeAtmosphereParams() {
                 // Generate random values for each atmosphere parameter
-                this.params.atmosphere_glow = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
-                this.params.atmosphere_halo = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
-                this.params.atmosphere_thickness = Math.floor(Math.random() * 10) + 1;      // 1-10
-                this.params.atmosphere_blur = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
+                this.params.atmosphere_density = parseFloat((Math.random()).toFixed(1));      // 0.0-1.0
+                this.params.atmosphere_scattering = parseFloat((Math.random()).toFixed(1));   // 0.0-1.0
+                this.params.atmosphere_color_shift = parseFloat((Math.random()).toFixed(1));  // 0.0-1.0
             },
 
             // Randomize rings parameters

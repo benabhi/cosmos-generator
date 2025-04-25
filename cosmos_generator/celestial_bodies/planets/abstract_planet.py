@@ -167,7 +167,7 @@ class AbstractPlanet(AbstractCelestialBody, PlanetInterface):
             clouds_param = True
 
         # Check if any atmosphere parameters are provided, which implies atmosphere should be enabled
-        if any(param in kwargs for param in ["atmosphere_glow", "atmosphere_halo", "atmosphere_thickness", "atmosphere_blur"]):
+        if any(param in kwargs for param in ["atmosphere_density", "atmosphere_scattering", "atmosphere_color_shift"]):
             atmosphere_param = True
 
         # Check if any rings parameters are provided, which implies rings should be enabled
@@ -241,30 +241,32 @@ class AbstractPlanet(AbstractCelestialBody, PlanetInterface):
             # Update atmosphere properties based on kwargs
             if has_atmosphere:
                 self.atmosphere.enabled = True
-                if "atmosphere_glow" in kwargs:
-                    self.atmosphere.glow_intensity = kwargs["atmosphere_glow"]
-                if "atmosphere_halo" in kwargs:
-                    self.atmosphere.halo_intensity = kwargs["atmosphere_halo"]
-                if "atmosphere_thickness" in kwargs:
-                    self.atmosphere.halo_thickness = kwargs["atmosphere_thickness"]
-                if "atmosphere_blur" in kwargs:
-                    self.atmosphere.blur_amount = kwargs["atmosphere_blur"]
+                if "atmosphere_density" in kwargs:
+                    self.atmosphere.density = kwargs["atmosphere_density"]
+                if "atmosphere_scattering" in kwargs:
+                    self.atmosphere.scattering = kwargs["atmosphere_scattering"]
+                if "atmosphere_color_shift" in kwargs:
+                    self.atmosphere.color_shift = kwargs["atmosphere_color_shift"]
             else:
                 self.atmosphere.enabled = False
         else:
             # Create a new atmosphere instance
-            atmosphere_glow = kwargs.get("atmosphere_glow", 0.5)
-            atmosphere_halo = kwargs.get("atmosphere_halo", 0.7)
-            atmosphere_thickness = kwargs.get("atmosphere_thickness", 3)
-            atmosphere_blur = kwargs.get("atmosphere_blur", 0.5)
+            atmosphere_density = kwargs.get("atmosphere_density", 0.5)
+            atmosphere_scattering = kwargs.get("atmosphere_scattering", 0.7)
+            atmosphere_color_shift = kwargs.get("atmosphere_color_shift", 0.3)
+
+            logger.debug(f"Creating atmosphere with density: {atmosphere_density}, " +
+                       f"scattering: {atmosphere_scattering}, color shift: {atmosphere_color_shift}", "planet")
+
             self.atmosphere = Atmosphere(
                 seed=self.seed,
                 enabled=has_atmosphere,
-                glow_intensity=atmosphere_glow,
-                halo_intensity=atmosphere_halo,
-                halo_thickness=atmosphere_thickness,
-                blur_amount=atmosphere_blur
+                density=atmosphere_density,
+                scattering=atmosphere_scattering,
+                color_shift=atmosphere_color_shift,
+                color_palette=self.color_palette
             )
+
             # Ensure the atmosphere is enabled if has_atmosphere is True
             self.atmosphere.enabled = has_atmosphere
 
@@ -511,20 +513,30 @@ class AbstractPlanet(AbstractCelestialBody, PlanetInterface):
             logger.debug(f"Applying features with flags: atmosphere={self.has_atmosphere}, rings={self.has_rings}, clouds={self.has_clouds}", "planet")
 
             # The order of applying features is important:
-            # 1. First apply atmosphere if enabled (before anything else)
-            if self.has_atmosphere and self.atmosphere.enabled:
-                result = self._apply_atmosphere_feature(result)
-                features_applied.append("atmosphere")
 
-            # 2. Then apply clouds if enabled
+            # 1. First apply clouds if enabled
             if self.has_clouds and self.clouds.enabled:
                 result = self._apply_clouds_feature(result)
                 features_applied.append("clouds")
 
-            # 3. Finally apply rings if enabled
+            # 2. For planets without rings, apply atmosphere directly
+            if not self.has_rings and self.has_atmosphere and self.atmosphere.enabled:
+                result = self._apply_atmosphere_feature(result)
+                features_applied.append("atmosphere")
+
+            # 3. For planets with rings, apply rings first
             if self.has_rings and self.rings_generator.enabled:
-                result = self._apply_rings(result)
-                features_applied.append("rings")
+                # If the planet has atmosphere, we need to apply it only to the planet part
+                if self.has_atmosphere and self.atmosphere.enabled:
+                    # Apply atmosphere to the planet part only
+                    planet_with_atmosphere = self._apply_atmosphere_feature(result)
+                    # Then apply rings to the planet with atmosphere
+                    result = self._apply_rings(planet_with_atmosphere)
+                    features_applied.append("atmosphere+rings")
+                else:
+                    # No atmosphere, just apply rings
+                    result = self._apply_rings(result)
+                    features_applied.append("rings")
 
             # Log features applied
             if features_applied:

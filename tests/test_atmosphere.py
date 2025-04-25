@@ -40,36 +40,31 @@ def test_atmosphere_creation():
     # Create with default parameters
     atmo1 = Atmosphere()
     assert atmo1.enabled is True
-    assert atmo1.glow_intensity == 0.5
-    assert atmo1.halo_intensity == 0.7
-    assert atmo1.halo_thickness == 3
-    assert atmo1.blur_amount == 0.5
+    assert atmo1.density == 0.5
+    assert atmo1.scattering == 0.7  # Default value is 0.7
+    assert atmo1.color_shift == 0.3  # Default value is 0.3
 
     # Create with custom parameters
     atmo2 = Atmosphere(
         enabled=False,
-        glow_intensity=0.8,
-        halo_intensity=0.2,
-        halo_thickness=5,
-        blur_amount=0.3
+        density=0.8,
+        scattering=0.2,
+        color_shift=0.3
     )
     assert atmo2.enabled is False
-    assert atmo2.glow_intensity == 0.8
-    assert atmo2.halo_intensity == 0.2
-    assert atmo2.halo_thickness == 5
-    assert atmo2.blur_amount == 0.3
+    assert atmo2.density == 0.8
+    assert atmo2.scattering == 0.2
+    assert atmo2.color_shift == 0.3
 
     # Test parameter clamping
     atmo3 = Atmosphere(
-        glow_intensity=1.5,  # Should be clamped to 1.0
-        halo_intensity=-0.5,  # Should be clamped to 0.0
-        halo_thickness=15,  # Should be clamped to 10
-        blur_amount=2.0  # Should be clamped to 1.0
+        density=1.5,  # Should be clamped to 1.0
+        scattering=-0.5,  # Should be clamped to 0.0
+        color_shift=2.0  # Should be clamped to 1.0
     )
-    assert atmo3.glow_intensity == 1.0
-    assert atmo3.halo_intensity == 0.0
-    assert atmo3.halo_thickness == 10
-    assert atmo3.blur_amount == 1.0
+    assert atmo3.density == 1.0
+    assert atmo3.scattering == 0.0
+    assert atmo3.color_shift == 1.0
 
 
 def test_atmosphere_disabled(atmosphere, test_image):
@@ -92,8 +87,8 @@ def test_atmosphere_glow(atmosphere, test_image):
     Test that atmosphere glow is applied correctly.
     """
     # Set parameters for testing glow only
-    atmosphere.glow_intensity = 1.0
-    atmosphere.halo_intensity = 0.0  # Disable halo
+    atmosphere.density = 1.0
+    atmosphere.scattering = 0.0  # Disable scattering
 
     # Apply to the test image
     result = atmosphere.apply_to_planet(test_image, "Desert")
@@ -113,10 +108,9 @@ def test_atmosphere_halo(atmosphere, test_image):
     """
     Test that atmosphere halo is applied correctly.
     """
-    # Set parameters for testing halo only
-    atmosphere.glow_intensity = 0.0  # Minimal glow
-    atmosphere.halo_intensity = 1.0  # Maximum halo
-    atmosphere.halo_thickness = 5    # Thick halo
+    # Set parameters for testing scattering effect
+    atmosphere.density = 0.2  # Minimal density
+    atmosphere.scattering = 1.0  # Maximum scattering
 
     # Apply to the test image
     result = atmosphere.apply_to_planet(test_image, "Desert")
@@ -125,7 +119,7 @@ def test_atmosphere_halo(atmosphere, test_image):
     assert result.width > test_image.width
     assert result.height > test_image.height
 
-    # Check that the result has some semi-transparent pixels (the halo)
+    # Check that the result has some semi-transparent pixels (the scattering effect)
     result_array = np.array(result)
     # Count pixels with alpha > 0 but < 255
     semi_transparent_pixels = np.sum((result_array[:, :, 3] > 0) & (result_array[:, :, 3] < 255))
@@ -156,23 +150,29 @@ def test_atmosphere_blur(atmosphere, test_image):
     """
     Test that atmosphere blur is applied correctly.
     """
-    # Test with different blur amounts
-    atmosphere.glow_intensity = 0.5
-    atmosphere.halo_intensity = 0.0  # Disable halo for this test
+    # Test with different density amounts
+    atmosphere.scattering = 0.5
 
-    # Low blur
-    atmosphere.blur_amount = 0.2
-    result_low_blur = atmosphere.apply_to_planet(test_image, "Desert")
+    # Low density
+    atmosphere.density = 0.2
+    result_low_density = atmosphere.apply_to_planet(test_image, "Desert")
 
-    # High blur
-    atmosphere.blur_amount = 0.8
-    result_high_blur = atmosphere.apply_to_planet(test_image, "Desert")
+    # High density
+    atmosphere.density = 0.8
+    result_high_density = atmosphere.apply_to_planet(test_image, "Desert")
 
-    # Both results should be the same size
-    assert result_low_blur.size == result_high_blur.size
+    # The sizes might be different due to different padding based on density
+    # So we'll just check that both results are larger than the input
+    assert result_low_density.width > test_image.width
+    assert result_low_density.height > test_image.height
+    assert result_high_density.width > test_image.width
+    assert result_high_density.height > test_image.height
 
-    # But the pixel values should be different due to different blur amounts
-    assert not np.array_equal(np.array(result_low_blur), np.array(result_high_blur))
+    # And the pixel values should be different due to different density amounts
+    # We'll resize them to the same size for comparison
+    result_low_density_resized = result_low_density.resize((200, 200), Image.LANCZOS)
+    result_high_density_resized = result_high_density.resize((200, 200), Image.LANCZOS)
+    assert not np.array_equal(np.array(result_low_density_resized), np.array(result_high_density_resized))
 
 
 def test_atmosphere_with_planet_colors(atmosphere, test_image):

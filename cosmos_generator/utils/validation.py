@@ -252,10 +252,9 @@ def validate_planet_params(params: Dict[str, Any]) -> ValidationResult:
 
     # Validate numeric parameters with ranges
     numeric_params = [
-        ('atmosphere_glow', 0.0, 1.0),
-        ('atmosphere_halo', 0.0, 1.0),
-        ('atmosphere_thickness', 1, 10),
-        ('atmosphere_blur', 0.0, 1.0),
+        ('atmosphere_density', 0.0, 1.0),
+        ('atmosphere_scattering', 0.0, 1.0),
+        ('atmosphere_color_shift', 0.0, 1.0),
         ('cloud_coverage', 0.0, 1.0),
         ('light_intensity', 0.1, 2.0),
         ('light_angle', 0, 360),
@@ -355,8 +354,8 @@ def sanitize_planet_params(params: Dict[str, Any]) -> ParamDict:
 
     # Numeric parameters
     numeric_params = [
-        'seed', 'atmosphere_glow', 'atmosphere_halo', 'atmosphere_thickness',
-        'atmosphere_blur', 'cloud_coverage', 'light_intensity', 'light_angle',
+        'seed', 'atmosphere_density', 'atmosphere_scattering', 'atmosphere_color_shift',
+        'cloud_coverage', 'light_intensity', 'light_angle',
         'rotation', 'zoom', 'rings_complexity', 'rings_tilt'
     ]
     for param in numeric_params:

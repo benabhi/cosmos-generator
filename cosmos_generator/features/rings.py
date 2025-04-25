@@ -181,27 +181,35 @@ class Rings(RingsInterface):
         # Calculate planet position and dimensions
         center_x, center_y = canvas_size // 2, canvas_size // 2
 
-        # Detect if the planet image already has padding (e.g., from atmosphere)
-        # We need to find the actual planet radius within the image
-        # First, check if the image has an alpha channel and find the non-transparent area
-        if planet_image.mode == "RGBA":
-            # Get the alpha channel
-            alpha = planet_image.split()[3]
-            # Find the bounding box of the non-transparent area
-            bbox = alpha.getbbox()
-            if bbox:
-                # Calculate the actual planet radius from the bounding box
-                actual_width = bbox[2] - bbox[0]
-                actual_height = bbox[3] - bbox[1]
-                # Use the smaller dimension to ensure we're inside the planet
-                actual_size = min(actual_width, actual_height)
-                planet_radius = actual_size // 2
-            else:
-                # Fallback if no non-transparent area is found
-                planet_radius = actual_planet_size // 2
+        # For planets with atmosphere, we need to be more precise about the planet radius
+        # We'll use the original_planet_size parameter which should be the size of the planet without atmosphere
+        if original_planet_size is not None:
+            # Use the original planet size directly
+            planet_radius = original_planet_size // 2
+            # Log that we're using the original planet size
+            from cosmos_generator.utils.logger import logger
+            logger.debug(f"Using original planet size for rings: {original_planet_size}px (radius: {planet_radius}px)", "rings")
         else:
-            # If no alpha channel, use the image size
-            planet_radius = actual_planet_size // 2
+            # Fallback: try to detect the planet size from the image
+            # This is less reliable with atmosphere
+            if planet_image.mode == "RGBA":
+                # Get the alpha channel
+                alpha = planet_image.split()[3]
+                # Find the bounding box of the non-transparent area
+                bbox = alpha.getbbox()
+                if bbox:
+                    # Calculate the actual planet radius from the bounding box
+                    actual_width = bbox[2] - bbox[0]
+                    actual_height = bbox[3] - bbox[1]
+                    # Use the smaller dimension to ensure we're inside the planet
+                    actual_size = min(actual_width, actual_height)
+                    planet_radius = actual_size // 2
+                else:
+                    # Fallback if no non-transparent area is found
+                    planet_radius = planet_image_size // 2
+            else:
+                # If no alpha channel, use the image size
+                planet_radius = planet_image_size // 2
 
         planet_offset = (canvas_size - planet_image_size) // 2
 

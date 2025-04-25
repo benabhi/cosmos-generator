@@ -22,12 +22,25 @@ planet = generator.create("Desert", {
         "falloff": 0.7
     },
     "atmosphere": True,
-    "atmosphere_glow": 0.7,  # 0.0 to 1.0, intensity of the glow
-    "atmosphere_halo": 0.8,  # 0.0 to 1.0, intensity of the halo
-    "atmosphere_thickness": 4,  # 1 to 10, thickness of the halo in pixels
-    "atmosphere_blur": 0.6,  # 0.0 to 1.0, amount of blur to apply
+    "atmosphere_density": 0.7,  # 0.0 to 1.0, affects thickness and opacity
+    "atmosphere_scattering": 0.8,  # 0.0 to 1.0, controls the limb brightening effect
+    "atmosphere_color_shift": 0.4,  # 0.0 to 1.0, controls color variation
     "clouds": True,
     "cloud_coverage": 1.0  # 0.0 to 1.0, where 1.0 is maximum coverage
+})
+
+# Generate jovian planet with atmosphere
+jovian_planet = generator.create("Jovian", {
+    "seed": 98765,
+    "variation": "bands",
+    "atmosphere": True,
+    "atmosphere_density": 0.6,  # 0.0 to 1.0, affects thickness and opacity
+    "atmosphere_scattering": 0.8,  # 0.0 to 1.0, controls the limb brightening effect
+    "atmosphere_color_shift": 0.5,  # 0.0 to 1.0, controls color variation
+    "lighting": {
+        "intensity": 1.2,
+        "angle": 30
+    }
 })
 
 # Generate ocean planet with archipelago variation
@@ -79,8 +92,8 @@ python -m cosmos_generator web --host 127.0.0.1 --port 8080 --debug
 # With custom output path
 python -m cosmos_generator planet generate --type desert --seed 987 --output planet.png --rings --atmosphere --light-angle 30
 
-# With custom atmosphere parameters
-python -m cosmos_generator planet generate --type desert --seed 987 --atmosphere --atmosphere-glow 0.8 --atmosphere-halo 0.6 --atmosphere-thickness 5 --atmosphere-blur 0.4
+# With atmosphere parameters
+python -m cosmos_generator planet generate --type ocean --seed 12345 --atmosphere --atmosphere-density 0.7 --atmosphere-scattering 0.8 --atmosphere-color-shift 0.4
 
 # With default output path (output/planets/desert/00000987/planet.png)
 python -m cosmos_generator planet generate --type desert --seed 987 --rings --atmosphere --light-angle 30
@@ -124,10 +137,9 @@ Options for the `planet generate` subcommand:
 - `--rings-complexity VALUE`: Ring system complexity (1=minimal, 2=medium, 3=full, default: random)
 - `--rings-tilt VALUE`: Tilt angle of the rings in degrees (0-90, where 0=edge-on, 90=face-on, default: random)
 - `--atmosphere`: Add atmosphere
-- `--atmosphere-glow VALUE`: Atmosphere glow intensity (0.0-1.0, default: 0.5)
-- `--atmosphere-halo VALUE`: Atmosphere halo intensity (0.0-1.0, default: 0.7)
-- `--atmosphere-thickness VALUE`: Atmosphere halo thickness in pixels (1-10, default: 3)
-- `--atmosphere-blur VALUE`: Atmosphere blur amount (0.0-1.0, default: 0.5)
+- `--atmosphere-density VALUE`: Atmosphere density (0.0-1.0, default: 0.5), affects thickness and opacity
+- `--atmosphere-scattering VALUE`: Atmosphere light scattering intensity (0.0-1.0, default: 0.7), controls the limb brightening effect
+- `--atmosphere-color-shift VALUE`: Atmosphere color shift amount (0.0-1.0, default: 0.3), controls color variation
 - `--clouds`: Add clouds with random coverage
 - `--clouds-coverage VALUE`: Set specific cloud coverage (0.0-1.0, where 1.0 is full coverage)
 - `--light-intensity VALUE`: Light intensity (0.0-2.0)

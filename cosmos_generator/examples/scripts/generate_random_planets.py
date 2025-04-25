@@ -13,7 +13,7 @@ Features supported:
 - Random lighting parameters (intensity and angle)
 - Random features (rings, atmosphere, clouds)
 - Random rings parameters (complexity and tilt)
-- Random atmosphere parameters
+- Random atmosphere parameters (density, scattering, color shift)
 - Random cloud coverage
 - Random zoom and rotation
 - Random color palette selection
@@ -138,10 +138,9 @@ def generate_random_parameters() -> Dict[str, Any]:
     if random.random() < 0.5:
         params["atmosphere"] = True
         # Random atmosphere parameters
-        params["atmosphere_glow"] = round(random.uniform(0.3, 1.0), 1)
-        params["atmosphere_halo"] = round(random.uniform(0.3, 1.0), 1)
-        params["atmosphere_thickness"] = random.randint(1, 10)
-        params["atmosphere_blur"] = round(random.uniform(0.3, 1.0), 1)
+        params["atmosphere_density"] = round(random.uniform(0.3, 1.0), 1)
+        params["atmosphere_scattering"] = round(random.uniform(0.3, 1.0), 1)
+        params["atmosphere_color_shift"] = round(random.uniform(0.1, 0.8), 1)
 
     if random.random() < 0.5:
         # Enable clouds
@@ -180,10 +179,9 @@ def build_command(planet_type: str, variation: Optional[str], params: Dict[str, 
         "light_angle": "light-angle",
         "rings_complexity": "rings-complexity",
         "rings_tilt": "rings-tilt",
-        "atmosphere_glow": "atmosphere-glow",
-        "atmosphere_halo": "atmosphere-halo",
-        "atmosphere_thickness": "atmosphere-thickness",
-        "atmosphere_blur": "atmosphere-blur",
+        "atmosphere_density": "atmosphere-density",
+        "atmosphere_scattering": "atmosphere-scattering",
+        "atmosphere_color_shift": "atmosphere-color-shift",
         "color_palette_id": "color-palette-id",
         "clouds_coverage": "clouds-coverage"
     }

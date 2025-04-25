@@ -91,10 +91,9 @@ def generate():
         rings (bool, optional): Whether the planet has rings.
         atmosphere (bool, optional): Whether the planet has an atmosphere.
         clouds (float, optional): Cloud coverage (0.0 to 1.0).
-        atmosphere_glow (float, optional): Atmosphere glow intensity (0.0 to 1.0).
-        atmosphere_halo (float, optional): Atmosphere halo intensity (0.0 to 1.0).
-        atmosphere_thickness (int, optional): Atmosphere thickness (1 to 10).
-        atmosphere_blur (float, optional): Atmosphere blur (0.0 to 1.0).
+        atmosphere_density (float, optional): Atmosphere density (0.0 to 1.0).
+        atmosphere_scattering (float, optional): Atmosphere light scattering intensity (0.0 to 1.0).
+        atmosphere_color_shift (float, optional): Atmosphere color shift amount (0.0 to 1.0).
         light_intensity (float, optional): Light intensity (0.1 to 2.0).
         light_angle (int, optional): Light angle in degrees (0 to 360).
         rotation (int, optional): Planet rotation in degrees (0 to 360).
